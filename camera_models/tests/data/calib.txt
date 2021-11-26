@@ -1,0 +1,8 @@
+type: pinhole
+is_normalized: True
+img_width: 640
+img_height: 480
+fx: 554.254691
+fy: 554.254691
+cx: 320
+cy: 240

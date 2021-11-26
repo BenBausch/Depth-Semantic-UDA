@@ -1,0 +1,55 @@
+model:
+    type: 'monodepth2'
+    depth_net:
+        params:
+            nof_layers: 18
+            weights_init: 'pretrained'
+
+    pose_net:
+        input: 'pairs' # 'all'
+        params:
+            weights_init: 'pretrained'
+
+train:
+    nof_epochs: 20
+    batch_size: 12
+    rgb_frame_offsets: [0, -1, +1]
+
+    optimizer:
+        type: 'Adam'
+        learning_rate: 0.0001
+    scheduler:
+        type: 'StepLR'
+        step_size: 15
+        gamma: 0.1
+
+val:
+    batch_size: 12
+    nof_workers: 4
+
+dataset:
+    name: 'kitti'
+    path: '/home/petek/kalimu/data/kitti/base'
+    feed_img_size: [640, 192]
+    use_sparse_depth: False
+    split: 'eigen_zhou'
+    camera: 'pinhole'
+
+losses:
+    use_depth_reprojection_loss: False
+
+    reconstruction:
+        nof_scales: 4
+        use_ssim: True
+        use_automasking: True
+
+    weights:
+        depth: 1.0
+        reconstruction: 1.0
+        smoothness: 0.00001 # ToDo: Normalize the depth output later, such that this is independent from the value margin of the depth!
+        # depth weight is set to 1 per definition as the relative weighting is relevant only
+
+checkpoint:
+    use_checkpoint: False
+#    path_base: '/home/petek/accepted_models/depth_estimation/2021_03_08_18_57_49_kitti_unsupervised_no_depth_input'
+#    filename: 'checkpoint_epoch_19.pth'

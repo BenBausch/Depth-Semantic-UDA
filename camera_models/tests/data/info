@@ -1,0 +1,26 @@
+Information on the gazebo configuration to set up the unit test:
+
+---Model 1: unit box---
+- unit size in each direction: 1
+- depth (x-coord.): 2.5 (aufgrund der Dicke der Box muss noch die -0.5 berücksichtigt werden - die Box wurde bei x = 3.0 platziert...)
+- no y- offset
+- z: centered
+		    -----
+		   |     |
+Camera --< |--3--| |     |
+		    -----
+---Model 2: Camera---
+- At the origin of the coordinate system
+- Intrinsics:  
+	- fx = fy = 554.254691
+	- cx = 320
+	- cy = 240
+
+warping:
+x_diff: +0.2
+y_diff: -0.5
+z_diff: 0.0
+roll: 0.05
+pitch: 0.1
+yaw: 0.3
+

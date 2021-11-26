@@ -1,0 +1,23 @@
+dataset:
+    name: 'kalimu'
+    path: '/home/petek/kalimu/data/kalimu/base'
+    feed_img_size: [640, 192]
+    use_sparse_depth: True
+    split: None
+    camera: 'pinhole'
+
+train:
+    batch_size: 1
+    nof_workers: 1
+
+val:
+    batch_size: 1
+    nof_workers: 1
+
+eval:
+    train:
+        gt_available: False
+    val:
+        gt_available: False
+    test:
+        gt_available: False
