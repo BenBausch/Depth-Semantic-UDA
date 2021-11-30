@@ -1,6 +1,8 @@
 import abc
+from abc import ABC
 
 import torch.nn as nn
+
 
 class ModelBase(nn.Module, abc.ABC):
     """
@@ -12,7 +14,11 @@ class ModelBase(nn.Module, abc.ABC):
         super(ModelBase, self).__init__()
 
     @abc.abstractmethod
-    def predict_depth(self, imgs):
+    def predict_semantic(self, features):
+        pass
+
+    @abc.abstractmethod
+    def predict_depth(self, features):
         pass
 
     @abc.abstractmethod
@@ -22,3 +28,23 @@ class ModelBase(nn.Module, abc.ABC):
     @abc.abstractmethod
     def forward(self, batch):
         pass
+
+    @abc.abstractmethod
+    def latent_features(self, images):
+        pass
+
+
+class DepthModelBase(ModelBase, ABC):
+    def __init__(self, depth_network, pose_network):
+        super(DepthModelBase, self).__init__(depth_network=depth_network, pose_network=pose_network)
+
+    def predict_semantic(self, features):
+        return None
+
+
+class SemanticModelBase(ModelBase, ABC):
+    def __init__(self, depth_network, pose_network):
+        super(DepthModelBase, self).__init__(depth_network=depth_network, pose_network=pose_network)
+
+    def predict_depth(self, features):
+        return None

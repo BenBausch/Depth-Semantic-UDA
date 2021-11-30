@@ -1,16 +1,17 @@
-from models.model_base import ModelBase
-from models.monodepth.resnet_encoder import ResnetEncoder
-from models.monodepth.pose_decoder import PoseDecoder
+from models.model_base import DepthModelBase
+from models.helper_models.resnet_encoder import ResnetEncoder
+from models.helper_models.pose_decoder import PoseDecoder
 from .PackNet01 import PackNet01
 
-import torch
-
 from train.layers import *
+
+#TODO adapt this code to changes made by Ben
 
 # ToDo: Die skalierten Ausgaben werden nicht im photometrischen Fehler berücksichtigt. Wir skalieren explizit nach...
 # ToDo: The depth network should also use the sparse input for depth estimation -> need other model, e.g. self-sup
 
-class ModelPacknet(ModelBase):
+
+class ModelPacknet(DepthModelBase):
     def __init__(self, device, cfg):
         super(ModelPacknet, self).__init__()
 
@@ -62,9 +63,9 @@ class ModelPacknet(ModelBase):
             self.networks["pose_encoder"].to(device)
             self.networks["pose_decoder"].to(device)
 
-    def predict_depth(self, imgs):
+    def predict_depth(self, features):
         # The network actually outputs the inverse depth!
-        inv_depth = self.networks["depth_net"](imgs)
+        inv_depth = self.networks["depth_net"](features)
         return 1.0/inv_depth, None
 
     def predict_poses(self, inputs):

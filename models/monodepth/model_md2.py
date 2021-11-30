@@ -1,9 +1,7 @@
-from models.model_base import ModelBase
-from .resnet_encoder import ResnetEncoder
-from .depth_decoder import DepthDecoder
-from models.monodepth.pose_decoder import PoseDecoder
-
-import torch
+from models.model_base import DepthModelBase
+from models.helper_models.resnet_encoder import ResnetEncoder
+from models.helper_models.depth_decoder import DepthDecoder
+from models.helper_models.pose_decoder import PoseDecoder
 
 from train.layers import *
 
@@ -11,7 +9,8 @@ from train.layers import *
 #  die RGB Bilder und die ausgegebene Tiefenkarte herunter -> Die anzahl beider Skalen, d.h. die bezüglich der
 #  Netzstruktur und die zur BErechnung des photom. Fehlers ist an self.num_scales gebunden -> FIX THAT
 
-class ModelMonodepth2(ModelBase):
+
+class ModelMonodepth2(DepthModelBase):
     def __init__(self, device, cfg):
         super(ModelMonodepth2, self).__init__()
 
@@ -70,9 +69,8 @@ class ModelMonodepth2(ModelBase):
             self.networks["pose_encoder"].to(device)
             self.networks["pose_decoder"].to(device)
 
-    def predict_depth(self, input):
+    def predict_depth(self, features):
         # The network actually outputs the inverse depth!
-        features = self.networks["depth_encoder"](input)
         raw_sigmoid = self.networks["depth_decoder"](features)
         raw_sigmoid_scale_0 = raw_sigmoid[("disp", 0)]
         _, depth_pred = disp_to_depth(raw_sigmoid_scale_0)
@@ -117,8 +115,9 @@ class ModelMonodepth2(ModelBase):
         return poses
 
     def forward(self, batch):
+        latent_features_batch = self.latent_features(batch)
         return {
-            'depth': self.predict_poses(batch),
+            'depth': self.predict_poses(latent_features_batch),
             'poses': self.predict_depth(batch["rgb", 0])
         }
 
@@ -133,4 +132,6 @@ class ModelMonodepth2(ModelBase):
 
     def get_networks(self):
         return self.networks
-        
+
+    def latent_features(self, images):
+        return self.networks["resnet_encoder"](images)

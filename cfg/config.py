@@ -1,4 +1,5 @@
 # Reference point for all configurable options
+# Reference point for all configurable options
 from yacs.config import CfgNode as CN
 
 # ToDo: Check in the beginning if everything's ok, e.g. whether the specified paths do exist...
@@ -46,6 +47,7 @@ cfg.model.depth_net.params.weights_init = 'pretrained'
 cfg.model.pose_net = CN()
 cfg.model.pose_net.input = 'pairs'
 cfg.model.pose_net.params = CN()
+cfg.model.pose_net.params.nof_layers = cfg.model.depth_net.params.nof_layers
 cfg.model.pose_net.params.weights_init = 'pretrained'
 
 # ********************************************************************

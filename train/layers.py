@@ -126,7 +126,7 @@ class Conv3x3(nn.Module):
         out = self.conv(out)
         return out
 
-def upsample(x):
+def upsample(x, mode='nearest'):
     """Upsample input tensor by a factor of 2
     """
-    return F.interpolate(x, scale_factor=2, mode="nearest")
+    return F.interpolate(x, scale_factor=2, mode=mode)

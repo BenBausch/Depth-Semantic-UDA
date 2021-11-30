@@ -1,13 +1,14 @@
 model:
-    type: 'monodepth2'
+    type: 'monodepth_guda'
     depth_net:
         params:
-            nof_layers: 18
+            nof_layers: 101
             weights_init: 'pretrained'
 
     pose_net:
         input: 'pairs' # 'all'
         params:
+            nof_layers: 18
             weights_init: 'pretrained'
 
 train:
