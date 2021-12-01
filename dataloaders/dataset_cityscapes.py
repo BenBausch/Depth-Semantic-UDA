@@ -23,9 +23,21 @@ import numbers
 import random
 
 
-def decompose_rgb_path(path_rgb_file):
+def decompose_rgb_path(path_file):
+    """
+    Decomposes the path to the rgb file and splits the name of the file into meaningful components
+    :param path_file: path to the file.
+    :return:
+        base_path: base path to the dataset
+        mode: 'train', 'val', 'test'
+        city: city where the data has been collected
+        seq_number: number of the sequence given a specific city
+        frame_id: number of the frame within the specific sequence
+        data_type: defines which camera has been used and if the data is raw data or ground truth, e.g. 'leftImg8bit'
+        file_format: extension of the file e.g. '.png'
+    """
     path_components = {}
-    par_dir = path_rgb_file
+    par_dir = path_file
 
     # Go through the rgb path and decompose its parent directory names step for step and store in path_components
     for i in range(3):
@@ -37,7 +49,7 @@ def decompose_rgb_path(path_rgb_file):
     city, seq_number, frame_id, data_type = re.split('_', path_components[0])
     file_format = re.search('(\.[A-Za-z0-9]*)', data_type).group(0)
     data_type = data_type[:-len(file_format)]  # cut off extension to get data type e.g 'leftImg8bit'
-    mode = path_components[2]  # eg. 'leftImg8bit' or 'leftImg8bit_sequence'
+    mode = path_components[2]  # eg. 'leftImg8bit'
 
     return par_dir, mode, city, seq_number, frame_id, data_type, file_format
 
@@ -141,11 +153,18 @@ class _PathsCityscapes(dataset_base.PathsHandlerSemantic):
             return None
 
 
-class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
+class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
+    """
+    Dataset for the semantically annotated images of the Cityscapes Dataset.
+    """
+
     def __init__(self, mode, cfg):
-        """Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/cityscapes_dataset.py"""
+        """
+        Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/cityscapes_dataset.py
+        Initializes the Cityscapes Semantic dataset by collecting all the paths and random shuffling the data if wanted.
+        """
         self.paths = _PathsCityscapes(mode, cfg)
-        super(Cityscapes_Semantic_Dataset, self).__init__(self.paths, cfg)
+        super(CityscapesSemanticDataset, self).__init__(self.paths, cfg)
 
         self.cfg = cfg
 
@@ -178,9 +197,19 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
             np.random.shuffle(self.ids)
 
     def __len__(self):
+        """
+        :return: The number of ids in the split of the dataset.
+        """
         return len(self.indexes)
 
     def __getitem__(self, index):
+        """
+        Collects the rgb images of the sequence and the label of the index image and returns them as a dict.
+        Images can be accessed by dict_variable[("rgb", offset)] with e.g. offset = 0 for the index image.
+        Labels can be accessed by dict_variable["gt"].
+        :param index: Index of an image in the sequence.
+        :return: dict of images and label
+        """
         # get the shuffled id, index and id are the same if cfg.dataset.shuffle set to false
         index = self.ids[index]
 
@@ -215,10 +244,10 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
 
     def transform_train(self, rgb_dict, gt_semantic):
         """
-        Transforms the data during training procress.
-        :param rgb_dict: dictionary of rgb images
-        :param gt_semantic: semantic ground truth of single image
-        :return: transformed gt and rgb images
+        Transforms the rgb images and the semantic ground truth for training.
+        :param rgb_dict: dict of rgb images of a sequence.
+        :param gt_semantic: ground truth of the image with offset = 0
+        :return: dict of transformed rgb images and transformed label
         """
         do_flip = random.random() > 0.5
 
@@ -236,10 +265,10 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
 
     def transform_val(self, rgb_dict, gt_semantic):
         """
-        Transforms the data during validation procress.
-        :param rgb_dict: dictionary of rgb images
-        :param gt_semantic: semantic ground truth of single image
-        :return: transformed gt and rgb images
+        Transforms the rgb images and the semantic ground truth for validation.
+        :param rgb_dict: dict of rgb images of a sequence.
+        :param gt_semantic: ground truth of the image with offset = 0
+        :return: dict of transformed rgb images and transformed label
         """
         # Get the transformation objects
         tf_rgb_val = self.tf_rgb_val(self.feed_img_size)
@@ -254,6 +283,11 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
         return rgb_dict_tf, gt_semantic
 
     def get_semantic(self, path_file):
+        """
+        Loads the PIL Image for the path_file label if it exists.
+        :param path_file: path to the label
+        :return: Pil Image of semantic ground truth.
+        """
         if path_file is None:
             return None
         else:
@@ -262,6 +296,13 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
             return label
 
     def get_rgb(self, path_file, offset):
+        """
+        Loads the PIL Image for the path_file label and all the other rgb images with the given offsets in the sequence
+        if they exist.
+        :param path_file: path to the label
+        :param offset: offsets of the other rgb images in the sequence to the path_file image.
+        :return: dict of Pil RGb Images.
+        """
         assert isinstance(offset, numbers.Number), "The inputted offset {} is not numeric!".format(offset)
         assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
 
@@ -282,6 +323,12 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
         return img
 
     def tf_rgb_train(self, tgt_size, do_flip):
+        """
+        Transformations of the rgb image during training.
+        :param tgt_size: target size of the images after resize operation
+        :param do_flip: True if the image should be horizontally flipped else False
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.BILINEAR),
@@ -293,6 +340,12 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
         )
 
     def tf_semantic_train(self, tgt_size, do_flip):
+        """
+        Transformations of the label during training.
+        :param tgt_size: target size of the labels after resize operation
+        :param do_flip: True if the image should be horizontally flipped else False
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.NEAREST),
@@ -304,6 +357,11 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
         )
 
     def tf_rgb_val(self, tgt_size):
+        """
+        Transformations of the rgb image during validation.
+        :param tgt_size: target size of the images after resize operation
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.BILINEAR),
@@ -314,6 +372,11 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
         )
 
     def tf_semantic_val(self, tgt_size):
+        """
+        Transformations of the labels during validation.
+        :param tgt_size: target size of the labels after resize operation
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.NEAREST),
@@ -325,7 +388,8 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
 
     def decode_segmap(self, temp):
         """
-            Copied from https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/cityscapes_dataset.py
+        Copied from https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
+        Decodes the class-id encoded segmentation map to an rgb encoded segmentation map.
         """
         r = temp.copy()
         g = temp.copy()
@@ -341,10 +405,11 @@ class Cityscapes_Semantic_Dataset(dataset_base.DatasetSemantic):
         rgb[:, :, 2] = b / 255.0
         return rgb
 
+
 if __name__ == "__main__":
     cfg = get_cfg_defaults()
     cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\depth_estimation\cfg\train_cityscapes_semantic.yaml')
+        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_cityscapes_semantic.yaml')
     cfg.eval.train.gt_available = False
     cfg.eval.val.gt_available = False
     cfg.eval.test.gt_available = False
@@ -353,7 +418,7 @@ if __name__ == "__main__":
     cfg.eval.val.gt_semantic_available = True
     cfg.eval.test.gt_semantic_available = True
     cfg.freeze()
-    gta_dataset = Cityscapes_Semantic_Dataset('train', cfg)
+    gta_dataset = CityscapesSemanticDataset('train', cfg)
     plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
     plt.show()
     plt.imshow((next(iter(gta_dataset))["gt"].numpy().transpose(1, 2, 0)))

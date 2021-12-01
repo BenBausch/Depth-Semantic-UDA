@@ -21,13 +21,13 @@ import matplotlib.pyplot as plt
 import numbers
 import random
 
+
 def create_split_filter_file(splits, base_path, split):
     """
     Creates files with the ids in different files
     :param splits: split proposed by the authors of the GTA5 dataset
     :param base_path: the path to the base folder of the GTA5 dataset
     :param split: None: use all data for training, else force GTA5 split proposed by authors of the dataset.
-    :return:
     """
     if split is None:
         splits['trainIds'] = np.concatenate((splits['trainIds'], splits['valIds']))
@@ -51,7 +51,6 @@ def check_ids_exist(path_base):
     """
     Removes the indexes of non existing files from the Ids of trainIds, valIds and testIds.
     :param path_base: path to the base directory of the GTA5 data
-    :return:
     """
     split_names = ['trainIds', 'valIds', 'testIds']
     for split_name in split_names:
@@ -68,6 +67,7 @@ def check_ids_exist(path_base):
 class _PathsGTA5(dataset_base.PathsHandlerSemantic):
     def __init__(self, mode, split, cfg):
         """
+        Creates lists af all file_paths from the dataset.
         :param mode: the mode ('train', 'val', 'test') in which the data is used.
         :param split: If none use all data for training else force use split proposed by GTA5 dataset authors.
         :param cfg: the configuration.
@@ -79,6 +79,15 @@ class _PathsGTA5(dataset_base.PathsHandlerSemantic):
         super(_PathsGTA5, self).__init__(mode, split, cfg)
 
     def get_rgb_image_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Collects the paths to all rgb images.
+        :param mode: 'train', 'val', 'test' are possible values
+        :param frame_ids: '*' collect all images, or specific 5-digit string ids e.g. 00001
+        :param file_format: extension of the files, '.png'
+        :param split: which splitting method to use, None takes all data into data-loader, orther values enforce default
+            split as introduced by authors of dataset (split.mat).
+        :return: sorted list of files
+        """
         if split is None: # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -94,6 +103,15 @@ class _PathsGTA5(dataset_base.PathsHandlerSemantic):
                 return sorted(files)
 
     def get_semantic_label_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Collects the paths to all semantic labels.
+        :param mode: 'train', 'val', 'test' are possible values
+        :param frame_ids: '*' collect all images, or specific 5-digit string ids e.g. 00001
+        :param file_format: extension of the files, '.png'
+        :param split: which splitting method to use, None takes all data into data-loader, orther values enforce default
+            split as introduced by authors of dataset (split.mat).
+        :return: sorted list of files
+        """
         if split is None: # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -110,6 +128,15 @@ class _PathsGTA5(dataset_base.PathsHandlerSemantic):
 
     @staticmethod
     def get_rgb_image_path(path_base, frame_ids, file_format):
+        """
+        Builds path to an rgb image.
+        Default path: path_base/images/*.png
+        Specific path: path_base/images/00001.png
+        :param path_base: path to directory containing images and labels
+        :param frame_ids: 5-digit string id or '*'
+        :param file_format: extensions of files '.png'
+        :return: single path string
+        """
         path = os.path.join(path_base, 'images', frame_ids + file_format)
         if os.path.exists(path) or not frame_ids.isnumeric():
             # Apply check only if exact id is provided, no regex like '*'
@@ -119,6 +146,15 @@ class _PathsGTA5(dataset_base.PathsHandlerSemantic):
 
     @staticmethod
     def get_semantic_label_path(path_base, frame_ids, file_format):
+        """
+        Builds path to an label.
+        Default path: path_base/labels/*.png
+        Specific path: path_base/labels/00001.png
+        :param path_base: path to directory containing images and labels
+        :param frame_ids: 5-digit string id or '*'
+        :param file_format: extensions of files '.png'
+        :return: single path string
+        """
         path = os.path.join(path_base, 'labels', frame_ids + file_format)
         if os.path.exists(path) or not frame_ids.isnumeric():
             # Apply check only if exact id is provided, no regex like '*'
@@ -127,12 +163,14 @@ class _PathsGTA5(dataset_base.PathsHandlerSemantic):
             return None
 
 
-class GTA5_Dataset(dataset_base.DatasetSemantic):
+class GTA5Dataset(dataset_base.DatasetSemantic):
     def __init__(self, mode, split, cfg):
-        """Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py"""
+        """
+        Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
+        Initializes the GTA5 dataset by collecting all the paths and random shuffling the data if wanted.
+        """
         self.paths = _PathsGTA5(mode, split, cfg)
-        print(len(self.paths.paths_semantic))
-        super(GTA5_Dataset, self).__init__(self.paths, cfg)
+        super(GTA5Dataset, self).__init__(self.paths, cfg)
 
         # dataset related values
         self.colors = [ [128, 64, 128], [244, 35, 232], [70, 70, 70], [102, 102, 156], [190, 153, 153], [153, 153, 153],
@@ -162,9 +200,19 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
             np.random.shuffle(self.ids)
 
     def __len__(self):
+        """
+        :return: The number of ids in the split of the dataset.
+        """
         return len(self.ids)
 
     def __getitem__(self, index):
+        """
+        Collects the rgb images of the sequence and the label of the index image and returns them as a dict.
+        Images can be accessed by dict_variable[("rgb", offset)] with e.g. offset = 0 for the index image.
+        Labels can be accessed by dict_variable["gt"].
+        :param index: Index of an image in the sequence.
+        :return: dict of images and label
+        """
         # Get all required training elements
         gt_semantic = self.get_semantic(self.paths.paths_semantic[index]) if self.paths.paths_semantic is not None else None
 
@@ -195,6 +243,12 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
         return data
 
     def transform_train(self, rgb_dict, gt_semantic):
+        """
+        Transforms the rgb images and the semantic ground truth for training.
+        :param rgb_dict: dict of rgb images of a sequence.
+        :param gt_semantic: ground truth of the image with offset = 0
+        :return: dict of transformed rgb images and transformed label
+        """
         do_flip = random.random() > 0.5
 
         # Get the transformation objects
@@ -210,6 +264,12 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
         return rgb_dict_tf, gt_semantic
 
     def transform_val(self, rgb_dict, gt_semantic):
+        """
+        Transforms the rgb images and the semantic ground truth for validation.
+        :param rgb_dict: dict of rgb images of a sequence.
+        :param gt_semantic: ground truth of the image with offset = 0
+        :return: dict of transformed rgb images and transformed label
+        """
         # Get the transformation objects
         tf_rgb_val = self.tf_rgb_val(self.feed_img_size)
         tf_semantic_val = self.tf_semantic_val(self.feed_img_size)
@@ -223,6 +283,11 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
         return rgb_dict_tf, gt_semantic
 
     def get_semantic(self, path_file):
+        """
+        Loads the PIL Image for the path_file label if it exists.
+        :param path_file: path to the label
+        :return: Pil Image of semantic ground truth.
+        """
         if path_file is None:
             return None
         else:
@@ -231,6 +296,13 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
             return label
 
     def get_rgb(self, path_file, offset):
+        """
+        Loads the PIL Image for the path_file label and all the other rgb images with the given offsets in the sequence
+        if they exist.
+        :param path_file: path to the label
+        :param offset: offsets of the other rgb images in the sequence to the path_file image.
+        :return: dict of Pil RGb Images.
+        """
         assert isinstance(offset, numbers.Number), "The inputted offset {} is not numeric!".format(offset)
         assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
 
@@ -248,7 +320,8 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
 
     def decode_segmap(self, temp):
         """
-            Copied from https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
+        Copied from https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
+        Decodes the class-id encoded segmentation map to an rgb encoded segmentation map.
         """
         r = temp.copy()
         g = temp.copy()
@@ -265,6 +338,12 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
         return rgb
 
     def tf_rgb_train(self, tgt_size, do_flip):
+        """
+        Transformations of the rgb image during training.
+        :param tgt_size: target size of the images after resize operation
+        :param do_flip: True if the image should be horizontally flipped else False
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.BILINEAR),
@@ -276,6 +355,12 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
         )
 
     def tf_semantic_train(self, tgt_size, do_flip):
+        """
+        Transformations of the label during training.
+        :param tgt_size: target size of the labels after resize operation
+        :param do_flip: True if the image should be horizontally flipped else False
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.NEAREST),
@@ -287,6 +372,11 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
         )
 
     def tf_rgb_val(self, tgt_size):
+        """
+        Transformations of the rgb image during validation.
+        :param tgt_size: target size of the images after resize operation
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.BILINEAR),
@@ -297,6 +387,11 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
         )
 
     def tf_semantic_val(self, tgt_size):
+        """
+        Transformations of the labels during validation.
+        :param tgt_size: target size of the labels after resize operation
+        :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.Resize(tgt_size, pil.NEAREST),
@@ -309,7 +404,8 @@ class GTA5_Dataset(dataset_base.DatasetSemantic):
 
 if __name__ == "__main__":
     cfg = get_cfg_defaults()
-    cfg.merge_from_file(r'C:\Users\benba\Documents\University\Masterarbeit\depth_estimation\cfg\train_gta5_semantic.yaml')
+    cfg.merge_from_file(
+        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_gta5_semantic.yaml ')
     cfg.eval.train.gt_available = False
     cfg.eval.val.gt_available = False
     cfg.eval.test.gt_available = False
@@ -318,7 +414,7 @@ if __name__ == "__main__":
     cfg.eval.val.gt_semantic_available = True
     cfg.eval.test.gt_semantic_available = True
     cfg.freeze()
-    gta_dataset = GTA5_Dataset('train', 'train', cfg)
+    gta_dataset = GTA5Dataset('train', 'train', cfg)
     plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
     plt.show()
     plt.imshow((next(iter(gta_dataset))[("rgb", 1)].numpy().transpose(1, 2, 0)))
