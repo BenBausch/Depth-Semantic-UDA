@@ -181,7 +181,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
         self.class_names = ["unlabelled", "road", "sidewalk", "building", "wall", "fence", "pole", "traffic_light",
                             "traffic_sign", "vegetation", "terrain", "sky", "person", "rider", "car", "truck", "bus",
                             "train", "motorcycle", "bicycle"]
-        self.n_classes = 19
+        self.n_classes = cfg.dataset.num_classes
         self.label_colours = dict(zip(range(19), self.colors))
         self.class_map = dict(zip(self.valid_classes, range(19)))
         self.ignore_index = 250

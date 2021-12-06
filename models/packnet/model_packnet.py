@@ -1,4 +1,4 @@
-from models.model_base import DepthModelBase
+from models.model_base import DepthFromMotionEncoderDecoderModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.pose_decoder import PoseDecoder
 from .PackNet01 import PackNet01
@@ -11,9 +11,9 @@ from train.layers import *
 # ToDo: The depth network should also use the sparse input for depth estimation -> need other model, e.g. self-sup
 
 
-class ModelPacknet(DepthModelBase):
+class FromMotionModelPacknet(DepthFromMotionEncoderDecoderModelBase):
     def __init__(self, device, cfg):
-        super(ModelPacknet, self).__init__()
+        super(FromMotionModelPacknet, self).__init__()
 
         self.weights_init_pose_net_encoder = cfg.model.pose_net.params.weights_init
         # self.num_scales = opts.num_scales

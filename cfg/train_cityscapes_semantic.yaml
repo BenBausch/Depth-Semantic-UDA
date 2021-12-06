@@ -31,7 +31,7 @@ val:
 dataset:
     name: 'gta5'
     path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit'
-    feed_img_size: [1914, 1052]
+    feed_img_size: [2048, 1024] #need to be powers of 2 due to up and down sampling + concat otherwise shape mismatch
     use_sparse_depth: False
     split: 'train'
     camera: 'pinhole'

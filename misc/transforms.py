@@ -24,7 +24,7 @@ class PrepareForNet(object):
         self.to_tensor = tf.transforms.ToTensor()
 
     def __call__(self, sample):
-        return self.to_tensor(sample)
+        return self.to_tensor(sample).double()
 
 
 class ToUint8Array(object):
@@ -65,7 +65,7 @@ class NormalizeRGB(object):
         sample = sample.astype(np.float64)
         sample -= self.mean
         if self.do_norm:
-            sample = sample.astype(float) / 255.0
+            sample = sample / 255.0
         return sample
 
 

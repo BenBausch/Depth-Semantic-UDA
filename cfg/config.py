@@ -38,32 +38,41 @@ cfg.val.nof_workers = 4
 # ********************************************************************
 cfg.model = CN()
 
-cfg.model.type = ''
+cfg.model.type = ''  # which model to use: packnet, monodepth2, ...
+
+cfg.model.encoder = CN()
+cfg.model.encoder.params = CN()
+cfg.model.encoder.params.nof_layers = 18
+cfg.model.encoder.params.weights_init = 'pretrained'
+
 cfg.model.depth_net = CN()
 cfg.model.depth_net.params = CN()
-cfg.model.depth_net.params.nof_layers = 18
-cfg.model.depth_net.params.weights_init = 'pretrained'
+
+cfg.model.semantic_net = CN()
+cfg.model.semantic_net.params = CN()
 
 cfg.model.pose_net = CN()
 cfg.model.pose_net.input = 'pairs'
 cfg.model.pose_net.params = CN()
-cfg.model.pose_net.params.nof_layers = cfg.model.depth_net.params.nof_layers
+cfg.model.pose_net.params.nof_layers = cfg.model.encoder.params.nof_layers  # default use same size resnet
+# for depth- and posenet
 cfg.model.pose_net.params.weights_init = 'pretrained'
 
 # ********************************************************************
 # /----- Dataset parameters
 # ********************************************************************
 cfg.dataset = CN()
-cfg.dataset.name = '' # 'KITTI'
-cfg.dataset.path = '' # '/home/petek/kalimu/data/kitti/base'
-cfg.dataset.feed_img_size = [] #[640, 192]
+cfg.dataset.name = ''  # 'KITTI'
+cfg.dataset.path = ''  # '/home/petek/kalimu/data/kitti/base'
+cfg.dataset.feed_img_size = []  # [640, 192]
 cfg.dataset.use_sparse_depth = True
-cfg.dataset.split = None # 'eigen_zhou'
-cfg.dataset.camera = '' # 'pinhole'
+cfg.dataset.split = None  # 'eigen_zhou'
+cfg.dataset.camera = ''  # 'pinhole'
 cfg.dataset.min_depth = 0.001
 cfg.dataset.max_depth = 80.0
 cfg.dataset.shuffle = False
 cfg.dataset.img_norm = False
+cfg.dataset.num_classes = 1
 
 # ********************************************************************
 # /----- Augmentation parameters
@@ -135,6 +144,7 @@ cfg.checkpoint = CN()
 cfg.checkpoint.use_checkpoint = False
 cfg.checkpoint.path_base = ''
 cfg.checkpoint.filename = ''
+
 
 # ********************************************************************
 # /----- Checkpoint parameters

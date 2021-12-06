@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 def transformation_from_parameters(axisangle, translation, invert=False):
     """Convert the network's (axisangle, translation) output into a 4x4 matrix
     # Source: https://github.com/nianticlabs/monodepth2/blob/master/layers.py
@@ -21,6 +22,7 @@ def transformation_from_parameters(axisangle, translation, invert=False):
         M = torch.matmul(T, R)
 
     return M
+
 
 def rot_from_axisangle(vec):
     """Convert an axisangle rotation into a 4x4 transformation matrix
@@ -63,6 +65,7 @@ def rot_from_axisangle(vec):
 
     return rot
 
+
 def get_translation_matrix(translation_vector):
     """
     Source: https://github.com/nianticlabs/monodepth2/blob/master/layers.py
@@ -79,6 +82,7 @@ def get_translation_matrix(translation_vector):
     T[:, :3, 3, None] = t
 
     return T
+
 
 def disp_to_depth(disp, min_depth=0.1, max_depth=100):
     """
@@ -109,11 +113,19 @@ class ConvBlock(nn.Module):
         out = self.nonlin(out)
         return out
 
+    def __repr__(self):
+        return str(self.conv) + f' --> ELU non-linearity'
+
+
 class Conv3x3(nn.Module):
-    """Layer to pad and convolve input
+    """
+    Layer to pad and convolve input
     """
     def __init__(self, in_channels, out_channels, use_refl=True):
         super(Conv3x3, self).__init__()
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
 
         if use_refl:
             self.pad = nn.ReflectionPad2d(1)
@@ -126,7 +138,11 @@ class Conv3x3(nn.Module):
         out = self.conv(out)
         return out
 
-def upsample(x, mode='nearest'):
+    def __repr__(self):
+        return f'ConvLayer 3x3 with {self.in_channels} in_channels and {self.out_channels} out_channels'
+
+
+def upsample(x, mode='nearest', scale_factor=2):
     """Upsample input tensor by a factor of 2
     """
-    return F.interpolate(x, scale_factor=2, mode=mode)
+    return F.interpolate(x, scale_factor=scale_factor, mode=mode)

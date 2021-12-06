@@ -14,11 +14,83 @@ import torchvision.models as models
 import torch.utils.model_zoo as model_zoo
 
 
+class ResnetEncoder(nn.Module):
+    """
+    Pytorch module for a resnet encoder. Wrapper for the Resnet implementation of torchvision
+    """
+
+    def __init__(self, num_layers, pretrained, num_input_images=1, wanted_scales=[1, 2, 3, 4]):
+        """
+        Creates default torchvision resnet model and applies wanted changes.
+        :param num_layers: which resnet to use e.g. 101
+        :param pretrained: if weights pretrained on imagenet should be used
+        :param num_input_images: how many input images the resnet takes (weights of first convolution will
+        be copied that often)
+        :param wanted_scales: ordered list of scales at which we want the features. Resolution of the features:
+        height_scale = height_img / (2 ** scale), width_scale = width_in / (2 ** scale)
+        """
+        super(ResnetEncoder, self).__init__()
+
+        self.num_ch_enc = np.array([64, 64, 128, 256, 512])
+
+        wanted_scales.sort() # sort list do that the features are returned in correct order during forward pass
+        self.wanted_scales = wanted_scales
+
+        resnets = {18: models.resnet18,
+                   34: models.resnet34,
+                   50: models.resnet50,
+                   101: models.resnet101,
+                   152: models.resnet152}
+
+        if num_layers not in resnets:
+            raise ValueError("{} is not a valid number of resnet layers".format(num_layers))
+
+        if num_input_images > 1:
+            self.encoder = resnet_multiimage_input(num_layers, pretrained, num_input_images)
+        else:
+            self.encoder = resnets[num_layers](pretrained)
+
+        # Torchvisions resnet implements 4 layer blocks with 4 different channel values [64, 128, 256, 512]
+        # each layer block halves the resolution of the input e.g an input of 1080x1920 has resolution 540x960 after
+        # first block
+        self.scales_to_layers = {1: self.encoder.layer1,
+                                 2: self.encoder.layer2,
+                                 3: self.encoder.layer3,
+                                 4: self.encoder.layer4}
+
+        if num_layers > 34:
+            # for large resnets increase the channels
+            self.num_ch_enc[1:] *= 4
+
+    def forward(self, input_image):
+        self.features = []
+        x = (input_image - 0.45) / 0.225
+        x = self.encoder.conv1(x)
+        x = self.encoder.bn1(x)
+        self.features.append(self.encoder.relu(x))
+        for i in self.wanted_scales:
+            if i == 1:
+                # apply max pooling to the first layer block
+                x = self.encoder.maxpool(self.features[-1])
+            else:
+                x = self.features[-1]
+            self.features.append(self.scales_to_layers[i](x))
+        return self.features
+
+    def get_channels_of_forward_features(self):
+        channels = [64]
+        for i in self.wanted_scales:
+            channels.append(self.num_ch_enc[i])
+        return channels
+
+
 class ResNetMultiImageInput(models.ResNet):
-    """Constructs a resnet model with varying number of input features.
+    """
+    Constructs a torchvision resnet model with varying number of input features in constructor.
     Adapted from https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
     """
-    def __init__(self, block, layers, num_classes=1000, num_input_images=1):
+
+    def __init__(self, block, layers, num_input_images=1):
         super(ResNetMultiImageInput, self).__init__(block, layers)
         self.inplanes = 64
         self.conv1 = nn.Conv2d(
@@ -59,40 +131,6 @@ def resnet_multiimage_input(num_layers, pretrained=False, num_input_images=1):
     return model
 
 
-class ResnetEncoder(nn.Module):
-    """Pytorch module for a resnet encoder
-    """
-    def __init__(self, num_layers, pretrained, num_input_images=1):
-        super(ResnetEncoder, self).__init__()
-
-        self.num_ch_enc = np.array([64, 64, 128, 256, 512])
-
-        resnets = {18: models.resnet18,
-                   34: models.resnet34,
-                   50: models.resnet50,
-                   101: models.resnet101,
-                   152: models.resnet152}
-
-        if num_layers not in resnets:
-            raise ValueError("{} is not a valid number of resnet layers".format(num_layers))
-
-        if num_input_images > 1:
-            self.encoder = resnet_multiimage_input(num_layers, pretrained, num_input_images)
-        else:
-            self.encoder = resnets[num_layers](pretrained)
-
-        if num_layers > 34:
-            self.num_ch_enc[1:] *= 4
-
-    def forward(self, input_image):
-        self.features = []
-        x = (input_image - 0.45) / 0.225
-        x = self.encoder.conv1(x)
-        x = self.encoder.bn1(x)
-        self.features.append(self.encoder.relu(x))
-        self.features.append(self.encoder.layer1(self.encoder.maxpool(self.features[-1])))
-        self.features.append(self.encoder.layer2(self.features[-1]))
-        self.features.append(self.encoder.layer3(self.features[-1]))
-        self.features.append(self.encoder.layer4(self.features[-1]))
-
-        return self.features
+if __name__ == '__main__':
+    a = ResnetEncoder(18, pretrained=True, num_input_images=2).double()
+    print(a)
