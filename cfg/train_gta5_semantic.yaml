@@ -12,10 +12,24 @@ model:
             nof_layers: 18
             weights_init: 'pretrained'
 
+eval:
+    train:
+        use_gt_scale: False
+        gt_available: False
+        gt_semantic_available: False
+    val:
+        use_gt_scale: False
+        gt_available: False
+        gt_semantic_available: False
+    test:
+        use_gt_scale: False
+        gt_available: False
+        gt_semantic_available: False
+
 train:
     nof_epochs: 20
-    batch_size: 12
-    rgb_frame_offsets: [0, -1, +1]
+    batch_size: 1
+    rgb_frame_offsets: [0, -1, +1] # first offset shall always be 0
 
     optimizer:
         type: 'Adam'
@@ -32,7 +46,7 @@ val:
 dataset:
     name: 'gta5'
     path: 'C:\Users\benba\Documents\University\Masterarbeit\data\gta5'
-    feed_img_size: [1024, 512] #[2048, 1024] #need to be divisible by 2, 4, 8, 16, and 32 due to up and down sampling
+    feed_img_size: [640, 480] #[2048, 1024] #need to be divisible by 2, 4, 8, 16, and 32 due to up and down sampling
                                # + concat otherwise shape mismatch
     use_sparse_depth: False
     split: 'train'
@@ -45,7 +59,7 @@ losses:
     use_depth_reprojection_loss: False
 
     reconstruction:
-        nof_scales: 4
+        nof_scales: 2
         use_ssim: True
         use_automasking: True
 

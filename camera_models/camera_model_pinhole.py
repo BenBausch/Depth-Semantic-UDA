@@ -47,8 +47,8 @@ class PinholeCameraModel(camera_model.CameraModel):
         return cls(msg.width, msg.height, fx, fy, cx, cy)
 
     def get_scaled_model(self, scale_u, scale_v):
-        return PinholeCameraModel(self.img_width * scale_u,
-                                  self.img_height * scale_v,
+        return PinholeCameraModel(int(self.img_width * scale_u),
+                                  int(self.img_height * scale_v),
                                   self.fx() * scale_u,
                                   self.fy() * scale_v,
                                   self.cx() * scale_u,
@@ -81,6 +81,8 @@ class PinholeCameraModel(camera_model.CameraModel):
         # Check whether the correct camera model is specified (i.e. whether the camera model name in the calibration
         # file indeed fits the type of the instantiated object)
         assert data["type"] == "pinhole"
+
+        print(data["img_width"][0].astype(np.int32))
 
         return cls(data["img_width"][0].astype(np.int32), data["img_height"][0].astype(np.int32), \
                    data["fx"][0].astype(np.float64), data["fy"][0].astype(np.float64), \

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from train.image_warper import ImageWarper
-from train.image_warper import CoordinateWarper
+from utils.image_warper import ImageWarper
+from utils.image_warper import CoordinateWarper
 
 
 def get_loss(loss_name, *args):
@@ -13,6 +13,7 @@ def get_loss(loss_name, *args):
         raise NotImplementedError('Loss functions {} is not yet implemented'.format(loss_name))
     else:
         return loss_dict[loss_name](*args)
+
 
 def allowed_losses():
     """
@@ -34,6 +35,7 @@ class L1LossDepth(nn.Module):
         loss = abs_diff.mean()
         return loss
 
+
 class SilogLossDepth(nn.Module):
     def __init__(self, weight=0.85):
         super(SilogLossDepth, self).__init__()
@@ -48,6 +50,7 @@ class SilogLossDepth(nn.Module):
         silog_wsme = self.weight * (log_diff.mean() ** 2)
 
         return silog_var - silog_wsme
+
 
 class L1LossPixelwise(nn.Module):
     def __init__(self):
@@ -93,6 +96,7 @@ class EdgeAwareSmoothnessLoss(nn.Module):
 
         return loss
 
+
 class SSIMLoss(nn.Module):
     def __init__(self, window_size=3):
         super(SSIMLoss, self).__init__()
@@ -128,7 +132,7 @@ class ReconstructionLoss(nn.Module):
     # Attention, we use a camera model here, that is normalized by the image size, in order to be able to compute
     # reprojections for each possible size of the image
     # ref_img_width and ref_img_height denote the original image sizes without scalings
-    def __init__(self, ref_img_width, ref_img_height, normalized_camera_model, num_scales, device, ssim_kernel_size=3):
+    def __init__(self, normalized_camera_model, num_scales, device, ssim_kernel_size=3):
         super(ReconstructionLoss, self).__init__()
         self.num_scales = num_scales
         self.l1_loss_pixelwise = L1LossPixelwise()
@@ -138,12 +142,11 @@ class ReconstructionLoss(nn.Module):
 
         # Get camera models that are adapted to the actual (scaled) image sizes
         for i in range(self.num_scales):
-            s = 2 ** i
-            scale_u = ref_img_width // s
-            scale_v = ref_img_height // s
-            camera_model_ = normalized_camera_model.get_scaled_model(scale_u, scale_v)
+            s = 2 ** -i
+            k_s = 2 ** i
+            camera_model_ = normalized_camera_model.get_scaled_model(s, s)
             self.image_warpers[i] = ImageWarper(camera_model_, device)
-            self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=s, stride=s)
+            self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=k_s, stride=k_s)
 
     # ToDo: Exclude "black" pixels as in selfsup and maybe use a mask for excluding pixels with depth supervision
     #  The problem with black pixels might get solved by an appropriate interpolation method!! (Comp. MD2 with selfsup)
@@ -161,6 +164,7 @@ class ReconstructionLoss(nn.Module):
             scaled_tgt_img = self.scaling_modules[s](batch_data[("rgb", 0)])
 
             for frame_id in rgb_frame_offsets[1:]:
+                print(frame_id)
                 scaled_adjacent_img_ = self.match_sizes(batch_data[("rgb", frame_id)], scaled_depth.shape)
                 warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_, scaled_depth, poses[frame_id])
 
@@ -205,6 +209,7 @@ class ReconstructionLoss(nn.Module):
 
         return F.interpolate(image, size=target_shape, mode=mode, align_corners=align_corners)
 
+
 # ToDo: Actually we need some curriculum learning or something like that, as since we use the poses here, the pose
 #  network can minimize this loss easily by just forcing the pose difference to be extremely small. This way the
 #  reprojection will lead to the same value! (zero pose, same pixel, depth doesn't matter anymore...)
@@ -212,9 +217,9 @@ class DepthReprojectionLoss(nn.Module):
     # Attention, we use a camera model here, that is normalized by the image size, in order to be able to compute
     # reprojections for each possible size of the image
     # ref_img_width and ref_img_height denote the original image sizes without scalings
-    def __init__(self, ref_img_width, ref_img_height, normalized_camera_model, device):
+    def __init__(self, scale_u, scale_v, normalized_camera_model, device):
         super(DepthReprojectionLoss, self).__init__()
-        camera_model_ = normalized_camera_model.get_scaled_model(ref_img_width, ref_img_height)
+        camera_model_ = normalized_camera_model.get_scaled_model(scale_u, scale_v)
         self.coordinate_warper = CoordinateWarper(camera_model_, device)
         self.l1_loss = L1LossDepth()
 
@@ -235,6 +240,7 @@ class DepthReprojectionLoss(nn.Module):
         coordinates_gt = self.coordinate_warper(gt_depth, T)
 
         return self.l1_loss(coordinates_pred, coordinates_gt) # ToDo: Check this
+
 
 loss_dict = {
     'reconstruction': ReconstructionLoss,

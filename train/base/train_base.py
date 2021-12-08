@@ -1,4 +1,5 @@
-"""Create an abstract class to force all subclasses to define the methods provided in the base class
+"""
+Create an abstract class to force all subclasses to define the methods provided in the base class
 """
 import os
 import abc
@@ -9,7 +10,7 @@ import dataloaders
 from io_utils import io_utils
 
 from datetime import datetime
-
+from utils.utils import info_gpu_memory
 # PyTorch
 import torch
 from torch.optim import lr_scheduler
@@ -17,8 +18,9 @@ from torch.utils.data import DataLoader
 
 from tensorboardX import SummaryWriter
 
-# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics are normalized...
 
+# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
+#  are normalized...
 class TrainBase(metaclass=abc.ABCMeta):
     def __init__(self, cfg):
         self.cfg = cfg
@@ -34,10 +36,12 @@ class TrainBase(metaclass=abc.ABCMeta):
         print("Using cudnn.benchmark? '{}'".format(torch.backends.cudnn.benchmark))
 
         # Initialize models and send to Cuda if possible
-        self.models = models.get_model(self.cfg.model.type, self.device, self.cfg)
+        self.model = models.get_model(self.cfg.model.type, self.device, self.cfg)
 
         # Initialization of the optimizer and lr scheduler
-        self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type, self.models.parameters_to_train, self.cfg.train.optimizer.learning_rate)
+        self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
+                                            self.model.parameters_to_train,
+                                            self.cfg.train.optimizer.learning_rate)
         self.scheduler = self.get_lr_scheduler(self.optimizer, self.cfg)
 
         # Get training and validation datasets
@@ -75,9 +79,11 @@ class TrainBase(metaclass=abc.ABCMeta):
             print("Using pretrained weights for the model and optimizer from \n", os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
             checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
             # Load pretrained weights for the model and the optimizer status
-            io_utils.IOHandler.load_weights(checkpoint, self.models.get_networks(), self.optimizer)
+            io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
         else:
             print("No checkpoint is used. Training from scratch!")
+
+        info_gpu_memory()
 
     @abc.abstractmethod
     def train(self):
@@ -85,7 +91,7 @@ class TrainBase(metaclass=abc.ABCMeta):
 
     def save_checkpoint(self):
         checkpoint = io_utils.IOHandler.gen_checkpoint(
-            self.models.get_networks(),
+            self.model.get_networks(),
             **{"optimizer": self.optimizer.state_dict(),
                 "cfg": self.cfg})
 

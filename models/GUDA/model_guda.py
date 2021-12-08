@@ -1,18 +1,16 @@
 import matplotlib.pyplot
-import numpy as np
 from torch.utils.data import DataLoader
 
-from models.model_base import SemanticDepthFromMotionModelBase
+from models.base.model_base import SemanticDepthFromMotionModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoder
 from models.helper_models.semantic_decoder import SemanticDecoder
 from models.helper_models.pose_decoder import PoseDecoder
-
-from torch.nn import functional as f
+from utils.utils import info_gpu_memory
 
 from cfg.config import get_cfg_defaults
 
-from train.layers import *
+from models.helper_models.layers import *
 
 from dataloaders.dataset_gta5 import GTA5Dataset
 
@@ -127,6 +125,8 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
         raw_sigmoid = self.networks["depth_decoder"](features)
         raw_sigmoid_scale_0 = raw_sigmoid[("disp", 0)]
         _, depth_pred = disp_to_depth(raw_sigmoid_scale_0)
+        print('depth')
+        info_gpu_memory()
         return depth_pred, raw_sigmoid_scale_0
 
     def predict_poses(self, inputs):
@@ -147,27 +147,33 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
                 else:
                     pose_inputs = [pose_feats[0], pose_feats[f_i]]
 
-                pose_inputs = [self.networks["pose_encoder"](torch.cat(pose_inputs, 1))]
-
-                axisangle, translation = self.networks["pose_decoder"](pose_inputs)
+                axisangle, translation = self.networks["pose_decoder"](
+                    [self.networks["pose_encoder"](torch.cat(pose_inputs, 1))])
 
                 # Invert the matrix if the frame id is negative
+
                 poses[f_i] = transformation_from_parameters(
                     axisangle[:, 0], translation[:, 0], invert=(f_i < 0))
 
         else:
-            raise Exception('The Input to the GUDA PoseNet model are exactly 2 frames!')
-
+            raise Exception('The Input to the GUDA PoseNet model are exactly 2 frames!')#
+        print('poses')
+        info_gpu_memory()
         return poses
 
     def predict_semantic(self, features):
-        return self.networks["semantic_decoder"](features)
+        a = self.networks["semantic_decoder"](features)
+        print('semantic')
+        info_gpu_memory()
+        return a
 
     def forward(self, batch):
         latent_features_batch = self.latent_features(batch["rgb", 0])
+        print('latent')
+        info_gpu_memory()
         return {
             'depth': self.predict_depth(latent_features_batch),
-            'semantic': self.predict_semantic(latent_features_batch),
+            #'semantic': self.predict_semantic(latent_features_batch),
             'poses': self.predict_poses(batch)
         }
 

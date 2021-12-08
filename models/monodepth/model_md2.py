@@ -1,11 +1,11 @@
 from cfg.config import get_cfg_defaults
 from dataloaders.dataset_gta5 import GTA5Dataset
-from models.model_base import DepthFromMotionEncoderDecoderModelBase
+from models.base.model_base import DepthFromMotionEncoderDecoderModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoder
 from models.helper_models.pose_decoder import PoseDecoder
 
-from train.layers import *
+from models.helper_models.layers import *
 
 # ToDo: Das Netz wird an die Anzahl der Skalen angepasst, um entsprechende Tiefenkarten auszugeben. Wir skalieren jedoch
 #  die RGB Bilder und die ausgegebene Tiefenkarte herunter -> Die anzahl beider Skalen, d.h. die bezüglich der

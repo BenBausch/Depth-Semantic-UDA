@@ -90,7 +90,8 @@ class CoordinateWarper(nn.Module):
         image_as_pointcloud_homogeneous = torch.cat([image_as_pointcloud, ones], 1)
 
         # Transform the obtained pointcloud into the local coordinate system of the target camera pose (homogeneous)
-        transformed_pointcloud = torch.bmm(T, image_as_pointcloud_homogeneous.view(batch_depth_map.size(0), 4, -1))
+        transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
+            batch_depth_map.size(0), 4, -1).double())
         transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
 
         # Transform back to Euclidean coordinates

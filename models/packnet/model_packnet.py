@@ -1,9 +1,9 @@
-from models.model_base import DepthFromMotionEncoderDecoderModelBase
+from models.base.model_base import DepthFromMotionEncoderDecoderModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.pose_decoder import PoseDecoder
 from .PackNet01 import PackNet01
 
-from train.layers import *
+from models.helper_models.layers import *
 
 #TODO adapt this code to changes made by Ben
 

@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import torch
-import torch.nn as nn
 
 from collections import OrderedDict
-from train.layers import *
+from models.helper_models.layers import *
 
 
 class DepthDecoder(nn.Module):
