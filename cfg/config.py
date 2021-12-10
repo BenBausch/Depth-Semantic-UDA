@@ -92,17 +92,17 @@ cfg.eval = CN()
 cfg.eval.use_garg_crop = True
 
 cfg.eval.train = CN()
-cfg.eval.train.gt_available = True
+cfg.eval.train.gt_depth_available = True
 cfg.eval.train.gt_semantic_available = False
 cfg.eval.train.use_gt_scale = True
 
 cfg.eval.val = CN()
-cfg.eval.val.gt_available = True
+cfg.eval.val.gt_depth_available = True
 cfg.eval.val.gt_semantic_available = False
 cfg.eval.val.use_gt_scale = True
 
 cfg.eval.test = CN()
-cfg.eval.test.gt_available = True
+cfg.eval.test.gt_depth_available = True
 cfg.eval.test.gt_semantic_available = False
 cfg.eval.test.use_gt_scale = True
 

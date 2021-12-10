@@ -15,15 +15,15 @@ model:
 eval:
     train:
         use_gt_scale: False
-        gt_available: False
+        gt_depth_available: False
         gt_semantic_available: True
     val:
         use_gt_scale: False
-        gt_available: False
+        gt_depth_available: False
         gt_semantic_available: True
     test:
         use_gt_scale: False
-        gt_available: False
+        gt_depth_available: False
         gt_semantic_available: True
 
 train:

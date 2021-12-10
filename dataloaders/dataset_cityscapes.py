@@ -252,8 +252,13 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         do_flip = random.random() > 0.5
 
         # Get the transformation objects
-        tf_rgb_train = self.tf_rgb_train(self.feed_img_size, do_flip)
-        tf_semantic_train = self.tf_semantic_train(self.feed_img_size, do_flip)
+        tf_rgb_train = self.tf_rgb_train(self.feed_img_size, do_flip, self.mean)
+        tf_semantic_train = self.tf_semantic_train(self.feed_img_size,
+                                                   do_flip,
+                                                   self.void_classes,
+                                                   self.valid_classes,
+                                                   self.class_map,
+                                                   self.ignore_index)
 
         rgb_dict_tf = {}
         for k, img in rgb_dict.items():
@@ -271,8 +276,12 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         :return: dict of transformed rgb images and transformed label
         """
         # Get the transformation objects
-        tf_rgb_val = self.tf_rgb_val(self.feed_img_size)
-        tf_semantic_val = self.tf_semantic_val(self.feed_img_size)
+        tf_rgb_val = self.tf_rgb_val(self.feed_img_size, self.mean)
+        tf_semantic_val = self.tf_semantic_val(self.feed_img_size,
+                                               self.void_classes,
+                                               self.valid_classes,
+                                               self.class_map,
+                                               self.ignore_index)
 
         rgb_dict_tf = {}
         for k, img in rgb_dict.items():
@@ -322,9 +331,11 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         img = pil.open(tgt_path_file)
         return img
 
-    def tf_rgb_train(self, tgt_size, do_flip):
+    @staticmethod
+    def tf_rgb_train(tgt_size, do_flip, mean):
         """
         Transformations of the rgb image during training.
+        :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
         :param do_flip: True if the image should be horizontally flipped else False
         :return: Transformation composition
@@ -334,14 +345,19 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
                 tf_prep.Resize(tgt_size, pil.BILINEAR),
                 tf_prep.HorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
-                tf_prep.NormalizeRGB(self.mean, True),
+                tf_prep.NormalizeRGB(mean, True),
                 tf_prep.PrepareForNet()
             ]
         )
 
-    def tf_semantic_train(self, tgt_size, do_flip):
+    @staticmethod
+    def tf_semantic_train(tgt_size, do_flip, void_classes, valid_classes, class_map, ignore_index):
         """
         Transformations of the label during training.
+        :param ignore_index: pixel will be labeled ignore_index if they are not part of a valid class
+        :param class_map: dict mapping valid class ids to numbers
+        :param valid_classes: list of valid classes
+        :param void_classes: list of non valid classes (such pixel will be set to ignore index)
         :param tgt_size: target size of the labels after resize operation
         :param do_flip: True if the image should be horizontally flipped else False
         :return: Transformation composition
@@ -351,13 +367,15 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
                 tf_prep.Resize(tgt_size, pil.NEAREST),
                 tf_prep.HorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
-                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index)
+                tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
 
-    def tf_rgb_val(self, tgt_size):
+    @staticmethod
+    def tf_rgb_val(tgt_size, mean):
         """
         Transformations of the rgb image during validation.
+        :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
         :return: Transformation composition
         """
@@ -365,14 +383,19 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
             [
                 tf_prep.Resize(tgt_size, pil.BILINEAR),
                 tf_prep.ToUint8Array(),
-                tf_prep.NormalizeRGB(self.mean, True),
+                tf_prep.NormalizeRGB(mean, True),
                 tf_prep.PrepareForNet()
             ]
         )
 
-    def tf_semantic_val(self, tgt_size):
+    @staticmethod
+    def tf_semantic_val(tgt_size, void_classes, valid_classes, class_map, ignore_index):
         """
         Transformations of the labels during validation.
+        :param ignore_index: pixel will be labeled ignore_index if they are not part of a valid class
+        :param class_map: dict mapping valid class ids to numbers
+        :param valid_classes: list of valid classes
+        :param void_classes: list of non valid classes (such pixel will be set to ignore index)
         :param tgt_size: target size of the labels after resize operation
         :return: Transformation composition
         """
@@ -380,7 +403,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
             [
                 tf_prep.Resize(tgt_size, pil.NEAREST),
                 tf_prep.ToUint8Array(),
-                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index)
+                tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
 
@@ -408,9 +431,9 @@ if __name__ == "__main__":
     cfg = get_cfg_defaults()
     cfg.merge_from_file(
         r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_cityscapes_semantic.yaml')
-    cfg.eval.train.gt_available = False
-    cfg.eval.val.gt_available = False
-    cfg.eval.test.gt_available = False
+    cfg.eval.train.gt_depth_available = False
+    cfg.eval.val.gt_depth_available = False
+    cfg.eval.test.gt_depth_available = False
     cfg.dataset.use_sparse_depth = False
     cfg.eval.train.gt_semantic_available = True
     cfg.eval.val.gt_semantic_available = True

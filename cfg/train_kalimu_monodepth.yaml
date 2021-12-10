@@ -40,8 +40,8 @@ losses:
 
 eval:
     train:
-        gt_available: False
+        gt_depth_available: False
     val:
-        gt_available: False
+        gt_depth_available: False
     test:
-        gt_available: False
+        gt_depth_available: False

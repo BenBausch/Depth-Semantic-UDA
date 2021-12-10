@@ -63,7 +63,7 @@ class _PathsKalimu(dataset_base.PathsHandlerDepth):
                 )
 
     def get_gt_depth_image_paths(self, mode, drive_seqs='*', cam_ids='image_blackfly', frame_ids='*', format=".png", split=None):
-        if not self.gt_available:
+        if not self.gt_depth_available:
             return None
         else:
             if split is None:
@@ -119,7 +119,7 @@ class _PathsKalimu(dataset_base.PathsHandlerDepth):
     def make_consistent(self):
         # If neither sparse nor dense GT depth maps are to be used, then the dataset is per definition consistent, i.e.
         # you just use the RGB images that are available
-        if not self.use_sparse_depth and not self.gt_available:
+        if not self.use_sparse_depth and not self.gt_depth_available:
             return True
         else:
             # Check if all of the specified rgb paths do exist
@@ -140,7 +140,7 @@ class _PathsKalimu(dataset_base.PathsHandlerDepth):
                     self.paths_depth_sparse.remove(path)
 
             # Check if all of the specified gt depth paths do exist
-            if self.gt_available:
+            if self.gt_depth_available:
                 path_gt_to_be_deleted = []
                 for path_gt in self.paths_depth_gt:
                     if not os.path.exists(path_gt):
@@ -159,7 +159,7 @@ class _PathsKalimu(dataset_base.PathsHandlerDepth):
             # Get the depth map formats first as they remain the same
             if self.use_sparse_depth:
                 format_sparse_depth = os.path.splitext(path_leaf(self.paths_depth_sparse[0]))[1]
-            if self.gt_available:
+            if self.gt_depth_available:
                 format_gt = os.path.splitext(path_leaf(self.paths_depth_gt[0]))[1]
 
             # Get all candidate sparse depth and GT dense depth maps from rgb image paths
@@ -180,7 +180,7 @@ class _PathsKalimu(dataset_base.PathsHandlerDepth):
     # Go through the rgb dataset, decompose it and look whether the corresponding file exists at the exactly same
     # position in the sparse and gt path lists... This makes sure that the lists are fully consistent
     def is_consistent(self):
-        if not self.use_sparse_depth and not self.gt_available:
+        if not self.use_sparse_depth and not self.gt_depth_available:
             return True
 
         # Get the depth map formats first as they remain the same
@@ -188,7 +188,7 @@ class _PathsKalimu(dataset_base.PathsHandlerDepth):
         format_gt = ""
         if self.use_sparse_depth:
             format_sparse_depth = os.path.splitext(path_leaf(self.paths_depth_sparse[0]))[1]
-        if self.gt_available:
+        if self.gt_depth_available:
             format_gt = os.path.splitext(path_leaf(self.paths_depth_gt[0]))[1]
 
         for i in range(len(self.paths_rgb)):
@@ -196,7 +196,7 @@ class _PathsKalimu(dataset_base.PathsHandlerDepth):
             # actually the case for the Kalimu dataset
             mode_rgb, drive_seq_rgb, cam_id_rgb, frame_id_rgb, _ = decompose_rgb_path(self.paths_rgb[i])
 
-            if self.gt_available:
+            if self.gt_depth_available:
                 candidate_path_gt = self.get_gt_depth_image_path(self.path_base, mode_rgb, drive_seq_rgb, cam_id_rgb, frame_id_rgb, format_gt)
                 if candidate_path_gt != self.paths_depth_gt[i]:
                     return False

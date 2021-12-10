@@ -36,8 +36,8 @@ class MonocularDepthFromMotionTrainer(TrainBase):
         if self.is_unsupervised:
             print("Training in fully unsupervised manner. No depth measurements are used!")
 
-        self.use_gt_scale_train = self.cfg.eval.train.use_gt_scale and self.cfg.eval.train.gt_available
-        self.use_gt_scale_val = self.cfg.eval.val.use_gt_scale and self.cfg.eval.val.gt_available
+        self.use_gt_scale_train = self.cfg.eval.train.use_gt_scale and self.cfg.eval.train.gt_depth_available
+        self.use_gt_scale_val = self.cfg.eval.val.use_gt_scale and self.cfg.eval.val.gt_depth_available
 
         if self.use_gt_scale_train:
             print("Ground truth scale is used for computing depth errors while training")
@@ -157,11 +157,11 @@ class MonocularDepthFromMotionTrainer(TrainBase):
             total_time = time.time() - self.start_time
 
             # Log and visualize training results for a single batch
-            imgs_visu_train = io_utils.IOHandler.generate_imgs_to_visualize( \
+            imgs_visu_train = io_utils.IOHandler.generate_imgs_to_visualize(
                 data, depth_pred, poses_pred, self.rgb_frame_offsets, self.crit_reconstruction.image_warpers[0])
 
             depth_errors = {}
-            if "gt" in data:
+            if self.cfg.eval.train.gt_depth_available:
                 _, depth_errors = eval.compute_depth_losses(self.use_gt_scale_train, self.use_garg_crop, data["gt"],
                                                             depth_pred, gt_size=(
                         self.cfg.dataset.feed_img_size[1], self.cfg.dataset.feed_img_size[0]),

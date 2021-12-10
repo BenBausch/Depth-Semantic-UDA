@@ -42,7 +42,7 @@ class Test_PathsKalimu(unittest.TestCase):
         sparse_paths = self.pathsObj.get_sparse_depth_image_paths(self.mode)
 
         assert len(rgb_paths) == self.nof_rgb
-        if self.cfg.eval.train.gt_available:
+        if self.cfg.eval.train.gt_depth_available:
             assert len(gt_paths) == self.nof_gt
         if self.cfg.dataset.use_sparse_depth:
             assert len(sparse_paths) == self.nof_sparse
@@ -92,7 +92,7 @@ class Test_DatasetKalimu(unittest.TestCase):
             plt.title("Sparse depth image (0 offset)")
             plt.show()
 
-            if self.cfg.eval.train.gt_available:
+            if self.cfg.eval.train.gt_depth_available:
                 gt = batch_data["gt"]
                 plt.imshow(gt.squeeze(dim=0).permute(1, 2, 0))
                 plt.title("GT depth image (0 offset)")

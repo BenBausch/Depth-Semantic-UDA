@@ -182,9 +182,9 @@ if __name__=="__main__":
     cfg = get_cfg_defaults()
     cfg.merge_from_file(
         r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_gta5_semantic.yaml')
-    cfg.eval.train.gt_available = False
-    cfg.eval.val.gt_available = False
-    cfg.eval.test.gt_available = False
+    cfg.eval.train.gt_depth_available = False
+    cfg.eval.val.gt_depth_available = False
+    cfg.eval.test.gt_depth_available = False
     cfg.dataset.use_sparse_depth = False
     cfg.eval.train.gt_semantic_available = True
     cfg.eval.val.gt_semantic_available = True

@@ -33,8 +33,8 @@ class SemanticTrainer(TrainBase):
         self.num_scales = self.cfg.losses.reconstruction.nof_scales
         self.rgb_frame_offsets = self.cfg.train.rgb_frame_offsets
 
-        self.use_gt_scale_train = self.cfg.eval.train.use_gt_scale and self.cfg.eval.train.gt_available
-        self.use_gt_scale_val = self.cfg.eval.val.use_gt_scale and self.cfg.eval.val.gt_available
+        self.use_gt_scale_train = self.cfg.eval.train.use_gt_scale and self.cfg.eval.train.gt_depth_available
+        self.use_gt_scale_val = self.cfg.eval.val.use_gt_scale and self.cfg.eval.val.gt_depth_available
 
         if self.use_gt_scale_train:
             print("Ground truth scale is used for computing depth errors while training")
