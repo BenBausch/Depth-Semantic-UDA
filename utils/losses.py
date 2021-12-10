@@ -5,14 +5,14 @@ from utils.image_warper import ImageWarper
 from utils.image_warper import CoordinateWarper
 
 
-def get_loss(loss_name, *args):
+def get_loss(loss_name, *args, **kwargs):
     """
     Source: https://github.com/wvangansbeke/Sparse-Depth-Completion/blob/master/Loss/loss.py
     """
     if loss_name not in allowed_losses():
         raise NotImplementedError('Loss functions {} is not yet implemented'.format(loss_name))
     else:
-        return loss_dict[loss_name](*args)
+        return loss_dict[loss_name](*args, **kwargs)
 
 
 def allowed_losses():
@@ -164,7 +164,6 @@ class ReconstructionLoss(nn.Module):
             scaled_tgt_img = self.scaling_modules[s](batch_data[("rgb", 0)])
 
             for frame_id in rgb_frame_offsets[1:]:
-                print(frame_id)
                 scaled_adjacent_img_ = self.match_sizes(batch_data[("rgb", frame_id)], scaled_depth.shape)
                 warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_, scaled_depth, poses[frame_id])
 
@@ -250,5 +249,6 @@ loss_dict = {
     'l1_depth': L1LossDepth,
     'silog_depth': SilogLossDepth,
     'depth_reprojection': DepthReprojectionLoss,
-    'l1_pixelwise': L1LossPixelwise
+    'l1_pixelwise': L1LossPixelwise,
+    'cross_entropy': nn.CrossEntropyLoss
 }

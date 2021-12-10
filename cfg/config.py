@@ -66,6 +66,7 @@ cfg.dataset.name = ''  # 'KITTI'
 cfg.dataset.path = ''  # '/home/petek/kalimu/data/kitti/base'
 cfg.dataset.feed_img_size = []  # [640, 192]
 cfg.dataset.use_sparse_depth = True
+cfg.dataset.use_semantic_gt = False
 cfg.dataset.split = None  # 'eigen_zhou'
 cfg.dataset.camera = ''  # 'pinhole'
 cfg.dataset.min_depth = 0.001

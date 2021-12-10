@@ -173,7 +173,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
         super(GTA5Dataset, self).__init__(self.paths, cfg)
 
         # dataset related values
-        self.colors = [ [128, 64, 128], [244, 35, 232], [70, 70, 70], [102, 102, 156], [190, 153, 153], [153, 153, 153],
+        self.colors = [[128, 64, 128], [244, 35, 232], [70, 70, 70], [102, 102, 156], [190, 153, 153], [153, 153, 153],
                    [250, 170, 30], [220, 220, 0], [107, 142, 35], [152, 251, 152], [0, 130, 180], [220, 20, 60],
                    [255, 0, 0], [0, 0, 142], [0, 0, 70], [0, 60, 100], [0, 80, 100], [0, 0, 230], [119, 11, 32]]
         self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, 34, -1]
@@ -227,7 +227,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
         if self.mode == 'train':
             rgb_imgs, gt_semantic = self.transform_train(rgb_imgs, gt_semantic)
         elif self.mode == 'val' or self.mode =='test':
-            rgb_imgs, sparse_depth, gt_depth = self.transform_val(rgb_imgs, gt_semantic)
+            rgb_imgs, gt_semantic = self.transform_val(rgb_imgs, gt_semantic)
         else:
             assert False, "The mode {} is not defined!".format(self.mode)
 
@@ -260,6 +260,8 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
             rgb_dict_tf[k] = tf_rgb_train(img) if img is not None else None
 
         gt_semantic = tf_semantic_train(gt_semantic) if gt_semantic is not None else None
+
+
 
         return rgb_dict_tf, gt_semantic
 
@@ -366,8 +368,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
                 tf_prep.Resize(tgt_size, pil.NEAREST),
                 tf_prep.HorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
-                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index),
-                tf_prep.PrepareForNet()
+                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index)
             ]
         )
 
@@ -396,8 +397,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
             [
                 tf_prep.Resize(tgt_size, pil.NEAREST),
                 tf_prep.ToUint8Array(),
-                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index),
-                tf_prep.PrepareForNet()
+                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index)
             ]
         )
 
@@ -405,7 +405,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
 if __name__ == "__main__":
     cfg = get_cfg_defaults()
     cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_gta5_semantic.yaml ')
+        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_gta5_semantic.yaml')
     cfg.eval.train.gt_available = False
     cfg.eval.val.gt_available = False
     cfg.eval.test.gt_available = False
@@ -415,11 +415,12 @@ if __name__ == "__main__":
     cfg.eval.test.gt_semantic_available = True
     cfg.freeze()
     gta_dataset = GTA5Dataset('train', 'train', cfg)
-    plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
+    #plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
     plt.show()
-    plt.imshow((next(iter(gta_dataset))[("rgb", 1)].numpy().transpose(1, 2, 0)))
+    #plt.imshow((next(iter(gta_dataset))[("rgb", 1)].numpy().transpose(1, 2, 0)))
     plt.show()
-    plt.imshow((next(iter(gta_dataset))[("rgb", -1)].numpy().transpose(1, 2, 0)))
+    #plt.imshow((next(iter(gta_dataset))[("rgb", -1)].numpy().transpose(1, 2, 0)))
     plt.show()
-    plt.imshow((next(iter(gta_dataset))["gt"].numpy().transpose(1, 2, 0)))
+    print((next(iter(gta_dataset))["gt"]))
+    plt.imshow((next(iter(gta_dataset))["gt"]))
     plt.show()

@@ -55,7 +55,7 @@ class DepthDecoder(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_features):
-        self.outputs = {}
+        outputs = {}
 
         # Initial previous layer is the
         x = input_features[-1]
@@ -74,8 +74,9 @@ class DepthDecoder(nn.Module):
             x = self.convs[("upconv", i, 1)](x)
             # if scale shall be part of output convolve to get 1 channel output dept
             if i in self.scales:
-                self.outputs[("disp", i)] = self.sigmoid(self.convs[("dispconv", i)](x))
-        return self.outputs
+                outputs[("disp", i)] = self.sigmoid(self.convs[("dispconv", i)](x))
+
+        return outputs
 
     def __str__(self):
         description = ''

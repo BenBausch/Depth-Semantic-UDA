@@ -10,6 +10,7 @@ import numpy as np
 
 from collections import OrderedDict
 from models.helper_models.layers import *
+from utils.utils import info_gpu_memory
 
 
 class SemanticDecoder(nn.Module):
@@ -58,7 +59,7 @@ class SemanticDecoder(nn.Module):
 
     def forward(self, input_features):
 
-        self.outputs = []
+        outputs = []
 
         # Initial previous layer is the
         x = input_features[-1]
@@ -79,9 +80,9 @@ class SemanticDecoder(nn.Module):
             if i in self.inputs_to_last_layer:
                 # concat all output, but not the first convolution output
                 # x will be upsampled to the size of the image before the resnet encoder
-                self.outputs.append(upsample(x, self.upsample_mode, scale_factor=self.scale_factors[i]))
+                outputs.append(upsample(x, self.upsample_mode, scale_factor=self.scale_factors[i]))
 
-        x = torch.cat(self.outputs, 1)
+        x = torch.cat(outputs, 1)
 
         return self.convs[("final_conv",)](x)
 

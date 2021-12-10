@@ -37,19 +37,20 @@ class MonocularDepthFromMotionTrainer(TrainBase):
             print("Training in fully unsupervised manner. No depth measurements are used!")
 
         self.use_gt_scale_train = self.cfg.eval.train.use_gt_scale and self.cfg.eval.train.gt_available
-        self.use_gt_scale_val = self.cfg.eval.val.use_gt_scale and self.cfg.eval.val.use_gt_scale
+        self.use_gt_scale_val = self.cfg.eval.val.use_gt_scale and self.cfg.eval.val.gt_available
 
         if self.use_gt_scale_train:
             print("Ground truth scale is used for computing depth errors while training")
         if self.use_gt_scale_val:
             print("Ground truth scale is used for computing depth errors while validating")
 
+        self.min_depth = self.cfg.dataset.min_depth
+        self.max_depth = self.cfg.dataset.max_depth
+
         self.use_garg_crop = self.cfg.eval.use_garg_crop
 
-        # ToDo: Load model weights if available and wanted...
-        # ToDo: Handle normalized stuff (atm we assume its normalized but don't be sure that it is the case)
         # Set up normalized camera model
-        try:  # todo: ask if this is wrong
+        try:
             self.normalized_camera_model = \
                 camera_models.get_camera_model_from_file(self.cfg.dataset.camera,
                                                          os.path.join(cfg.dataset.path, "calib", "calib.txt"))
@@ -76,8 +77,6 @@ class MonocularDepthFromMotionTrainer(TrainBase):
 
         print("Training started...")
 
-        info_gpu_memory()
-
         for self.epoch in range(self.cfg.train.nof_epochs):
             self.train()
             self.validate()
@@ -92,7 +91,7 @@ class MonocularDepthFromMotionTrainer(TrainBase):
         for batch_idx, data in enumerate(self.train_loader):
             print("Training epoch {:>3} | batch {:>6}".format(self.epoch, batch_idx))
 
-            info_gpu_memory()
+            #info_gpu_memory()
 
             # Here also an image dictionary shall be outputted and other stuff to be logged
             self.training_step(data, batch_idx)
@@ -111,17 +110,14 @@ class MonocularDepthFromMotionTrainer(TrainBase):
         # Move batch to device
         for key, val in data.items():
             data[key] = val.to(self.device)
-        info_gpu_memory()
         prediction = self.model.forward(data)
-        info_gpu_memory()
+
         # Predict the poses
         poses_pred = prediction['poses']
 
         # ToDo: Use sparse depth data also in the pose prediction maybe? For this we would have to load the data
         # ToDo: Adapt the network for sparse depth inputs
         # Predict the depth map
-        input = data[
-            "rgb", 0]  # if not self.cfg.dataset.use_sparse_depth else torch.cat((data["rgb", 0], data["sparse"]), 1)
         depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
 
 
@@ -129,8 +125,11 @@ class MonocularDepthFromMotionTrainer(TrainBase):
         # depth_target = data["sparse"] if self.cfg.dataset.use_sparse_depth else data["gt"] # ToDo: Take this in later
         depth_target = data["sparse"] if self.cfg.dataset.use_sparse_depth else None
 
+
         # Compute the losses
         losses_dict = self.compute_losses(data, depth_target, depth_pred, raw_sigmoid, poses_pred)
+        #print('After losses: ')
+        #info_gpu_memory()
 
         # Compute the final loss
         loss = losses_dict["photometric_loss"] * self.cfg.losses.weights.reconstruction + losses_dict[
@@ -142,6 +141,9 @@ class MonocularDepthFromMotionTrainer(TrainBase):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+        #print('After gradient step: ')
+        #info_gpu_memory()
 
         # Log some results from the training
         # The following part is taken from https://github.com/nianticlabs/monodepth2/blob/master/trainer.py
@@ -169,9 +171,10 @@ class MonocularDepthFromMotionTrainer(TrainBase):
             io_utils.IOHandler.log_train(self.writer_train, loss, depth_errors, losses_dict, depth_pred,
                                          imgs_visu_train, 4, batch_idx, samples_per_sec, total_time, self.epoch,
                                          self.num_total_steps, self.step_train)
+        #print('After early phase: ')
+        #info_gpu_memory()
 
     def compute_losses(self, data, depth_target, depth_pred, raw_sigmoid, poses_pred):
-        print('Computing Losses')
         # ToDo: We maybe should compare the inverse depths as their value margin is usually smaller than that of the
         #  depth so, it may be easier to learn it for outdoor/indoor scenarios where the depths ranges are completely
         #  different
@@ -205,8 +208,6 @@ class MonocularDepthFromMotionTrainer(TrainBase):
                          "smoothness_loss": smoothness_loss}
         else:
             loss_dict = {"photometric_loss": photometric_loss, "smoothness_loss": smoothness_loss}
-
-        print(loss_dict)
 
         return loss_dict
 

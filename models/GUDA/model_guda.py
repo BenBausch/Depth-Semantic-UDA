@@ -55,6 +55,10 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
 
         self.create_PoseNet()
 
+        print(f'Device: {self.device}')
+        print('After creating networks')
+        info_gpu_memory()
+
     def create_Encoder(self):
         self.networks["resnet_encoder"] = ResnetEncoder(
             self.num_layers_encoder, self.weights_init_encoder == "pretrained").double()
@@ -125,8 +129,8 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
         raw_sigmoid = self.networks["depth_decoder"](features)
         raw_sigmoid_scale_0 = raw_sigmoid[("disp", 0)]
         _, depth_pred = disp_to_depth(raw_sigmoid_scale_0)
-        print('depth')
-        info_gpu_memory()
+        #print('depth')
+        #info_gpu_memory()
         return depth_pred, raw_sigmoid_scale_0
 
     def predict_poses(self, inputs):
@@ -156,24 +160,25 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
                     axisangle[:, 0], translation[:, 0], invert=(f_i < 0))
 
         else:
-            raise Exception('The Input to the GUDA PoseNet model are exactly 2 frames!')#
-        print('poses')
-        info_gpu_memory()
+            raise Exception('The Input to the GUDA PoseNet model are exactly 2 frames!')
+
+        #print('poses')
+        #info_gpu_memory()
         return poses
 
     def predict_semantic(self, features):
         a = self.networks["semantic_decoder"](features)
-        print('semantic')
-        info_gpu_memory()
+        #print('semantic')
+        #info_gpu_memory()
         return a
 
     def forward(self, batch):
         latent_features_batch = self.latent_features(batch["rgb", 0])
-        print('latent')
-        info_gpu_memory()
+        #print('latent')
+        #info_gpu_memory()
         return {
             'depth': self.predict_depth(latent_features_batch),
-            #'semantic': self.predict_semantic(latent_features_batch),
+            'semantic': self.predict_semantic(latent_features_batch),
             'poses': self.predict_poses(batch)
         }
 

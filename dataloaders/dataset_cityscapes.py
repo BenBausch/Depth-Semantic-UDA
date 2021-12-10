@@ -171,7 +171,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         self.colors = [[128, 64, 128], [244, 35, 232], [70, 70, 70], [102, 102, 156], [190, 153, 153], [153, 153, 153],
                        [250, 170, 30], [220, 220, 0], [107, 142, 35], [152, 251, 152], [0, 130, 180], [220, 20, 60],
                        [255, 0, 0], [0, 0, 142], [0, 0, 70], [0, 60, 100], [0, 80, 100], [0, 0, 230], [119, 11, 32]]
-        self.class_names = ["unlabelled","road","sidewalk","building","wall","fence","pole","traffic_light",
+        self.class_names = ["road","sidewalk","building","wall","fence","pole","traffic_light",
                             "traffic_sign","vegetation","terrain","sky","person","rider","car","truck",
                             "bus","train","motorcycle","bicycle"]
         self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, -1]
@@ -351,8 +351,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
                 tf_prep.Resize(tgt_size, pil.NEAREST),
                 tf_prep.HorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
-                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index),
-                tf_prep.PrepareForNet()
+                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index)
             ]
         )
 
@@ -381,8 +380,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
             [
                 tf_prep.Resize(tgt_size, pil.NEAREST),
                 tf_prep.ToUint8Array(),
-                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index),
-                tf_prep.PrepareForNet()
+                tf_prep.EncodeSegmentation(self.void_classes, self.valid_classes, self.class_map, self.ignore_index)
             ]
         )
 
@@ -419,7 +417,8 @@ if __name__ == "__main__":
     cfg.eval.test.gt_semantic_available = True
     cfg.freeze()
     gta_dataset = CityscapesSemanticDataset('train', cfg)
-    plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
-    plt.show()
+    print((next(iter(gta_dataset))["gt"])[:,1,1])
+    #plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
+    #plt.show()
     plt.imshow((next(iter(gta_dataset))["gt"].numpy().transpose(1, 2, 0)))
     plt.show()

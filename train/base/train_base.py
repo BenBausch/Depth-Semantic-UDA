@@ -46,7 +46,9 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         # Get training and validation datasets
         self.train_loader = self.get_dataloader("train")
+        print(f'Length Train Loader: {len(self.train_loader)}')
         self.val_loader = self.get_dataloader("val")
+        print(f'Length Validation Loader: {len(self.val_loader)}')
 
         # Set up IO handler
         path_save_folder = os.path.join(self.cfg.io.path_save, "tmp")
@@ -63,8 +65,6 @@ class TrainBase(metaclass=abc.ABCMeta):
         self.writer_val = SummaryWriter(os.path.join(path_save_folder, \
                                                        self.training_start_time + "_" + self.cfg.dataset.name, \
                                                        "tensorboard", "val"))
-        self.min_depth = self.cfg.dataset.min_depth
-        self.max_depth = self.cfg.dataset.max_depth
 
         # Get number of total steps to compute remaining training time later
         self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
@@ -82,8 +82,6 @@ class TrainBase(metaclass=abc.ABCMeta):
             io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
         else:
             print("No checkpoint is used. Training from scratch!")
-
-        info_gpu_memory()
 
     @abc.abstractmethod
     def train(self):

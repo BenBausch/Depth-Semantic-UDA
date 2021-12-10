@@ -1,6 +1,7 @@
 model:
-    type: 'monodepth_guda'
-    depth_net:
+    type: 'guda'
+
+    encoder:
         params:
             nof_layers: 101
             weights_init: 'pretrained'
@@ -25,11 +26,11 @@ train:
         gamma: 0.1
 
 val:
-    batch_size: 12
+    batch_size: 1
     nof_workers: 4
 
 dataset:
-    name: 'gta5'
+    name: 'cityscapes'
     path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit'
     feed_img_size: [2048, 1024] #need to be powers of 2 due to up and down sampling + concat otherwise shape mismatch
     use_sparse_depth: False
