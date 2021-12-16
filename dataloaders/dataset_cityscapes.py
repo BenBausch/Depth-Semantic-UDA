@@ -153,7 +153,7 @@ class _PathsCityscapes(dataset_base.PathsHandlerSemantic):
             return None
 
 
-class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
+class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
     """
     Dataset for the semantically annotated images of the Cityscapes Dataset.
     """
@@ -164,6 +164,11 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         Initializes the Cityscapes Semantic dataset by collecting all the paths and random shuffling the data if wanted.
         """
         self.paths = _PathsCityscapes(mode, cfg)
+
+        # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
+        assert len(cfg.train.rgb_frame_offsets) == 1
+        assert cfg.train.rgb_frame_offsets[0] == 0
+
         super(CityscapesSemanticDataset, self).__init__(self.paths, cfg)
 
         self.cfg = cfg
@@ -306,8 +311,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
 
     def get_rgb(self, path_file, offset):
         """
-        Loads the PIL Image for the path_file label and all the other rgb images with the given offsets in the sequence
-        if they exist.
+        Loads the PIL Image with the given offset to the path file label.
         :param path_file: path to the label
         :param offset: offsets of the other rgb images in the sequence to the path_file image.
         :return: dict of Pil RGb Images.
@@ -332,7 +336,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         return img
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, mean):
+    def tf_rgb_train(tgt_size, do_flip, mean): # fixme add augmentations to train and val rgb transforms
         """
         Transformations of the rgb image during training.
         :param mean: mean of rgb images
@@ -342,8 +346,8 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.BILINEAR),
-                tf_prep.HorizontalFlip(do_flip),
+                tf_prep.PILResize(tgt_size, pil.BILINEAR),
+                tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
                 tf_prep.NormalizeRGB(mean, True),
                 tf_prep.PrepareForNet()
@@ -364,8 +368,8 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.NEAREST),
-                tf_prep.HorizontalFlip(do_flip),
+                tf_prep.PILResize(tgt_size, pil.NEAREST),
+                tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
@@ -381,7 +385,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.BILINEAR),
+                tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.ToUint8Array(),
                 tf_prep.NormalizeRGB(mean, True),
                 tf_prep.PrepareForNet()
@@ -401,7 +405,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.NEAREST),
+                tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.ToUint8Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
@@ -440,8 +444,8 @@ if __name__ == "__main__":
     cfg.eval.test.gt_semantic_available = True
     cfg.freeze()
     gta_dataset = CityscapesSemanticDataset('train', cfg)
-    print((next(iter(gta_dataset))["gt"])[:,1,1])
-    #plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
-    #plt.show()
-    plt.imshow((next(iter(gta_dataset))["gt"].numpy().transpose(1, 2, 0)))
+    a = next(iter(gta_dataset))
+    plt.imshow(a[("rgb", 0)].numpy().transpose(1, 2, 0))
+    plt.show()
+    plt.imshow(a["gt"])
     plt.show()

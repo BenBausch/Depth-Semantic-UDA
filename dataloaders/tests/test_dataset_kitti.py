@@ -30,7 +30,7 @@ class Test_PathsKitti(unittest.TestCase):
         self.cfg.freeze()
 
         self.mode = 'train'
-        self.pathsObj = kitti._PathsKitti(self.mode, self.cfg.dataset.split, self.cfg)
+        self.pathsObj = kitti._PathsKittiFromMotion(self.mode, self.cfg.dataset.split, self.cfg)
 
         self.nof_rgb =  56278
         self.nof_sparse = 53938

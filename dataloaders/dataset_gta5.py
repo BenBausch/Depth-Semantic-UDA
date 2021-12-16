@@ -163,7 +163,7 @@ class _PathsGTA5(dataset_base.PathsHandlerSemantic):
             return None
 
 
-class GTA5Dataset(dataset_base.DatasetSemantic):
+class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
     def __init__(self, mode, split, cfg):
         """
         Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
@@ -308,11 +308,11 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
 
     def get_rgb(self, path_file, offset):
         """
-        Loads the PIL Image for the path_file label and all the other rgb images with the given offsets in the sequence
-        if they exist.
+        Loads the PIL Image with the given offset within the sequence form the path_file.
+
         :param path_file: path to the label
         :param offset: offsets of the other rgb images in the sequence to the path_file image.
-        :return: dict of Pil RGb Images.
+        :return: PIL RGB Image.
         """
         assert isinstance(offset, numbers.Number), "The inputted offset {} is not numeric!".format(offset)
         assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
@@ -359,8 +359,8 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.BILINEAR),
-                tf_prep.HorizontalFlip(do_flip),
+                tf_prep.PILResize(tgt_size, pil.BILINEAR),
+                tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
                 tf_prep.NormalizeRGB(mean, True),
                 tf_prep.PrepareForNet()
@@ -381,8 +381,8 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.NEAREST),
-                tf_prep.HorizontalFlip(do_flip),
+                tf_prep.PILResize(tgt_size, pil.NEAREST),
+                tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ToUint8Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
@@ -398,7 +398,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.BILINEAR),
+                tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.ToUint8Array(),
                 tf_prep.NormalizeRGB(mean, True),
                 tf_prep.PrepareForNet()
@@ -418,7 +418,7 @@ class GTA5Dataset(dataset_base.DatasetSemantic):
         """
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.NEAREST),
+                tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.ToUint8Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]

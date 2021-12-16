@@ -30,7 +30,7 @@ class Test_PathsKalimu(unittest.TestCase):
         self.cfg.freeze()
 
         self.mode = 'train'
-        self.pathsObj = kalimu._PathsKalimu(self.mode, self.cfg.dataset.split, self.cfg)
+        self.pathsObj = kalimu._PathsKalimuFromMotion(self.mode, self.cfg.dataset.split, self.cfg)
 
         self.nof_rgb =  348
         self.nof_sparse = 348

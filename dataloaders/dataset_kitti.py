@@ -44,9 +44,12 @@ def decompose_rgb_path(path_rgb_file):
 
 # Attention: The user must make sure, that the data is sorted as required by the program. However, consistency is
 # guaranteed here. If the KITTI dataset is sorted by the scripts as in this framework, then the correct order is also guaranteed.
-class _PathsKitti(dataset_base.PathsHandlerDepth):
+class _PathsKittiFromMotion(dataset_base.PathsHandlerDepthFromMotion):
     def __init__(self, mode, split, cfg):
-        super(_PathsKitti, self).__init__(mode, split, cfg)
+        super(_PathsKittiFromMotion, self).__init__(mode, split, cfg)
+
+        self.make_consistent()
+        assert self.is_consistent() == True
 
     def get_rgb_image_paths(self, mode, drive_seqs='*', cam_ids='[2,3]', frame_ids='*', format=".png", split=None):
         if split is None: # i.e. no specific subset of files is given, hence use all data
@@ -209,9 +212,9 @@ class _PathsKitti(dataset_base.PathsHandlerDepth):
 
 # Note: We set all parameters that we need out of the cfg object inside of the constructor for the sake of readability.
 # So the reader knows which arguments inside of the cfg object are actually used...
-class KittiDataset(dataset_base.DatasetDepth):
+class KittiDataset(dataset_base.DatasetRGB, dataset_base.DatasetDepth):
     def __init__(self, mode, split, cfg):
-        kittiPaths = _PathsKitti(mode, split, cfg)
+        kittiPaths = _PathsKittiFromMotion(mode, split, cfg)
         super(KittiDataset, self).__init__(kittiPaths, cfg)
 
         # Initialize the paths here
@@ -260,8 +263,8 @@ class KittiDataset(dataset_base.DatasetDepth):
     def tf_rgb_train(tgt_size, do_flip, do_aug, aug_params):
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.LANCZOS),
-                tf_prep.HorizontalFlip(do_flip),
+                tf_prep.PILResize(tgt_size, pil.LANCZOS),
+                tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ColorAug(do_aug, aug_params),
                 tf_prep.PrepareForNet()
             ]
@@ -271,7 +274,7 @@ class KittiDataset(dataset_base.DatasetDepth):
     def tf_rgb_val(tgt_size):
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.LANCZOS),
+                tf_prep.PILResize(tgt_size, pil.LANCZOS),
                 tf_prep.PrepareForNet()
             ]
         )
@@ -280,8 +283,8 @@ class KittiDataset(dataset_base.DatasetDepth):
     def tf_depth_train(tgt_size, do_flip):
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.NEAREST),
-                tf_prep.HorizontalFlip(do_flip),
+                tf_prep.PILResize(tgt_size, pil.NEAREST),
+                tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.TransformToDepthKitti(),
                 tf_prep.PrepareForNet()
             ]
@@ -291,7 +294,7 @@ class KittiDataset(dataset_base.DatasetDepth):
     def tf_depth_val(tgt_size):
         return transforms.Compose(
             [
-                tf_prep.Resize(tgt_size, pil.NEAREST),
+                tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.TransformToDepthKitti(),
                 tf_prep.PrepareForNet()
             ]
@@ -314,7 +317,7 @@ class KittiDataset(dataset_base.DatasetDepth):
         if offset != 0:
             mode, drive_seq, cam_id, frame_id, format_img = decompose_rgb_path(path_file)
             tgt_frame_id = "{:010d}".format(int(frame_id) + offset)
-            tgt_path_file = _PathsKitti.get_rgb_image_path(self.paths.path_base, mode, drive_seq, cam_id, tgt_frame_id, format_img)
+            tgt_path_file = _PathsKittiFromMotion.get_rgb_image_path(self.paths.path_base, mode, drive_seq, cam_id, tgt_frame_id, format_img)
 
         if not os.path.exists(tgt_path_file):
             return None
