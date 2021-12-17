@@ -38,8 +38,8 @@ class Test_ImageWarper(unittest.TestCase):
         self.T[:, 3, 0:3] = 0
         self.T[:, 3, 3] = 1
 
-        self.path_src_img = "./data/source.png"
-        self.path_tgt_img = "./data/warped.png"
+        self.path_src_img = "../../losses/tests/data/source.png"
+        self.path_tgt_img = "../../losses/tests/data/warped.png"
         #self.depth = 2.5 # The plane has a unique depth of 2.5 w.r.t the camera
         self.dataset = TestDataset(self.path_src_img, self.path_tgt_img, self.nof_data)
 

@@ -1,25 +1,46 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils.image_warper import ImageWarper
-from utils.image_warper import CoordinateWarper
+from losses.helper_modules.image_warper import ImageWarper
+from losses.helper_modules.image_warper import CoordinateWarper
 
 
-def get_loss(loss_name, *args, **kwargs):
+class BootstrappedCrossEntropy(nn.Module):
     """
-    Source: https://github.com/wvangansbeke/Sparse-Depth-Completion/blob/master/Loss/loss.py
+        Calculates the cross entropy of the k pixels with the lowest confident prediction.
     """
-    if loss_name not in allowed_losses():
-        raise NotImplementedError('Loss functions {} is not yet implemented'.format(loss_name))
-    else:
-        return loss_dict[loss_name](*args, **kwargs)
+    def __init__(self, img_height, img_width, r=0.3, ignore_index=-100):
+        """
+        :param img_height: height of the input image to the network
+        :param img_width: width of the input image to the network
+        :param r: percentage of pixels to consider for loss (0.3 ==> lowest 30% confident predictions)
+        :param ignore_index: class label of pixels which should be ignored in the loss
+        """
+        super(BootstrappedCrossEntropy, self).__init__()
+        self.ratio = r
+        self.criterion = nn.CrossEntropyLoss(reduction='none', ignore_index=ignore_index)
+        self.k = int(r * img_height * img_width)
 
+    def forward(self, prediction, target):
+        """
+        Calculates the bootstrapped cross entropy of the lowest k predictions.
+        :param prediction: Tensor of shape [minibatch, n_classes, height, width]
+        :param target: Tensor of shape [minibatch, height, width]
+        :return:
+        """
+        #print(f'Prediction shape: {prediction.shape}')
+        #print(f'Target shape: {target.shape}')
 
-def allowed_losses():
-    """
-    Source: https://github.com/wvangansbeke/Sparse-Depth-Completion/blob/master/Loss/loss.py
-    """
-    return loss_dict.keys()
+        # todo: implement cold start where k is all the pixels down to k = ratio * height * width
+        # k = int(self.ratio * prediction.shape[2] * prediction.shape[3])
+
+        #  calculate the loss
+        loss = self.criterion(prediction, target).view(-1)
+        # select the losses of the lowest k predictions (the same as the highest k losses)
+        values, _ = torch.topk(loss, k=self.k, largest=True, sorted=False, dim=0)
+        loss = torch.sum(values) / self.k
+
+        return loss
 
 
 # This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
@@ -240,15 +261,3 @@ class DepthReprojectionLoss(nn.Module):
 
         return self.l1_loss(coordinates_pred, coordinates_gt) # ToDo: Check this
 
-
-loss_dict = {
-    'reconstruction': ReconstructionLoss,
-    'ssim': SSIMLoss,
-    'edge_smooth': EdgeAwareSmoothnessLoss,
-    'mse': MSELoss,
-    'l1_depth': L1LossDepth,
-    'silog_depth': SilogLossDepth,
-    'depth_reprojection': DepthReprojectionLoss,
-    'l1_pixelwise': L1LossPixelwise,
-    'cross_entropy': nn.CrossEntropyLoss
-}

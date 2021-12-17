@@ -7,8 +7,7 @@ import torch
 
 # Own classes
 from train.base.train_base import TrainBase
-from utils.utils import info_gpu_memory
-from utils.losses import get_loss
+from losses import get_loss
 from io_utils import io_utils
 from eval import eval
 import camera_models

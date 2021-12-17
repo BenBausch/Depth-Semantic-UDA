@@ -1,21 +1,16 @@
 # Python modules
 # Python modules
 import time
-import os
 
 import torch
 
 # Own classes
 from train.base.train_base import TrainBase
-from utils.utils import info_gpu_memory
-from utils.losses import get_loss
-from io_utils import io_utils
-from eval import eval
+from losses import get_loss
 import torch.nn as nn
-import camera_models
 
-#todo: Remove imports below
-import matplotlib.pyplot as plt
+
+# todo: Remove imports below
 
 
 class SemanticTrainer(TrainBase):
@@ -47,7 +42,11 @@ class SemanticTrainer(TrainBase):
         # ToDo1: Handle normalized stuff (atm we assume its normalized but don't be sure that it is the case)
 
         # Get all loss objects for later usage (not all of them may be used...)
-        self.crit_ce = get_loss("cross_entropy", ignore_index=250)
+        self.crit_ce = get_loss("bootstrapped_cross_entropy",
+                                img_height=self.img_height,
+                                img_width=self.img_width,
+                                r=0.3,
+                                ignore_index=250)
         self.soft_max = nn.Softmax()
 
     def run(self):
