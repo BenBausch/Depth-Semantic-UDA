@@ -1,7 +1,7 @@
 # my_project/main.py
 import sys
 from train.semantic import train_semantic
-from cfg.config import get_cfg_defaults  # local variable usage pattern, or:
+from cfg.config_single_dataset import get_cfg_defaults  # local variable usage pattern, or:
 # from config import cfg  # global singleton usage pattern
 
 

@@ -10,7 +10,7 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 
 from yacs.config import CfgNode as CN
-from cfg.config import get_cfg_defaults
+from cfg.config_single_dataset import get_cfg_defaults
 
 # For visualization
 import numpy as np

@@ -82,8 +82,6 @@ class PinholeCameraModel(camera_model.CameraModel):
         # file indeed fits the type of the instantiated object)
         assert data["type"] == "pinhole"
 
-        print(data["img_width"][0].astype(np.int32))
-
         return cls(data["img_width"][0].astype(np.int32), data["img_height"][0].astype(np.int32), \
                    data["fx"][0].astype(np.float64), data["fy"][0].astype(np.float64), \
                    data["cx"][0].astype(np.float64), data["cy"][0].astype(np.float64))

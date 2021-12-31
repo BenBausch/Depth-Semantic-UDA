@@ -1,4 +1,4 @@
-from cfg.config import get_cfg_defaults
+from cfg.config_single_dataset import get_cfg_defaults
 from dataloaders.dataset_gta5 import GTA5Dataset
 from models.base.model_base import DepthFromMotionEncoderDecoderModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder

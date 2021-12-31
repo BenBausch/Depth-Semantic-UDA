@@ -8,7 +8,7 @@ from models.helper_models.semantic_decoder import SemanticDecoder
 from models.helper_models.pose_decoder import PoseDecoder
 from utils.utils import info_gpu_memory
 
-from cfg.config import get_cfg_defaults
+from cfg.config_single_dataset import get_cfg_defaults
 
 from models.helper_models.layers import *
 
