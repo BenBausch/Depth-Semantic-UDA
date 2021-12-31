@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from losses.helper_modules.image_warper import ImageWarper
-from losses.helper_modules.image_warper import CoordinateWarper
+import numpy as np
+from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
+from helper_modules.image_warper import CoordinateWarper
 
 
 class BootstrappedCrossEntropy(nn.Module):
@@ -41,6 +42,45 @@ class BootstrappedCrossEntropy(nn.Module):
         loss = torch.sum(values) / self.k
 
         return loss
+
+
+class SurfaceNormalRegularizationLoss(nn.Module): # todo: finish this implementation
+    def __init__(self, normalized_camera_model, device):
+        super(SurfaceNormalRegularizationLoss, self).__init__()
+        self.device = device
+        self.camera_model = normalized_camera_model
+        self.similiarity_loss = F.cosine_similarity
+        self.img_to_pointcloud = _ImageToPointcloud(camera_model=normalized_camera_model, device=device)
+        self.image_width, self.image_height = self.camera_model.image_size()
+        self.cos_sim = nn.CosineSimilarity(dim=1)
+
+    def get_normal_vectors(self, points3d):
+        points3d_numpy = points3d.cpu().numpy()
+
+        diff_h = (points3d_numpy[:, :, 0:, :] - np.pad(points3d_numpy[:, :, 1:, :], ((0, 0), (0, 0), (0, 1), (0, 0)),
+                                                       'edge'))
+        diff_w = (points3d_numpy[:, :, :, 0:] - np.pad(points3d_numpy[:, :, :, 1:], ((0, 0), (0, 0), (0, 0), (0, 1)),
+                                                       'edge'))
+
+        normals = np.einsum('bikm, bjkm-> bikm', diff_w, diff_h)
+        lengths = np.expand_dims(
+            np.sqrt(normals[:, 0, :, :] ** 2 + normals[:, 1, :, :] ** 2 + normals[:, 2, :, :] ** 2), 1)
+        normals = normals / (lengths + 1e-08)
+
+        return torch.tensor(normals).to(self.device)
+
+    def __forward__(self, prediction_depth_batch, gt_depth_batch):
+        points3d_prediction = self.img_to_pointcloud(prediction_depth_batch)
+        points3d_gt = self.img_to_pointcloud(gt_depth_batch)
+
+        normals_prediction = self.get_normal_vectors(points3d_prediction)
+        normals_gt = self.get_normal_vectors(points3d_gt)
+
+        simi = torch.divide(torch.sum(1 - self.cos_sim(normals_prediction, normals_gt), dim=(1, 2))
+                            , 2 * self.image_height * self.image_width)
+
+        return simi
+
 
 
 # This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with

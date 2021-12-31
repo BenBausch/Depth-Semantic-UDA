@@ -27,5 +27,6 @@ loss_dict = {
     'depth_reprojection': DepthReprojectionLoss,
     'l1_pixelwise': L1LossPixelwise,
     'cross_entropy': nn.CrossEntropyLoss,
-    'bootstrapped_cross_entropy': BootstrappedCrossEntropy
+    'bootstrapped_cross_entropy': BootstrappedCrossEntropy,
+    'surface_normal_regularization': SurfaceNormalRegularizationLoss
 }
