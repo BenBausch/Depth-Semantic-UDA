@@ -1,0 +1,105 @@
+model:
+    type: 'guda'
+
+    encoder:
+        params:
+            nof_layers: 101
+            weights_init: 'pretrained'
+
+    pose_net:
+        input: 'pairs' # 'all'
+        params:
+            nof_layers: 18
+            weights_init: 'pretrained'
+
+source:
+  name: 'synthia'
+  path: 'C:\Users\benba\Documents\University\Masterarbeit\data\SYNTHIA_RAND_CITYSCAPES\RAND_CITYSCAPES'
+  feed_img_size: [544, 384]
+  use_sparse_depth: False
+  use_semantic_gt: True
+  split: None
+  camera: 'pinhole'
+  shuffle: True
+  num_classes: 19
+  sequence_dataset: False
+
+target:
+  name: "cityscapes_sequence" # todo: implement this dataloader
+  path: ""
+  feed_img_size: [ 544, 384 ]
+  use_sparse_depth: False
+  use_semantic_gt: True
+  split: None
+  camera: 'pinhole'
+  shuffle: True
+  num_classes: 19
+  sequence_dataset: True
+
+eval:
+  source:
+    train:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True
+    val:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True
+    test:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True
+
+  target:
+    train:
+      use_gt_scale: False
+      gt_depth_available: False
+      gt_semantic_available: False
+    val:
+      use_gt_scale: False
+      gt_depth_available: False
+      gt_semantic_available: True
+    test:
+      use_gt_scale: False
+      gt_depth_available: True
+      gt_semantic_available: True
+
+train:
+    nof_epochs: 40
+    batch_size: 8
+    rgb_frame_offsets: [0, -1, +1] # first offset shall always be 0
+
+    optimizer:
+        type: 'Adam'
+        learning_rate: 0.0001
+    scheduler:
+        type: None
+
+val:
+    batch_size: 1
+    nof_workers: 4
+
+losses:
+    source:
+      loss_names_and_parameters: {'silog_depth': {'weight':0.85},
+                                  'bootstrapped_cross_entropy': {'r': 0.3, 'ignore_index':250},
+                                  'surface_normal_regularization': {}
+                                 }
+
+      loss_names_and_weights: {'silog_depth': 1,
+                                'bootstrapped_cross_entropy': 0.001,
+                                'surface_normal_regularization': 0.01
+                              }
+
+    target:
+      loss_names_and_parameters: { 'reconstruction': {},
+      }
+
+      loss_names_and_weights: { 'reconstruction': 1,
+      }
+
+checkpoint:
+    use_checkpoint: False
+#    path_base: '/home/petek/accepted_models/depth_estimation/2021_03_08_18_57_49_kitti_unsupervised_no_depth_input'
+#    filename: 'checkpoint_epoch_19.pth'
