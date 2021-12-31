@@ -1,5 +1,5 @@
 # Project Imports
-from cfg.config import get_cfg_defaults
+from cfg.config_single_dataset import get_cfg_defaults
 from dataloaders.dataset_base import DatasetDepth, DatasetSemantic, DatasetRGB, \
     PathsHandlerDepthDense, PathsHandlerSemantic
 from dataloaders.scritps.prepare_synthia import available_splits
@@ -141,12 +141,14 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         RGB Images annotated with Depth and Semantic classes. This dataset does not provide any image sequences.
     """
 
-    def __init__(self, pathsObj, cfg):
+    def __init__(self, mode, split, cfg):
         # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
         assert len(cfg.train.rgb_frame_offsets) == 1
         assert cfg.train.rgb_frame_offsets[0] == 0
 
-        super(SynthiaRandCityscapesDataset, self).__init__(pathsObj=pathsObj, cfg=cfg)
+        self.paths = _PathsSynthiaRandCityscapes(mode, split, cfg)
+
+        super(SynthiaRandCityscapesDataset, self).__init__(pathsObj=self.paths, cfg=cfg)
 
         # Stuff realted to class encoding -------------------------------------------------------------
         # class name index in list corresponds to id of label
@@ -399,6 +401,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
                 tf_prep.CV2HorizontalFlip(do_flip=do_flip),
+                tf_prep.ToUint8Array(),
                 tf_prep.Syntia_To_Cityscapes_Encoding(s_to_c_mapping=s_to_c_mapping,
                                                       valid_classes=valid_classes,
                                                       void_classes=void_classes,
@@ -445,6 +448,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         return transforms.Compose(
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
+                tf_prep.ToUint8Array(),
                 tf_prep.Syntia_To_Cityscapes_Encoding(s_to_c_mapping=s_to_c_mapping,
                                                       valid_classes=valid_classes,
                                                       void_classes=void_classes,
@@ -469,8 +473,7 @@ if __name__ == "__main__":
     cfg.merge_from_file(
         r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_synthia.yaml')
     cfg.freeze()
-    paths = _PathsSynthiaRandCityscapes('val', 'bausch', cfg)
-    ds = SynthiaRandCityscapesDataset(pathsObj=paths, cfg=cfg)
+    ds = SynthiaRandCityscapesDataset(mode='val', split='bausch', cfg=cfg)
     data = next(iter(ds))
     for i, data in enumerate(ds):
         if i == 10:

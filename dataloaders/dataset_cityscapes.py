@@ -1,7 +1,7 @@
 # Own files
 from misc import transforms as tf_prep
 from dataloaders import dataset_base
-from cfg.config import get_cfg_defaults
+from cfg.config_single_dataset import get_cfg_defaults
 
 # External libraries
 # I/O
@@ -158,7 +158,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
     Dataset for the semantically annotated images of the Cityscapes Dataset.
     """
 
-    def __init__(self, mode, cfg):
+    def __init__(self, mode, _, cfg):
         """
         Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/cityscapes_dataset.py
         Initializes the Cityscapes Semantic dataset by collecting all the paths and random shuffling the data if wanted.
@@ -443,7 +443,7 @@ if __name__ == "__main__":
     cfg.eval.val.gt_semantic_available = True
     cfg.eval.test.gt_semantic_available = True
     cfg.freeze()
-    gta_dataset = CityscapesSemanticDataset('train', cfg)
+    gta_dataset = CityscapesSemanticDataset('train', None,  cfg)
     a = next(iter(gta_dataset))
     plt.imshow(a[("rgb", 0)].numpy().transpose(1, 2, 0))
     plt.show()

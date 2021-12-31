@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from dataloaders import get_dataset
 import  dataloaders.dataset_kitti as kitti
-from cfg.config import get_cfg_defaults  # local variable usage pattern, or:
+from cfg.config_single_dataset import get_cfg_defaults  # local variable usage pattern, or:
 
 class Test_PathProcessing(unittest.TestCase):
     def setUp(self):

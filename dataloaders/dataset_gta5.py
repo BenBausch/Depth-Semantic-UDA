@@ -1,7 +1,7 @@
 # Own files
 from misc import transforms as tf_prep
 from dataloaders import dataset_base
-from cfg.config import get_cfg_defaults
+from cfg.config_single_dataset import get_cfg_defaults
 
 # External libraries
 # I/O
