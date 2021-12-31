@@ -10,6 +10,7 @@ class PrepareForNet(object):
         self.to_tensor = tf.transforms.ToTensor()
 
     def __call__(self, sample):
+
         return self.to_tensor(sample).double()
 
 
@@ -79,7 +80,7 @@ class ColorAug(object):
     def __init__(self, do_aug, aug_params):
         self.do_aug = do_aug
         if do_aug:
-            self.color_aug_obj = tf.transforms.ColorJitter.get_params(
+            self.color_aug_obj = tf.ColorJitter(
                 (1 - aug_params["brightness_jitter"], 1 + aug_params["brightness_jitter"]),
                 (1 - aug_params["contrast_jitter"], 1 + aug_params["contrast_jitter"]),
                 (1 - aug_params["saturation_jitter"], 1 + aug_params["saturation_jitter"]),
