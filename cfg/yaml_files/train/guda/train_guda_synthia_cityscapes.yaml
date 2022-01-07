@@ -1,0 +1,39 @@
+model:
+    type: 'guda'
+
+    encoder:
+        params:
+            nof_layers: 101
+            weights_init: 'pretrained'
+
+    pose_net:
+        input: 'pairs' # 'all'
+        params:
+            nof_layers: 18
+            weights_init: 'pretrained'
+
+datasets:
+    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\synthia.yaml', #source
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\gta5.yaml'] #target
+    loss_weights : [1, 1]
+
+train:
+    nof_epochs: 40
+    batch_size: 1
+
+    optimizer:
+        type: 'Adam'
+        learning_rate: 0.0001
+    scheduler:
+        type: 'MultiStepLR'
+        gamma: 0.5
+        milestones: [30] # half the learning rate for the last 10 epochs
+
+val:
+    batch_size: 1
+    nof_workers: 4
+
+checkpoint:
+    use_checkpoint: False
+#    path_base: '/home/petek/accepted_models/depth_estimation/2021_03_08_18_57_49_kitti_unsupervised_no_depth_input'
+#    filename: 'checkpoint_epoch_19.pth'

@@ -6,24 +6,23 @@ import cv2
 
 
 class PrepareForNet(object):
-    def __init__(self):
+    def __init__(self, do_normaliazion=False, mean=None, var=None):
         self.to_tensor = tf.transforms.ToTensor()
-
-    def __call__(self, sample):
-
-        return self.to_tensor(sample).double()
-
-
-class NormalizeRGB(object):
-    def __init__(self, mean, do_norm):
+        self.do_norm = do_normaliazion
         self.mean = mean
-        self.do_norm = do_norm
+        self.var = var
+
+    def normalize(self, sample):
+        """
+        Normalizes the image to have mean = 0 und variance = 1
+        :param sample: torch tensor of shape [batch_size, channels, height, width]
+        """
+        return torch.sub(sample, self.mean) / self.var
 
     def __call__(self, sample):
-        sample = sample.astype(np.float64)
-        sample -= self.mean
+        sample = self.to_tensor(sample).double()
         if self.do_norm:
-            sample = sample / 255.0
+            sample = self.normalize(sample)
         return sample
 
 
@@ -123,12 +122,12 @@ class TransformToDepthSynthia(object):
 
 
 # ------------------------------------------GTA5------------------------------------------
-class ToUint8Array(object):
+class ToInt64Array(object):
     def __init__(self):
         pass
 
     def __call__(self, sample):
-        return np.asarray(sample, dtype=np.uint8)
+        return np.asarray(sample, dtype=np.int64)
 
 
 class EncodeSegmentation(object):

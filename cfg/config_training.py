@@ -1,6 +1,7 @@
 # Reference point for all configurable options
 # Reference point for all configurable options
 from yacs.config import CfgNode as CN
+from cfg.config_dataset import get_cfg_dataset_defaults
 
 # ToDo: Check in the beginning if everything's ok, e.g. whether the specified paths do exist...
 # /----- Create a cfg node
@@ -12,8 +13,7 @@ cfg = CN()
 cfg.train = CN()
 cfg.train.nof_epochs = 20
 cfg.train.nof_workers = 4
-cfg.train.batch_size = 12
-cfg.train.rgb_frame_offsets = [0, -1, +1]
+cfg.train.batch_size = 8
 
 # /----- Optimizer parameters
 cfg.train.optimizer = CN()
@@ -25,6 +25,7 @@ cfg.train.scheduler = CN()
 cfg.train.scheduler.type = 'StepLR'
 cfg.train.scheduler.step_size = 10
 cfg.train.scheduler.gamma = 0.1
+cfg.train.scheduler.milestones = [] # needed only if scheduler type is MultiStepLR
 
 # ********************************************************************
 # /------ Validation parameters
@@ -38,7 +39,7 @@ cfg.val.nof_workers = 4
 # ********************************************************************
 cfg.model = CN()
 
-cfg.model.type = ''  # which model to use: packnet, monodepth2, ...
+cfg.model.type = ''  # which model to use: guda, monodepth2, ...
 
 cfg.model.encoder = CN()
 cfg.model.encoder.params = CN()
@@ -47,6 +48,7 @@ cfg.model.encoder.params.weights_init = 'pretrained'
 
 cfg.model.depth_net = CN()
 cfg.model.depth_net.params = CN()
+cfg.model.depth_net.nof_scales = 4
 
 cfg.model.semantic_net = CN()
 cfg.model.semantic_net.params = CN()
@@ -59,69 +61,13 @@ cfg.model.pose_net.params.nof_layers = cfg.model.encoder.params.nof_layers  # de
 cfg.model.pose_net.params.weights_init = 'pretrained'
 
 # ********************************************************************
-# /----- Dataset parameters
+# /----- Datasets
 # ********************************************************************
-cfg.dataset = CN()
-cfg.dataset.name = ''  # 'KITTI'
-cfg.dataset.path = ''  # '/home/petek/kalimu/data/kitti/base'
-cfg.dataset.feed_img_size = []  # [640, 192]
-cfg.dataset.use_sparse_depth = True
-cfg.dataset.use_semantic_gt = False
-cfg.dataset.split = None  # 'eigen_zhou'
-cfg.dataset.camera = ''  # 'pinhole'
-cfg.dataset.min_depth = 0.001
-cfg.dataset.max_depth = 80.0
-cfg.dataset.shuffle = False
-cfg.dataset.img_norm = False
-cfg.dataset.num_classes = 1
-
-# ********************************************************************
-# /----- Augmentation parameters
-# ********************************************************************
-cfg.dataset.augmentation = CN()
-cfg.dataset.augmentation.brightness_jitter = 0.2
-cfg.dataset.augmentation.contrast_jitter = 0.2
-cfg.dataset.augmentation.saturation_jitter = 0.2
-cfg.dataset.augmentation.hue_jitter = 0.1
-cfg.dataset.augmentation.horizontal_flip = 0.5
-
-# ********************************************************************
-# /----- Evaluation parameters
-# ********************************************************************
-cfg.eval = CN()
-cfg.eval.use_garg_crop = True
-
-cfg.eval.train = CN()
-cfg.eval.train.gt_depth_available = True
-cfg.eval.train.gt_semantic_available = False
-cfg.eval.train.use_gt_scale = True
-
-cfg.eval.val = CN()
-cfg.eval.val.gt_depth_available = True
-cfg.eval.val.gt_semantic_available = False
-cfg.eval.val.use_gt_scale = True
-
-cfg.eval.test = CN()
-cfg.eval.test.gt_depth_available = True
-cfg.eval.test.gt_semantic_available = False
-cfg.eval.test.use_gt_scale = True
-
-# ********************************************************************
-# /----- Losses
-# ********************************************************************
-cfg.losses = CN()
-
-cfg.losses.use_depth_reprojection_loss = False
-
-cfg.losses.reconstruction = CN()
-cfg.losses.reconstruction.nof_scales = 4
-cfg.losses.reconstruction.use_ssim = True
-cfg.losses.reconstruction.use_automasking = True
-
-cfg.losses.weights = CN()
-cfg.losses.weights.depth = 1.0
-cfg.losses.weights.smoothness = 0.001
-cfg.losses.weights.reconstruction = 1.0
+cfg.datasets = CN()
+cfg.datasets.paths_to_configs = []  # to be set in the yaml file of training,
+# paths_to_configs format: single path, or source then target path
+cfg.datasets.configs = []  # dataset configs will be initialized in get configs
+cfg.datasets.loss_weights = []  # should be same length as cfg.datasets.paths_to_configs
 
 # ********************************************************************
 # /----- Device
@@ -150,9 +96,59 @@ cfg.checkpoint.filename = ''
 # ********************************************************************
 # /----- Checkpoint parameters
 # ********************************************************************
-
 def get_cfg_defaults():
     """Get a yacs CfgNode object with default values"""
     # Return a clone so that the defaults will not be altered
     # This is for the "local variable" use pattern
     return cfg.clone()
+
+
+def create_configuration(path_to_training_yaml):
+    """
+    Creates a configuration object.
+    :param path_to_training_yaml: path to the yaml configuration file
+    :return: configuration object
+    """
+    configuration = get_cfg_defaults()
+    configuration.merge_from_file(path_to_training_yaml)
+    if len(configuration.datasets.paths_to_configs) == 0:
+        raise ValueError('No dataset specified!')
+
+    # assure one loss weight per dataset
+    assert len(configuration.datasets.loss_weights) == len(configuration.datasets.paths_to_configs)
+
+    for dataset_configuration in configuration.datasets.paths_to_configs:
+        dataset_config = get_cfg_dataset_defaults()
+        dataset_config.merge_from_file(dataset_configuration)
+
+        # process losses to be list of dictionary instead of list of multiple dictionaries for easier access without
+        # slicing
+        loss_dictionary = {}
+        for loss in dataset_config.losses.loss_names_and_parameters:
+            for k in loss.keys():
+                loss_dictionary[k] = loss[k]
+        dataset_config.losses.loss_names_and_parameters = [loss_dictionary]
+
+        loss_weight_dictionary = {}
+        for loss in dataset_config.losses.loss_names_and_weights:
+            for k in loss.keys():
+                loss_weight_dictionary[k] = loss[k]
+        dataset_config.losses.loss_names_and_weights = [loss_weight_dictionary]
+
+        configuration.datasets.configs.append(dataset_config)
+
+    if len(configuration.datasets.configs) == 1:
+        print(f'Single dataset specified: {configuration.datasets.configs[0].dataset.name}')
+
+    if len(configuration.datasets.configs) == 2:
+        print(f'Two datasets specified: source is {configuration.datasets.configs[0].dataset.name} and '
+              f'target is {configuration.datasets.configs[1].dataset.name}')
+
+    configuration.freeze()
+    return configuration
+
+
+if __name__ == '__main__':
+    configuration_path = r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train' \
+                         r'\guda\train_guda_synthia_cityscapes.yaml'
+    configi = create_configuration(configuration_path)

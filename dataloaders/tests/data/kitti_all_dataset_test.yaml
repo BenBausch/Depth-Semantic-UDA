@@ -1,6 +1,6 @@
 dataset:
-    name: 'kitti'
-    path: '/home/petek/kalimu/data/kitti/base'
+    name: 'kitti_depricated'
+    path: '/home/petek/kalimu_depricated/data/kitti_depricated/base'
     feed_img_size: [640, 192]
     use_sparse_depth: True
     split: None

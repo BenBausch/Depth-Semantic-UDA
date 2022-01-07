@@ -5,7 +5,7 @@ import time
 import torch
 
 # Own classes
-from train.base.train_base import TrainBase
+from train.base.train_base import TrainSingleDatasetBase
 from losses import get_loss
 import torch.nn as nn
 
@@ -13,7 +13,7 @@ import torch.nn as nn
 # todo: Remove imports below
 
 
-class SemanticTrainer(TrainBase):
+class SemanticTrainer(TrainSingleDatasetBase):
     def __init__(self, cfg):
         super(SemanticTrainer, self).__init__(cfg)
 

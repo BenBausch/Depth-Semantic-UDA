@@ -1,6 +1,7 @@
 from models.monodepth.model_md2 import Monodepth2
 from models.packnet.model_packnet import FromMotionModelPacknet
-from models.GUDA.model_guda import GudaMonodepth
+from models.GUDA.model_guda import Guda
+
 
 def get_model(model_name, *args):
     """
@@ -12,10 +13,14 @@ def get_model(model_name, *args):
         raise NotImplementedError('Packnet implementation is depricated, ' +
                                   'please update implementation to new structure of repo')
     else:
-        return available_models[model_name](*args)
+        try:
+            return available_models[model_name](*args)
+        except:
+            raise Warning('PLease implement 2 dataset version of your model, e.g. guda!')
+            return available_models[model_name](*args)
+
 
 available_models = {
-    'guda': GudaMonodepth,
-    'monodepth2': Monodepth2#,
-    #'packnet': FromMotionModelPacknet #TODO update packnet to new structure of repo
+    'guda': Guda,
+    'monodepth2': Monodepth2
 }

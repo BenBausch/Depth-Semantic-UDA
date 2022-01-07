@@ -1,5 +1,3 @@
-from cfg.config_single_dataset import get_cfg_defaults
-from dataloaders.dataset_gta5 import GTA5Dataset
 from models.base.model_base import DepthFromMotionEncoderDecoderModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoder
@@ -177,20 +175,3 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         Get all the networks of the model.
         """
         return self.networks
-
-if __name__=="__main__":
-    cfg = get_cfg_defaults()
-    cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_gta5_semantic.yaml')
-    cfg.eval.train.gt_depth_available = False
-    cfg.eval.val.gt_depth_available = False
-    cfg.eval.test.gt_depth_available = False
-    cfg.dataset.use_sparse_depth = False
-    cfg.eval.train.gt_semantic_available = True
-    cfg.eval.val.gt_semantic_available = True
-    cfg.eval.test.gt_semantic_available = True
-    cfg.freeze()
-    gta_dataset = GTA5Dataset('train', 'train', cfg)
-    net = Monodepth2('cpu', cfg)
-
-    print(net.networks['depth_encoder'].forward((next(iter(gta_dataset)))[('rgb', 0)].unsqueeze(0)))

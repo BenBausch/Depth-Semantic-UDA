@@ -1,5 +1,8 @@
 # Project Imports
-from cfg.config_single_dataset import get_cfg_defaults
+import torch
+from torch import tensor
+from torch.utils.data import DataLoader
+
 from dataloaders.dataset_base import DatasetDepth, DatasetSemantic, DatasetRGB, \
     PathsHandlerDepthDense, PathsHandlerSemantic
 from dataloaders.scritps.prepare_synthia import available_splits
@@ -18,6 +21,8 @@ import cv2
 from torchvision import transforms
 
 
+# fixme: if split is None, the whole dataset will be used no matter the mode 'train' or 'val', is this an appropriate
+#  behaviour
 class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
 
     def __init__(self, mode, split, cfg):
@@ -143,8 +148,8 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
     def __init__(self, mode, split, cfg):
         # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
-        assert len(cfg.train.rgb_frame_offsets) == 1
-        assert cfg.train.rgb_frame_offsets[0] == 0
+        assert len(cfg.dataset.rgb_frame_offsets) == 1
+        assert cfg.dataset.rgb_frame_offsets[0] == 0
 
         self.paths = _PathsSynthiaRandCityscapes(mode, split, cfg)
 
@@ -179,6 +184,12 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                            "contrast_jitter": cfg.dataset.augmentation.contrast_jitter,
                            "saturation_jitter": cfg.dataset.augmentation.saturation_jitter,
                            "hue_jitter": cfg.dataset.augmentation.hue_jitter}
+
+        self.do_normalization = self.cfg.dataset.img_norm
+
+        # todo: validate these values
+        self.mean = torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
+        self.var = tensor([[[0.073771872, 0.062956616, 0.062426906]]]).transpose(0, 2)
 
     def __len__(self):
         """
@@ -270,7 +281,10 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,
                                          do_flip=do_flip,
                                          do_aug=do_aug,
-                                         aug_params=self.aug_params)
+                                         aug_params=self.aug_params,
+                                         do_normalization=self.do_normalization,
+                                         mean=self.mean,
+                                         var=self.var)
         tf_semantic_train = self.tf_semantic_train(tgt_size=self.feed_img_size,
                                                    do_flip=do_flip,
                                                    s_to_c_mapping=self.synthia_id_to_cityscapes_id,
@@ -300,7 +314,10 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             :return: dict of transformed rgb images and transformed label
         """
         # Get the transformation objects
-        tf_rgb_val = self.tf_rgb_val(tgt_size=self.feed_img_size)
+        tf_rgb_val = self.tf_rgb_val(tgt_size=self.feed_img_size,
+                                     do_normalization=self.do_normalization,
+                                     mean=self.mean,
+                                     var=self.var)
         tf_semantic_val = self.tf_semantic_val(tgt_size=self.feed_img_size,
                                                s_to_c_mapping=self.synthia_id_to_cityscapes_id,
                                                valid_classes=self.valid_classes,
@@ -365,15 +382,16 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             return label
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, do_aug, aug_params):
-        #fixme maybe add image normalization
+    def tf_rgb_train(tgt_size, do_flip, do_aug, do_normalization, aug_params, mean, var):
         """
         Transformations of the rgb image during training.
         :param aug_params: augmentation parameters
         :param do_aug: True if augmentations should be applied to the rgb image else False
         :param tgt_size: target size of the images after resize operation
         :param do_flip: True if the image should be horizontally flipped else False
-
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
@@ -381,7 +399,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ColorAug(do_aug, aug_params),
-                tf_prep.PrepareForNet()
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
@@ -401,7 +419,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
                 tf_prep.CV2HorizontalFlip(do_flip=do_flip),
-                tf_prep.ToUint8Array(),
+                tf_prep.ToInt64Array(),
                 tf_prep.Syntia_To_Cityscapes_Encoding(s_to_c_mapping=s_to_c_mapping,
                                                       valid_classes=valid_classes,
                                                       void_classes=void_classes,
@@ -421,16 +439,19 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         )
 
     @staticmethod
-    def tf_rgb_val(tgt_size):
+    def tf_rgb_val(tgt_size, do_normalization, mean, var):
         """
         Transformations of the rgb image during validation.
         :param tgt_size: target size of the images after resize operation
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
-                tf_prep.PrepareForNet()
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
@@ -448,7 +469,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         return transforms.Compose(
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
-                tf_prep.ToUint8Array(),
+                tf_prep.ToInt64Array(),
                 tf_prep.Syntia_To_Cityscapes_Encoding(s_to_c_mapping=s_to_c_mapping,
                                                       valid_classes=valid_classes,
                                                       void_classes=void_classes,
@@ -468,13 +489,43 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
 
 if __name__ == "__main__":
-
-    cfg = get_cfg_defaults()
+    from cfg.config_dataset import get_cfg_dataset_defaults
+    cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_synthia.yaml')
+        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\synthia.yaml')
     cfg.freeze()
-    ds = SynthiaRandCityscapesDataset(mode='val', split='bausch', cfg=cfg)
-    data = next(iter(ds))
+
+    img_h = cfg.dataset.feed_img_size[1]
+    img_w = cfg.dataset.feed_img_size[0]
+
+    ds = SynthiaRandCityscapesDataset(mode='val', split=None, cfg=cfg)
+    batch_size = 64
+    ds = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
+
+    print(len(ds))
+
+    torch.set_printoptions(precision=9)
+
+
+    """mean = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
+    for i, data in enumerate(ds):
+        print(i)
+        data = data[('rgb', 0)].to('cuda:0')
+        data = data.view(data.size(0), data.size(1), -1)
+        mean += data.mean(2).sum(0) / batch_size
+    print(mean / len(ds))"""
+
+    print('Calculating var:')
+    var = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
+    for i, data in enumerate(ds):
+        print(i)
+        data = data[('rgb', 0)].to('cuda:0')
+        # data = data.view(data.size(0), data.size(1), -1)
+        var += torch.sum(((data - torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)) ** 2), dim=(0, 2, 3)) / (batch_size * img_h * img_w)
+        print(var / (i + 1))
+    var = var / len(ds)
+    print(var)
+    r"""data = next(iter(ds))
     for i, data in enumerate(ds):
         if i == 10:
             break
@@ -500,7 +551,7 @@ if __name__ == "__main__":
 
     plt.subplot(2, 2, 3)
 
-    file = r'C:\Users\benba\Documents\University\Masterarbeit\data\SYNTHIA_RAND_CITYSCAPES\RAND_CITYSCAPES\GT\LABELS\0000631.png'
+    file = r'/data/SYNTHIA_RAND_CITYSCAPES/RAND_CITYSCAPES/GT/LABELS/0000631.png'
 
     import torch
     print(torch.max(data['depth_dense']))
@@ -508,7 +559,7 @@ if __name__ == "__main__":
     plt.colorbar()
 
     plt.show()
-    r"""semantic = ds.get_semantic(file)
+    semantic = ds.get_semantic(file)
     plt.subplot(1, 2, 1)
     plt.imshow(semantic)
     print(semantic.shape)

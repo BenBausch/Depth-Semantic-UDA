@@ -22,8 +22,8 @@ train:
         gamma: 0.1
 
 dataset:
-    name: 'kalimu'
-    path: '/home/petek/kalimu/data/kalimu/base'
+    name: 'kalimu_depricated'
+    path: '/home/petek/kalimu_depricated/data/kalimu_depricated/base'
     feed_img_size: [608, 512]
     use_sparse_depth: True
     camera: 'pinhole'

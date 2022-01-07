@@ -46,7 +46,7 @@ val:
 dataset:
     name: 'synthia'
     path: 'C:\Users\benba\Documents\University\Masterarbeit\data\SYNTHIA_RAND_CITYSCAPES\RAND_CITYSCAPES'
-    feed_img_size: [544, 384] #[1280, 760] #need to be divisible by 2, 4, 8, 16, and 32 due to up and down sampling
+    feed_img_size: [1280, 760] # [544, 384] #need to be divisible by 2, 4, 8, 16, and 32 due to up and down sampling
                                # + concat otherwise shape mismatch
     use_sparse_depth: False
 

@@ -1,7 +1,9 @@
 # Own files
+import torch
+from torch.utils.data import DataLoader
+
 from misc import transforms as tf_prep
 from dataloaders import dataset_base
-from cfg.config_single_dataset import get_cfg_defaults
 
 # External libraries
 # I/O
@@ -54,13 +56,13 @@ def decompose_rgb_path(path_file):
     return par_dir, mode, city, seq_number, frame_id, data_type, file_format
 
 
-class _PathsCityscapes(dataset_base.PathsHandlerSemantic):
+class _PathsCityscapesSemantic(dataset_base.PathsHandlerSemantic):
     def __init__(self, mode, cfg):
         """
         :param mode: the mode ('train', 'val', 'test') in which the data is used.
         :param cfg: the configuration.
         """
-        super(_PathsCityscapes, self).__init__(mode, None, cfg)
+        super(_PathsCityscapesSemantic, self).__init__(mode, None, cfg)
 
     def get_rgb_image_paths(self, mode, cities='*', frame_ids='*', seq_ids='*', data_type='*', file_format=".png", **kwargs):
         """
@@ -110,8 +112,8 @@ class _PathsCityscapes(dataset_base.PathsHandlerSemantic):
         :param file_format: the file extension e.g '.png'
         :return: single specific path if files exists else None
         """
-        path = os.path.join(path_base, 'images', mode, cities, cities + '_' + seq_ids + '_' + frame_ids + data_type +
-                            file_format)
+        path = os.path.join(path_base, 'images', mode, cities, cities + '_' + seq_ids + '_' + frame_ids + '_' +
+                            data_type + file_format)
         if os.path.exists(path) or \
                 not frame_ids.isnumeric() or \
                 not seq_ids.isnumeric() or \
@@ -139,8 +141,8 @@ class _PathsCityscapes(dataset_base.PathsHandlerSemantic):
         # Only use the semantic labels ( other data is for traffic participating individuals like a specific person)
         data_type = 'gtFine_color'
 
-        path = os.path.join(path_base, 'labels', mode, cities, cities + '_' + seq_ids + '_' + frame_ids + data_type +
-                            file_format)
+        path = os.path.join(path_base, 'labels', mode, cities, cities + '_' + seq_ids + '_' + frame_ids + '_' +
+                            data_type + file_format)
         if os.path.exists(path) or \
                 not frame_ids.isnumeric() or \
                 not seq_ids.isnumeric() or \
@@ -163,11 +165,11 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/cityscapes_dataset.py
         Initializes the Cityscapes Semantic dataset by collecting all the paths and random shuffling the data if wanted.
         """
-        self.paths = _PathsCityscapes(mode, cfg)
+        self.paths = _PathsCityscapesSemantic(mode, cfg)
 
         # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
-        assert len(cfg.train.rgb_frame_offsets) == 1
-        assert cfg.train.rgb_frame_offsets[0] == 0
+        assert len(cfg.dataset.rgb_frame_offsets) == 1
+        assert cfg.dataset.rgb_frame_offsets[0] == 0
 
         super(CityscapesSemanticDataset, self).__init__(self.paths, cfg)
 
@@ -189,23 +191,24 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         self.img_size = cfg.dataset.feed_img_size
         self.img_norm = cfg.dataset.img_norm
 
-        self.mean_rgb = {
-            "pascal": [103.939, 116.779, 123.68],
-            "cityscapes": [0.0, 0.0, 0.0],
-        }  # pascal mean for PSPNet and ICNet pre-trained model
 
-        self.mean = np.array(self.mean_rgb['cityscapes'])
+        # mean tensor([2.2948, 2.6006, 2.2707], device='cuda:0') / 8
+        # variance tensor([0.2621, 0.2749, 0.2669], device='cuda:0') / 8
+
+        # mean and std from https://github.com/inferno-pytorch/inferno/blob/master/inferno/io/box/cityscapes.py
+        # todo: validate these numbers
+        self.mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
+        self.var = torch.tensor([[[0.18696375, 0.19017339, 0.18720214]]]).transpose(0, 2)
+
+        self.do_normalization = self.cfg.dataset.img_norm
 
         self.ids = np.asarray([i for i in range(len(self.paths.paths_rgb))])
-
-        if cfg.dataset.shuffle:
-            np.random.shuffle(self.ids)
 
     def __len__(self):
         """
         :return: The number of ids in the split of the dataset.
         """
-        return len(self.indexes)
+        return len(self.ids)
 
     def __getitem__(self, index):
         """
@@ -232,7 +235,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         if self.mode == 'train':
             rgb_imgs, gt_semantic = self.transform_train(rgb_imgs, gt_semantic)
         elif self.mode == 'val' or self.mode =='test':
-            rgb_imgs, sparse_depth, gt_depth = self.transform_val(rgb_imgs, gt_semantic)
+            rgb_imgs, gt_semantic = self.transform_val(rgb_imgs, gt_semantic)
         else:
             assert False, "The mode {} is not defined!".format(self.mode)
 
@@ -257,7 +260,11 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         do_flip = random.random() > 0.5
 
         # Get the transformation objects
-        tf_rgb_train = self.tf_rgb_train(self.feed_img_size, do_flip, self.mean)
+        tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,
+                                         do_flip=do_flip,
+                                         do_normalization=self.do_normalization,
+                                         mean=self.mean,
+                                         var=self.var)
         tf_semantic_train = self.tf_semantic_train(self.feed_img_size,
                                                    do_flip,
                                                    self.void_classes,
@@ -281,7 +288,10 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         :return: dict of transformed rgb images and transformed label
         """
         # Get the transformation objects
-        tf_rgb_val = self.tf_rgb_val(self.feed_img_size, self.mean)
+        tf_rgb_val = self.tf_rgb_val(tgt_size=self.feed_img_size,
+                                     do_normalization=self.do_normalization,
+                                     mean=self.mean,
+                                     var=self.var)
         tf_semantic_val = self.tf_semantic_val(self.feed_img_size,
                                                self.void_classes,
                                                self.valid_classes,
@@ -336,21 +346,22 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         return img
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, mean): # fixme add augmentations to train and val rgb transforms
+    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var): # fixme add augmentations to train and val rgb transforms
         """
         Transformations of the rgb image during training.
-        :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
         :param do_flip: True if the image should be horizontally flipped else False
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToUint8Array(),
-                tf_prep.NormalizeRGB(mean, True),
-                tf_prep.PrepareForNet()
+                tf_prep.ToInt64Array(),
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
@@ -370,25 +381,26 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
             [
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToUint8Array(),
+                tf_prep.ToInt64Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
 
     @staticmethod
-    def tf_rgb_val(tgt_size, mean):
+    def tf_rgb_val(tgt_size, do_normalization, mean, var):
         """
         Transformations of the rgb image during validation.
-        :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
-                tf_prep.ToUint8Array(),
-                tf_prep.NormalizeRGB(mean, True),
-                tf_prep.PrepareForNet()
+                tf_prep.ToInt64Array(),
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
@@ -406,7 +418,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
-                tf_prep.ToUint8Array(),
+                tf_prep.ToInt64Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
@@ -432,20 +444,27 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
 
 
 if __name__ == "__main__":
-    cfg = get_cfg_defaults()
+    from cfg.config_dataset import get_cfg_dataset_defaults
+    cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_cityscapes_semantic.yaml')
-    cfg.eval.train.gt_depth_available = False
-    cfg.eval.val.gt_depth_available = False
-    cfg.eval.test.gt_depth_available = False
-    cfg.dataset.use_sparse_depth = False
-    cfg.eval.train.gt_semantic_available = True
-    cfg.eval.val.gt_semantic_available = True
-    cfg.eval.test.gt_semantic_available = True
+        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_semantic.yaml')
     cfg.freeze()
-    gta_dataset = CityscapesSemanticDataset('train', None,  cfg)
-    a = next(iter(gta_dataset))
-    plt.imshow(a[("rgb", 0)].numpy().transpose(1, 2, 0))
-    plt.show()
-    plt.imshow(a["gt"])
-    plt.show()
+    CITY_dataset = CityscapesSemanticDataset("train", None, cfg)
+
+    img_h = cfg.dataset.feed_img_size[1]
+    img_w = cfg.dataset.feed_img_size[0]
+    batch_size = 32
+    ds = DataLoader(CITY_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
+
+    mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2).to('cuda:0')
+
+    print('Calculating var:')
+    var = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
+    for i, data in enumerate(ds):
+        print(i)
+        data = data[('rgb', 0)].to('cuda:0')
+        #data = data.view(data.size(0), data.size(1), -1)
+        var += torch.sum(((data - mean) ** 2), dim=(0, 2, 3)) / (batch_size * img_h * img_w)
+        print(var / (i + 1))
+    var = var / len(ds)
+    print(var)

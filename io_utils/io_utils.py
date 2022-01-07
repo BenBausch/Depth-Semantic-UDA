@@ -6,11 +6,10 @@ import time
 import torch
 from tensorboardX import SummaryWriter
 
+from cfg.config_training import create_configuration
+
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-
-from yacs.config import CfgNode as CN
-from cfg.config_single_dataset import get_cfg_defaults
 
 # For visualization
 import numpy as np
@@ -59,9 +58,7 @@ class IOHandler:
 
     @staticmethod
     def load_cfg(path_cfg):
-        cfg = get_cfg_defaults()
-        cfg.merge_from_file(path_cfg)
-        cfg.freeze()
+        cfg = create_configuration(path_cfg)
         return cfg
 
     @staticmethod

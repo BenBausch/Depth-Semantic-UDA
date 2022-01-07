@@ -10,6 +10,7 @@ class BootstrappedCrossEntropy(nn.Module):
     """
         Calculates the cross entropy of the k pixels with the lowest confident prediction.
     """
+
     def __init__(self, img_height, img_width, r=0.3, ignore_index=-100):
         """
         :param img_height: height of the input image to the network
@@ -29,8 +30,8 @@ class BootstrappedCrossEntropy(nn.Module):
         :param target: Tensor of shape [minibatch, height, width]
         :return:
         """
-        #print(f'Prediction shape: {prediction.shape}')
-        #print(f'Target shape: {target.shape}')
+        # print(f'Prediction shape: {prediction.shape}')
+        # print(f'Target shape: {target.shape}')
 
         # todo: implement cold start where k is all the pixels down to k = ratio * height * width
         # k = int(self.ratio * prediction.shape[2] * prediction.shape[3])
@@ -44,7 +45,7 @@ class BootstrappedCrossEntropy(nn.Module):
         return loss
 
 
-class SurfaceNormalRegularizationLoss(nn.Module): # todo: finish this implementation
+class SurfaceNormalRegularizationLoss(nn.Module):  # todo: test this implementation
     def __init__(self, normalized_camera_model, device):
         super(SurfaceNormalRegularizationLoss, self).__init__()
         self.device = device
@@ -53,25 +54,21 @@ class SurfaceNormalRegularizationLoss(nn.Module): # todo: finish this implementa
         self.img_to_pointcloud = _ImageToPointcloud(camera_model=normalized_camera_model, device=device)
         self.image_width, self.image_height = self.camera_model.image_size()
         self.cos_sim = nn.CosineSimilarity(dim=1)
+        self.padder_h = torch.nn.ReflectionPad2d((0, 0, 0, 1))
+        self.padder_w = torch.nn.ReflectionPad2d((0, 1, 0, 0))
 
     def get_normal_vectors(self, points3d):
-        points3d_numpy = points3d.cpu().numpy()
+        diff_h = (points3d[:, :, 0:, :] - self.padder_h(points3d[:, :, 1:, :]))
+        diff_w = (points3d[:, :, :, 0:] - self.padder_w(points3d[:, :, :, 1:]))
 
-        diff_h = (points3d_numpy[:, :, 0:, :] - np.pad(points3d_numpy[:, :, 1:, :], ((0, 0), (0, 0), (0, 1), (0, 0)),
-                                                       'edge'))
-        diff_w = (points3d_numpy[:, :, :, 0:] - np.pad(points3d_numpy[:, :, :, 1:], ((0, 0), (0, 0), (0, 0), (0, 1)),
-                                                       'edge'))
+        normals = torch.cross(diff_w, diff_h)
+        vector_norms = torch.linalg.vector_norm(normals, dim=1).unsqueeze(1)
 
-        normals = np.einsum('bikm, bjkm-> bikm', diff_w, diff_h)
-        lengths = np.expand_dims(
-            np.sqrt(normals[:, 0, :, :] ** 2 + normals[:, 1, :, :] ** 2 + normals[:, 2, :, :] ** 2), 1)
-        normals = normals / (lengths + 1e-08)
+        return normals / vector_norms
 
-        return torch.tensor(normals).to(self.device)
-
-    def __forward__(self, prediction_depth_batch, gt_depth_batch):
-        points3d_prediction = self.img_to_pointcloud(prediction_depth_batch)
-        points3d_gt = self.img_to_pointcloud(gt_depth_batch)
+    def forward(self, depth_prediction, depth_gt):
+        points3d_prediction = self.img_to_pointcloud(depth_prediction)
+        points3d_gt = self.img_to_pointcloud(depth_gt)
 
         normals_prediction = self.get_normal_vectors(points3d_prediction)
         normals_gt = self.get_normal_vectors(points3d_gt)
@@ -80,7 +77,6 @@ class SurfaceNormalRegularizationLoss(nn.Module): # todo: finish this implementa
                             , 2 * self.image_height * self.image_width)
 
         return simi
-
 
 
 # This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
@@ -92,7 +88,7 @@ class L1LossDepth(nn.Module):
     def forward(self, prediction, target):
         assert prediction.dim() == target.dim(), "Inconsistent dimensions in L1Loss between prediction and target"
         mask = (target > 0).detach()
-        abs_diff = (prediction-target)[mask].abs()
+        abs_diff = (prediction - target)[mask].abs()
         loss = abs_diff.mean()
         return loss
 
@@ -119,7 +115,7 @@ class L1LossPixelwise(nn.Module):
 
     def forward(self, prediction, target):
         assert prediction.dim() == target.dim(), "Inconsistent dimensions in L1Loss between prediction and target"
-        loss = (prediction-target).abs()
+        loss = (prediction - target).abs()
         return loss
 
 
@@ -132,7 +128,7 @@ class MSELoss(nn.Module):
     def forward(self, prediction, target):
         assert prediction.dim() == target.dim(), "Inconsistent dimensions in MSELoss between prediction and target"
         mask = (target > 0).detach()
-        abs_squared_diff = torch.square((prediction-target)[mask])
+        abs_squared_diff = torch.square((prediction - target)[mask])
         loss = abs_squared_diff.mean()
         return loss
 
@@ -150,8 +146,8 @@ class EdgeAwareSmoothnessLoss(nn.Module):
         abs_grad_image_y = ((image[:, :, 1:, :] - image[:, :, :-1, :]).abs()).mean(1, keepdim=True)
 
         # Compute the final loss
-        loss_x = abs_grad_inv_depth_x*torch.exp(-abs_grad_image_x)
-        loss_y = abs_grad_inv_depth_y*torch.exp(-abs_grad_image_y)
+        loss_x = abs_grad_inv_depth_x * torch.exp(-abs_grad_image_x)
+        loss_y = abs_grad_inv_depth_y * torch.exp(-abs_grad_image_y)
 
         loss = loss_x.mean() + loss_y.mean()
 
@@ -211,8 +207,10 @@ class ReconstructionLoss(nn.Module):
 
     # ToDo: Exclude "black" pixels as in selfsup and maybe use a mask for excluding pixels with depth supervision
     #  The problem with black pixels might get solved by an appropriate interpolation method!! (Comp. MD2 with selfsup)
-    def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85, mask=None):
-        assert rgb_frame_offsets[0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
+    def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
+                mask=None):
+        assert rgb_frame_offsets[
+                   0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
 
         total_loss = 0.0
 
@@ -232,14 +230,15 @@ class ReconstructionLoss(nn.Module):
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
 
                 # Compute pixelwise reconstruction loss by combining photom. loss and ssim loss
-                reconstruction_losses_s.append((1-alpha)*rec_l1_loss + alpha*rec_ssim_loss if use_ssim else rec_l1_loss)
+                reconstruction_losses_s.append(
+                    (1 - alpha) * rec_l1_loss + alpha * rec_ssim_loss if use_ssim else rec_l1_loss)
 
                 # ToDo: Actually, we shouldn't only take the minimum but exclude those pixels where the identity loss is smaller!!
                 #  CHANGE THIS! Md2 claims that this is right but I don't think so... Implement both and compare!
                 if use_automasking:
                     id_l1_loss = self.l1_loss_pixelwise(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                     id_ssim_loss = self.ssim(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
-                    identity_loss = (1-alpha)*id_l1_loss + alpha*id_ssim_loss if use_ssim else id_l1_loss
+                    identity_loss = (1 - alpha) * id_l1_loss + alpha * id_ssim_loss if use_ssim else id_l1_loss
                     identity_loss += torch.randn(identity_loss.shape, device=identity_loss.device) * 0.00001
                     identity_losses_s.append(identity_loss)
 
@@ -299,5 +298,4 @@ class DepthReprojectionLoss(nn.Module):
         # Compute the warped pixel coordinates based on the measured (GT) depth
         coordinates_gt = self.coordinate_warper(gt_depth, T)
 
-        return self.l1_loss(coordinates_pred, coordinates_gt) # ToDo: Check this
-
+        return self.l1_loss(coordinates_pred, coordinates_gt)  # ToDo: Check this

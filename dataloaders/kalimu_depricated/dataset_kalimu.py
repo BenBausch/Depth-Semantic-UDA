@@ -41,7 +41,7 @@ def decompose_rgb_path(path_rgb_file):
     return mode, drive_seq, cam_id, frame_id, format
 
 # Attention: The user must make sure, that the data is sorted as required by the program. However, consistency is
-# guaranteed here. If the kalimu dataset is sorted by the scripts as in this framework, then the correct order is also guaranteed.
+# guaranteed here. If the kalimu_depricated dataset is sorted by the scripts as in this framework, then the correct order is also guaranteed.
 class _PathsKalimuFromMotion(dataset_base.PathsHandlerDepthFromMotion):
     def __init__(self, mode, split, cfg):
         super(_PathsKalimuFromMotion, self).__init__(mode, split, cfg)

@@ -1,7 +1,6 @@
 # Own files
 from misc import transforms as tf_prep
 from dataloaders import dataset_base
-from cfg.config_single_dataset import get_cfg_defaults
 
 # External libraries
 # I/O
@@ -16,6 +15,7 @@ import ntpath
 import PIL.Image as pil
 from torchvision import transforms
 import matplotlib.pyplot as plt
+import torch
 
 # Miscellaneous
 import numbers
@@ -186,7 +186,11 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
         self.class_map = dict(zip(self.valid_classes, range(19)))
         self.ignore_index = 250
 
-        self.mean = [0, 0, 0]
+        # todo find true mean and variance
+        self.mean = torch.tensor([[[0., 0.0, 0.0]]]).transpose(0, 2)
+        self.var = torch.tensor([[[1.0, 1.0, 1.0]]]).transpose(0, 2)
+
+        self.do_normalization = self.cfg.dataset.img_norm
 
         self.split = split
 
@@ -195,9 +199,6 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
             for i in f.readlines():
                 self.ids.append(int(i))
         self.ids = np.array(self.ids)
-
-        if cfg.dataset.shuffle:
-            np.random.shuffle(self.ids)
 
     def __len__(self):
         """
@@ -252,7 +253,11 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
         do_flip = random.random() > 0.5
 
         # Get the transformation objects
-        tf_rgb_train = self.tf_rgb_train(self.feed_img_size, do_flip, self.mean)
+        tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,
+                                         do_flip=do_flip,
+                                         do_normalization=self.do_normalization,
+                                         mean=self.mean,
+                                         var=self.var)
         tf_semantic_train = self.tf_semantic_train(self.feed_img_size,
                                                    do_flip,
                                                    self.void_classes,
@@ -278,7 +283,10 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
         :return: dict of transformed rgb images and transformed label
         """
         # Get the transformation objects
-        tf_rgb_val = self.tf_rgb_val(self.feed_img_size, self.mean)
+        tf_rgb_val = self.tf_rgb_val(tgt_size=self.feed_img_size,
+                                     do_normalization=self.do_normalization,
+                                     mean=self.mean,
+                                     var=self.var)
         tf_semantic_val = self.tf_semantic_val(self.feed_img_size,
                                                self.void_classes,
                                                self.valid_classes,
@@ -349,21 +357,22 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
         return rgb
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, mean):
+    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var):
         """
         Transformations of the rgb image during training.
-        :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
         :param do_flip: True if the image should be horizontally flipped else False
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToUint8Array(),
-                tf_prep.NormalizeRGB(mean, True),
-                tf_prep.PrepareForNet()
+                tf_prep.ToInt64Array(),
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
@@ -383,25 +392,26 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
             [
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToUint8Array(),
+                tf_prep.ToInt64Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
 
     @staticmethod
-    def tf_rgb_val(tgt_size, mean):
+    def tf_rgb_val(tgt_size, do_normalization, mean, var):
         """
         Transformations of the rgb image during validation.
-        :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
-                tf_prep.ToUint8Array(),
-                tf_prep.NormalizeRGB(mean, True),
-                tf_prep.PrepareForNet()
+                tf_prep.ToInt64Array(),
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
@@ -419,30 +429,24 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
-                tf_prep.ToUint8Array(),
+                tf_prep.ToInt64Array(),
                 tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
 
 
 if __name__ == "__main__":
-    cfg = get_cfg_defaults()
+    from cfg.config_dataset import get_cfg_dataset_defaults
+    cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_gta5_semantic.yaml')
-    cfg.eval.train.gt_depth_available = False
-    cfg.eval.val.gt_depth_available = False
-    cfg.eval.test.gt_depth_available = False
-    cfg.dataset.use_sparse_depth = False
-    cfg.eval.train.gt_semantic_available = True
-    cfg.eval.val.gt_semantic_available = True
-    cfg.eval.test.gt_semantic_available = True
+        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\gta5.yaml')
     cfg.freeze()
     gta_dataset = GTA5Dataset('train', 'train', cfg)
-    #plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
+    plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
     plt.show()
-    #plt.imshow((next(iter(gta_dataset))[("rgb", 1)].numpy().transpose(1, 2, 0)))
+    plt.imshow((next(iter(gta_dataset))[("rgb", 1)].numpy().transpose(1, 2, 0)))
     plt.show()
-    #plt.imshow((next(iter(gta_dataset))[("rgb", -1)].numpy().transpose(1, 2, 0)))
+    plt.imshow((next(iter(gta_dataset))[("rgb", -1)].numpy().transpose(1, 2, 0)))
     plt.show()
     print((next(iter(gta_dataset))["gt"]))
     plt.imshow((next(iter(gta_dataset))["gt"]))

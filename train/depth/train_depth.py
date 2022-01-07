@@ -6,14 +6,14 @@ import os
 import torch
 
 # Own classes
-from train.base.train_base import TrainBase
+from train.base.train_base import TrainSingleDatasetBase
 from losses import get_loss
 from io_utils import io_utils
 from eval import eval
 import camera_models
 
 
-class MonocularDepthFromMotionTrainer(TrainBase):
+class MonocularDepthFromMotionTrainer(TrainSingleDatasetBase):
     def __init__(self, cfg):
         super(MonocularDepthFromMotionTrainer, self).__init__(cfg)
 

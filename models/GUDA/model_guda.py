@@ -6,13 +6,8 @@ from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoder
 from models.helper_models.semantic_decoder import SemanticDecoder
 from models.helper_models.pose_decoder import PoseDecoder
-from utils.utils import info_gpu_memory
-
-from cfg.config_single_dataset import get_cfg_defaults
 
 from models.helper_models.layers import *
-
-from dataloaders.dataset_gta5 import GTA5Dataset
 
 
 # ToDo: Das Netz wird an die Anzahl der Skalen angepasst, um entsprechende Tiefenkarten auszugeben. Wir skalieren jedoch
@@ -20,25 +15,38 @@ from dataloaders.dataset_gta5 import GTA5Dataset
 #  Netzstruktur und die zur BErechnung des photom. Fehlers ist an self.num_scales gebunden -> FIX THAT
 
 
-class GudaMonodepth(SemanticDepthFromMotionModelBase):
+class Guda(SemanticDepthFromMotionModelBase):
 
     # --------------------------------------------------------------------------
     # ------------------------Initialization-Methods----------------------------
     # --------------------------------------------------------------------------
     def __init__(self, device, cfg):
-        super(GudaMonodepth, self).__init__()
+        """
+        Constructor for guda network.
+        :param device: device on which to run the network
+        :param cfg: the config file
+        :param dataset: 0 if only one dataset used
+                        0 if source dataset parameters shall be considered in case of 2 datasets
+                        1 if source dataset parameters shall be considered in case of 2 datasets
+        """
+        super(Guda, self).__init__()
+
+        self.cfg = cfg
 
         self.num_layers_encoder = cfg.model.encoder.params.nof_layers  # which resnet to use
         # e.g. num_layers_encoder = 101 --> resnet101
         self.num_layers_pose = cfg.model.pose_net.params.nof_layers
         self.weights_init_encoder = cfg.model.encoder.params.weights_init
         self.weights_init_pose_net_encoder = cfg.model.pose_net.params.weights_init
-        self.num_scales = cfg.losses.reconstruction.nof_scales
-        self.num_classes = cfg.dataset.num_classes
+        self.num_scales = cfg.model.depth_net.nof_scales
         self.no_cuda = cfg.device.no_cuda
         self.multiple_gpus = cfg.device.multiple_gpus
-        self.rgb_frame_offsets = cfg.train.rgb_frame_offsets
         self.pose_model_input = cfg.model.pose_net.input
+
+        self.num_classes = None  # initialized in get_dataset_parameters
+        self.rgb_frame_offsets = None  # initialized in get_dataset_parameters
+
+        self.get_dataset_parameters()
 
         self.device = device
 
@@ -57,7 +65,45 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
 
         print(f'Device: {self.device}')
         print('After creating networks')
-        info_gpu_memory()
+
+    def get_dataset_parameters(self):  # todo move this into the base class
+        """
+        Collects the parameters per dataset.
+        :param dataset:
+        :return:
+        """
+        # rgb frame offsets vary across datasets if self-supervised depth is used or not.
+        self.rgb_frame_offsets = []
+
+        # depending on the dataset one might only want to predict semantic masks or depth or depth with pose
+        self.dataset_predict_depth = []
+        self.dataset_predict_semantic = []
+        self.dataset_predict_pose = []
+
+        # all datasets should have the same number of classes because they use the same semantic head
+        self.num_classes = self.cfg.datasets.configs[0].dataset.num_classes
+
+        # collect the parameters from all the datasets
+        for i, dcfg in enumerate(self.cfg.datasets.configs):
+            self.rgb_frame_offsets.append(dcfg.dataset.rgb_frame_offsets)
+
+            # in all these cases depth prediction is needed
+            self.dataset_predict_depth.append(dcfg.dataset.use_sparse_depth or
+                                              dcfg.dataset.use_dense_depth or
+                                              dcfg.dataset.use_self_supervised_depth)
+
+            # pose prediction is only needed in context of self-supervised monocular depth
+            self.dataset_predict_pose.append(dcfg.dataset.use_self_supervised_depth)
+
+            self.dataset_predict_semantic.append(dcfg.dataset.use_semantic_gt)
+
+            if self.num_classes != dcfg.dataset.num_classes:
+                raise ValueError('All datasets need to have same number of classes!')
+        print(f'Frame offsets for all datasets: {self.rgb_frame_offsets}')
+        print(f'Predict depth per dataset: {self.dataset_predict_depth}')
+        print(f'Predict pose per dataset: {self.dataset_predict_pose}')
+        print(f'Predict semantic mask per dataset: {self.dataset_predict_semantic}')
+        print(f'Number classes: {self.num_classes}')
 
     def create_Encoder(self):
         self.networks["resnet_encoder"] = ResnetEncoder(
@@ -129,22 +175,22 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
         raw_sigmoid = self.networks["depth_decoder"](features)
         raw_sigmoid_scale_0 = raw_sigmoid[("disp", 0)]
         _, depth_pred = disp_to_depth(raw_sigmoid_scale_0)
-        #print('depth')
-        #info_gpu_memory()
+
         return depth_pred, raw_sigmoid_scale_0
 
-    def predict_poses(self, inputs):
+    def predict_poses(self, inputs, dataset_id):
         """
         Adapted from: https://github.com/nianticlabs/monodepth2/blob/master/trainer.py
         Predict poses between input frames for monocular sequences.
+        Slightly modified by Ben Bausch
         """
         poses = {}
         if self.num_pose_frames == 2:
             # In this setting, we compute the pose to each source frame via a
             # separate forward pass through the pose network.
-            pose_feats = {f_i: inputs["rgb", f_i] for f_i in self.rgb_frame_offsets}
+            pose_feats = {f_i: inputs["rgb", f_i] for f_i in self.rgb_frame_offsets[dataset_id]}
 
-            for f_i in self.rgb_frame_offsets[1:]:
+            for f_i in self.rgb_frame_offsets[dataset_id][1:]:
                 # To maintain ordering we always pass frames in temporal order
                 if f_i < 0:
                     pose_inputs = [pose_feats[f_i], pose_feats[0]]
@@ -162,25 +208,38 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
         else:
             raise Exception('The Input to the GUDA PoseNet model are exactly 2 frames!')
 
-        #print('poses')
-        #info_gpu_memory()
         return poses
 
     def predict_semantic(self, features):
         a = self.networks["semantic_decoder"](features)
-        #print('semantic')
-        #info_gpu_memory()
+
         return a
 
-    def forward(self, batch):
-        latent_features_batch = self.latent_features(batch["rgb", 0])
-        #print('latent')
-        #info_gpu_memory()
-        return {
-            'depth': self.predict_depth(latent_features_batch),
-            'semantic': self.predict_semantic(latent_features_batch),
-            'poses': self.predict_poses(batch)
-        }
+    def forward(self, batch, dataset_id):
+        """
+        :param batch: batch of data to process
+        :param dataset_id: number of datasets in the list of datasets (source: 0, target:1, ...)
+        """
+        latent_features_batch = self.latent_features(batch[("rgb", 0)])
+
+        results = {}
+
+        if self.dataset_predict_depth[dataset_id]:
+            results['depth'] = self.predict_depth(latent_features_batch)
+        else:
+            results['depth'] = None
+
+        if self.dataset_predict_pose[dataset_id]:
+            results['poses'] = self.predict_poses(batch, dataset_id=dataset_id)
+        else:
+            results['poses'] = None
+
+        if self.dataset_predict_semantic[dataset_id]:
+            results['semantic'] = self.predict_semantic(latent_features_batch)
+        else:
+            results['semantic'] = None
+
+        return results
 
     # --------------------------------------------------------------------------
     # -----------------------------Helper-Methods-------------------------------
@@ -215,41 +274,3 @@ class GudaMonodepth(SemanticDepthFromMotionModelBase):
         Get all the networks of the model.
         """
         return self.networks
-
-
-if __name__ == "__main__":
-    cfg = get_cfg_defaults()
-    cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\train_gta5_semantic.yaml')
-    cfg.eval.train.gt_depth_available = False
-    cfg.eval.val.gt_depth_available = False
-    cfg.eval.test.gt_depth_available = False
-    cfg.dataset.use_sparse_depth = False
-    cfg.eval.train.gt_semantic_available = True
-    cfg.eval.val.gt_semantic_available = True
-    cfg.eval.test.gt_semantic_available = True
-    cfg.freeze()
-    gta5_dataset = GTA5Dataset('train', 'train', cfg)
-    dl = DataLoader(gta5_dataset, batch_size=1, shuffle=False, num_workers=1, pin_memory=True, drop_last=False)
-    net = GudaMonodepth('cpu', cfg)
-
-    for i in dl:
-        a = net.forward(i)
-        print(a['depth'][0].shape)
-        matplotlib.pyplot.imshow(a['depth'][0].detach().numpy().squeeze(0).transpose(1,2,0))
-        matplotlib.pyplot.show()
-        break
-
-
-    """
-    # print size of each latent feature
-    for i in dl:
-        print(i[('rgb', 0)].size())
-        size = np.asarray(cfg.dataset.feed_img_size[::-1])
-        print(size)
-        latent_features = net.latent_features(i[('rgb', 0)])
-        for i, f in enumerate(latent_features):
-            print('{} divided by {} = {}'.format(size, 2 ** (i + 1), size / (2 ** (i + 1))))
-            print(f.size())
-        break
-    """

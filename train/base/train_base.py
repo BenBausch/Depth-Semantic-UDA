@@ -5,8 +5,11 @@ import os
 import abc
 
 # Own classes
+from abc import ABC
+
 import models
 import dataloaders
+from dataloaders.datasamplers.CompletlyRandomSampler import CompletelyRandomSampler
 from io_utils import io_utils
 
 from datetime import datetime
@@ -19,10 +22,8 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
 
-# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
-#  are normalized...
 class TrainBase(metaclass=abc.ABCMeta):
-    def __init__(self, cfg):
+    def __init__(self, cfg, dataset_type):
         self.cfg = cfg
 
         # Specify the device to perform computations on
@@ -44,39 +45,20 @@ class TrainBase(metaclass=abc.ABCMeta):
                                             self.cfg.train.optimizer.learning_rate)
         self.scheduler = self.get_lr_scheduler(self.optimizer, self.cfg)
 
-        # Get training and validation datasets
-        self.train_loader = self.get_dataloader("train")
-        print(f'Length Train Loader: {len(self.train_loader)}')
-        self.val_loader = self.get_dataloader("val")
-        print(f'Length Validation Loader: {len(self.val_loader)}')
-
         # Set up IO handler
-        path_save_folder = os.path.join(self.cfg.io.path_save, "tmp")
-        self.io_handler = io_utils.IOHandler(path_save_folder)
+        self.path_save_folder = os.path.join(self.cfg.io.path_save, "tmp")
+        self.io_handler = io_utils.IOHandler(self.path_save_folder)
 
         # get todays date as string 'YYYY_MM_DD' to indicate when the training started
         current_time = datetime.now()
         self.training_start_time = current_time.strftime("%Y_%m_%d_%H_%M_%S")
 
-        # Set up SummaryWriters to log data into the tensorboard events file
-        self.writer_train = SummaryWriter(os.path.join(path_save_folder, \
-                                                       self.training_start_time + "_" + self.cfg.dataset.name, \
-                                                       "tensorboard", "train"))
-        self.writer_val = SummaryWriter(os.path.join(path_save_folder, \
-                                                       self.training_start_time + "_" + self.cfg.dataset.name, \
-                                                       "tensorboard", "val"))
-
-        # Get number of total steps to compute remaining training time later
-        self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
-
-        # Save the current configuration of arguments
-        self.io_handler.save_cfg({"time": self.training_start_time, "dataset": self.cfg.dataset.name}, self.cfg)
-
         # See whether a checkpoint shall be used and load the corresponding weights
 
         # Load the checkpoint if one is provided
         if cfg.checkpoint.use_checkpoint:
-            print("Using pretrained weights for the model and optimizer from \n", os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
+            print("Using pretrained weights for the model and optimizer from \n",
+                  os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
             checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
             # Load pretrained weights for the model and the optimizer status
             io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
@@ -91,35 +73,71 @@ class TrainBase(metaclass=abc.ABCMeta):
         checkpoint = io_utils.IOHandler.gen_checkpoint(
             self.model.get_networks(),
             **{"optimizer": self.optimizer.state_dict(),
-                "cfg": self.cfg})
+               "cfg": self.cfg})
 
         self.io_handler.save_checkpoint(
-            {"epoch": self.epoch, "time": self.training_start_time, "dataset": self.cfg.dataset.name}, checkpoint)
+            {"epoch": self.epoch, "time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
+            checkpoint)
 
-    def get_dataloader(self, mode):
-        dataset = dataloaders.get_dataset(self.cfg.dataset.name, mode, self.cfg.dataset.split, self.cfg)
+    @staticmethod
+    def get_dataloader(mode, name, split, bs, num_workers, cfg, sample_completely_random=False, num_samples=None):
+        """
+        Creates a dataloader.
+        :param cfg: configuration of the dataset (not the whole configuration of training!)
+        :param mode: 'train', 'test', 'val'
+        :param name: name of the dataset (list of names --> see init dataloaders module)
+        :param split: wanted split, e.g. eigen split for kitti_depricated
+        :param bs: batch size of the dataloader
+        :param num_workers: number of workers for the dataloader
+        :param sample_completely_random: randomly sample batches from whole dataset even across epochs
+        :param num_samples: length of the dataloader, e.g. number of samples to sample
+        :return: dataloader, dataloader length
+        """
+        dataset = dataloaders.get_dataset(name, mode, split, cfg)
 
-        if mode == "train":
-            self.num_train_files = dataset.__len__()
-            return DataLoader(dataset, batch_size=self.cfg.train.batch_size, shuffle=True,
-                              num_workers=self.cfg.train.nof_workers, pin_memory=True, drop_last=False)
-
-        return DataLoader(dataset, batch_size=self.cfg.val.batch_size, shuffle=False,
-                              num_workers=self.cfg.val.nof_workers, pin_memory=True, drop_last=False)
+        if sample_completely_random:
+            if num_samples is None:
+                num_samples = len(dataset)
+                raise Warning('num_samples is set to None, if wanted please ignore this message!')
+            if mode == "train":
+                return DataLoader(dataset, batch_size=bs, num_workers=num_workers,
+                                  pin_memory=True, drop_last=False,
+                                  sampler=CompletelyRandomSampler(data_source=dataset, num_samples=num_samples)), \
+                        num_samples
+            else:
+                return DataLoader(dataset, batch_size=bs,
+                                  num_workers=num_workers, pin_memory=True, drop_last=False,
+                                  sampler=CompletelyRandomSampler(data_source=dataset, num_samples=num_samples)), \
+                        num_samples
+        else:
+            if mode == "train":
+                return DataLoader(dataset, batch_size=bs, shuffle=True, num_workers=num_workers,
+                                  pin_memory=True, drop_last=False), len(dataset)
+            else:
+                return DataLoader(dataset, batch_size=bs, shuffle=False,
+                                  num_workers=num_workers, pin_memory=True, drop_last=False), len(dataset)
 
     # Define those methods that can be used for any kind of depth estimation algorithms
-    def get_lr_scheduler(self, optimizer, cfg):
-        assert isinstance(cfg.train.scheduler.type, str), "The option cfg.train.scheduler.type has to be a string. Current type: {}".format(cfg.train.scheduler.type.type())
+    @staticmethod
+    def get_lr_scheduler(optimizer, cfg):
+        assert isinstance(cfg.train.scheduler.type,
+                          str), "The option cfg.train.scheduler.type has to be a string. Current type: {}".format(
+            cfg.train.scheduler.type.type())
         # You can implement other rules here...
         if cfg.train.scheduler.type == "StepLR":
-            return lr_scheduler.StepLR(optimizer, step_size=cfg.train.scheduler.step_size, gamma=cfg.train.scheduler.gamma)
+            return lr_scheduler.StepLR(optimizer, step_size=cfg.train.scheduler.step_size,
+                                       gamma=cfg.train.scheduler.gamma)
+        elif cfg.train.scheduler.type == "MultiStepLR":
+            return lr_scheduler.MultiStepLR(optimizer, milestones=cfg.train.scheduler.milestones,
+                                            gamma=cfg.train.scheduler.gamma)
+
         elif cfg.train.scheduler.type == "None":
             return None
         else:
             raise NotImplementedError("The lr scheduler ({}) is not yet implemented.".format(cfg.train.scheduler.type))
 
-
-    def get_optimizer(self, type_optimizer, params_to_train, learning_rate):
+    @staticmethod
+    def get_optimizer(type_optimizer, params_to_train, learning_rate):
         assert isinstance(type_optimizer, str)
         # You can implement other rules here...
         if type_optimizer == "Adam":
@@ -129,3 +147,125 @@ class TrainBase(metaclass=abc.ABCMeta):
         else:
             raise NotImplementedError(
                 "The optimizer ({}) is not yet implemented.".format(type_optimizer))
+
+
+# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
+#  are normalized...
+class TrainSingleDatasetBase(TrainBase, ABC):
+    def __init__(self, cfg, dataset_type='single'):
+        super(TrainSingleDatasetBase, self).__init__(cfg=cfg, dataset_type=dataset_type)
+
+        # Get training and validation datasets
+        self.train_loader, self.num_train_files = self.get_dataloader(mode="train",
+                                                                      name=self.cfg.datasets.configs[0].dataset.name,
+                                                                      split=self.cfg.datasets.configs[0].dataset.split,
+                                                                      bs=self.cfg.train.batch_size,
+                                                                      num_workers=self.cfg.train.nof_workers,
+                                                                      cfg=self.cfg.datasets.configs[0])
+        print(f'Length Train Loader: {len(self.train_loader)}')
+        self.val_loader, self.num_val_files = self.get_dataloader(mode="val",
+                                                                  name=self.cfg.datasets.configs[0].dataset.name,
+                                                                  split=self.cfg.datasets.configs[0].dataset.split,
+                                                                  bs=self.cfg.val.batch_size,
+                                                                  num_workers=self.cfg.val.nof_workers,
+                                                                  cfg=self.cfg.datasets.configs[0])
+        print(f'Length Validation Loader: {len(self.val_loader)}')
+
+        # Set up SummaryWriters to log data into the tensorboard events file
+        self.writer_train = SummaryWriter(os.path.join(self.path_save_folder,
+                                                       self.training_start_time + "_"
+                                                       + self.cfg.datasets.configs[0].dataset.name,
+                                                       "tensorboard", "train"))
+        self.writer_val = SummaryWriter(os.path.join(self.path_save_folder,
+                                                     self.training_start_time + "_" +
+                                                     self.cfg.datasets.configs[0].dataset.name,
+                                                     "tensorboard", "val"))
+
+        # Get number of total steps to compute remaining training time later
+        self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
+
+        # Save the current configuration of arguments
+        self.io_handler.save_cfg({"time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
+                                 self.cfg)
+
+        # Load the checkpoint if one is provided
+        if cfg.checkpoint.use_checkpoint:
+            print("Using pretrained weights for the model and optimizer from \n",
+                  os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
+            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
+            # Load pretrained weights for the model and the optimizer status
+            io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
+        else:
+            print("No checkpoint is used. Training from scratch!")
+
+
+class TrainSourceTargetDatasetBase(TrainBase, ABC):
+    def __init__(self, cfg, dataset_type='target'):
+        super(TrainSourceTargetDatasetBase, self).__init__(cfg=cfg, dataset_type=dataset_type)
+
+        # Get training and validation datasets for source and target
+        self.target_train_loader, self.target_num_train_files = \
+            self.get_dataloader(mode="train",
+                                name=self.cfg.datasets.configs[1].dataset.name,
+                                split=self.cfg.datasets.configs[1].dataset.split,
+                                bs=self.cfg.train.batch_size,
+                                num_workers=self.cfg.train.nof_workers,
+                                cfg=self.cfg.datasets.configs[1])
+        print(f'Length Target Train Loader: {len(self.target_train_loader)}')
+        self.target_val_loader, self.target_num_val_files = \
+            self.get_dataloader(mode="val",
+                                name=self.cfg.datasets.configs[1].dataset.name,
+                                split=self.cfg.datasets.configs[1].dataset.split,
+                                bs=self.cfg.val.batch_size,
+                                num_workers=self.cfg.val.nof_workers,
+                                cfg=self.cfg.datasets.configs[1])
+        print(f'Length Target Validation Loader: {len(self.target_val_loader)}')
+
+        self.source_train_loader, self.source_num_train_files = \
+            self.get_dataloader(mode="train",
+                                name=self.cfg.datasets.configs[0].dataset.name,
+                                split=self.cfg.datasets.configs[0].dataset.split,
+                                bs=self.cfg.train.batch_size,
+                                num_workers=self.cfg.train.nof_workers,
+                                cfg=self.cfg.datasets.configs[0],
+                                sample_completely_random=True,
+                                num_samples=self.target_num_train_files)
+        print(f'Length Source Train Loader: {len(self.source_train_loader)}')
+        self.source_val_loader, self.source_num_val_files = \
+            self.get_dataloader(mode="val",
+                                name=self.cfg.datasets.configs[0].dataset.name,
+                                split=self.cfg.datasets.configs[0].dataset.split,
+                                bs=self.cfg.val.batch_size,
+                                num_workers=self.cfg.val.nof_workers,
+                                cfg=self.cfg.datasets.configs[0])
+        print(f'Length Source Validation Loader: {len(self.source_val_loader)}')
+
+        # Set up SummaryWriters to log data into the tensorboard events file
+        self.writer_train = SummaryWriter(
+            os.path.join(self.path_save_folder,
+                         self.training_start_time + "_" + self.cfg.datasets.configs[0].dataset.name
+                         + "_" + self.cfg.datasets.configs[1].dataset.name,
+                         "tensorboard", "train"))
+        self.writer_val = SummaryWriter(
+            os.path.join(self.path_save_folder,
+                         self.training_start_time + "_" + self.cfg.datasets.configs[0].dataset.name
+                         + "_" + self.cfg.datasets.configs[1].dataset.name,
+                         "tensorboard", "val"))
+
+        # Get number of total steps to compute remaining training time later
+        # calculate time using target dataset length
+        self.num_total_steps = self.target_num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
+
+        # Save the current configuration of arguments
+        self.io_handler.save_cfg({"time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name
+                                  + "_" + self.cfg.datasets.configs[1].dataset.name}, self.cfg)
+
+        # Load the checkpoint if one is provided
+        if cfg.checkpoint.use_checkpoint:
+            print("Using pretrained weights for the model and optimizer from \n",
+                  os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
+            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
+            # Load pretrained weights for the model and the optimizer status
+            io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
+        else:
+            print("No checkpoint is used. Training from scratch!")

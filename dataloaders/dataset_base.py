@@ -142,7 +142,7 @@ class DatasetRGB(data.Dataset, metaclass=abc.ABCMeta):
         self.cfg = cfg
         self.paths = pathsObj
         self.mode = pathsObj.mode
-        self.rgb_frame_offsets = cfg.train.rgb_frame_offsets
+        self.rgb_frame_offsets = cfg.dataset.rgb_frame_offsets
         self.feed_img_size = cfg.dataset.feed_img_size
 
     @abc.abstractmethod

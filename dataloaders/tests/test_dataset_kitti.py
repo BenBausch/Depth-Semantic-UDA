@@ -1,10 +1,9 @@
-import os
 import unittest
 from matplotlib import pyplot as plt
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 
 from dataloaders import get_dataset
-import  dataloaders.dataset_kitti as kitti
+import  dataloaders.kitti.dataset_kitti as kitti
 from cfg.config_single_dataset import get_cfg_defaults  # local variable usage pattern, or:
 
 class Test_PathProcessing(unittest.TestCase):
@@ -13,7 +12,7 @@ class Test_PathProcessing(unittest.TestCase):
         self.cfg.merge_from_file("data/kitti_all_dataset_test.yaml")
         self.cfg.freeze()
 
-        self.path_rgb_dummy = '/home/petek/kalimu/data/kitti/base/train/2011_09_26_drive_0001_sync/rgb/image_02/data/0000000106.png'
+        self.path_rgb_dummy = '/home/petek/kalimu_depricated/data/kitti_depricated/base/train/2011_09_26_drive_0001_sync/rgb/image_02/data/0000000106.png'
 
     def test_decompose_rgb_path(self):
         mode, drive_seq, cam_id, frame_id, format = kitti.decompose_rgb_path(self.path_rgb_dummy)
