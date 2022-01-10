@@ -1,3 +1,5 @@
+experiment_name: 'synthia_to_cityscapes'
+
 model:
     type: 'guda'
 

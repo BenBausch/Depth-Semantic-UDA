@@ -2,10 +2,12 @@
 # Reference point for all configurable options
 from yacs.config import CfgNode as CN
 from cfg.config_dataset import get_cfg_dataset_defaults
+from copy import deepcopy
 
 # ToDo: Check in the beginning if everything's ok, e.g. whether the specified paths do exist...
 # /----- Create a cfg node
 cfg = CN()
+cfg.experiment_name = ''
 
 # ********************************************************************
 # /------ Training parameters
@@ -135,6 +137,8 @@ def create_configuration(path_to_training_yaml):
                 loss_weight_dictionary[k] = loss[k]
         dataset_config.losses.loss_names_and_weights = [loss_weight_dictionary]
 
+        dataset_config.freeze()
+
         configuration.datasets.configs.append(dataset_config)
 
     if len(configuration.datasets.configs) == 1:
@@ -148,7 +152,35 @@ def create_configuration(path_to_training_yaml):
     return configuration
 
 
+def to_dictionary(value):
+    """
+    Creates a dictionary copy of the yacs configuration.
+    :param value: can either be a yacs cfgnode (configuration) or any other object
+    :return:
+    """
+    value = deepcopy(value)  # prevent changing the underlying objects
+    if isinstance(value, CN):
+        # if value is a cfgNode unpack it into a dictionary
+        value = dict(value)
+        for key, val in value.items():
+            # repeat the same for all sub cfgNodes
+            if isinstance(val, list):
+                # check if objects in lists are not cfgNodes
+                for i, list_val in enumerate(val):
+                    val[i] = to_dictionary(list_val)
+            else:
+                value[key] = to_dictionary(val)
+        return value
+    else:
+        return value
+
+
+
 if __name__ == '__main__':
     configuration_path = r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train' \
                          r'\guda\train_guda_synthia_cityscapes.yaml'
     configi = create_configuration(configuration_path)
+
+    configi_dict = to_dictionary(configi)
+
+    print(configi_dict)

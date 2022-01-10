@@ -1,0 +1,61 @@
+
+Length Target Train Loader: 7500
+Length Target Validation Loader: 0
+Length Source Train Loader: 7500
+Length Source Validation Loader: 9400
+No checkpoint is used. Training from scratch!
+[{'silog_depth': {'weight': 0.85}, 'bce': {'r': 0.3, 'ignore_index': 250}, 'snr': 'None'}]
+[{'silog_depth': 1, 'bce': 0.001, 'snr': 0.01}]
+Training supervised on source dataset using dense depth!
+Training supervised on source dataset using semantic annotations!
+Source ground truth scale is used for computing depth errors while training.
+Source ground truth scale is used for computing depth errors while validating.
+Training unsupervised on target dataset using self supervised depth!
+Training started...
+Training epoch 0 | batch 0
+C:\Users\benba\anaconda3\envs\Masterarbeit\lib\site-packages\torch\nn\functional.py:3635: UserWarning: Default upsampling behavior when mode=bilinear is changed to align_corners=False since 0.4.0. Please specify align_corners=True if the old behavior is desired. See the documentation of nn.Upsample for details.
+  "See the documentation of nn.Upsample for details.".format(mode)
+C:\Users\benba\anaconda3\envs\Masterarbeit\lib\site-packages\torch\nn\functional.py:4004: UserWarning: Default grid_sample and affine_grid behavior has changed to align_corners=False since 1.3.0. Please specify align_corners=True if the old behavior is desired. See the documentation of grid_sample for details.
+  "Default grid_sample and affine_grid behavior has changed "
+Training epoch 0 | batch 1
+Training epoch 0 | batch 2
+Training epoch 0 | batch 3
+Training epoch 0 | batch 4
+Training epoch 0 | batch 5
+Training epoch 0 | batch 6
+Training epoch 0 | batch 7
+Training epoch 0 | batch 8
+Training epoch 0 | batch 9
+Training epoch 0 | batch 10
+Training epoch 0 | batch 11
+Training epoch 0 | batch 12
+Training epoch 0 | batch 13
+Training epoch 0 | batch 14
+Training epoch 0 | batch 15
+Training epoch 0 | batch 16
+Training epoch 0 | batch 17
+Training epoch 0 | batch 18
+Training epoch 0 | batch 19
+Training epoch 0 | batch 20
+Training epoch 0 | batch 21
+Training epoch 0 | batch 22
+Training epoch 0 | batch 23
+Training epoch 0 | batch 24
+Training epoch 0 | batch 25
+Training epoch 0 | batch 26
+Training epoch 0 | batch 27
+Training epoch 0 | batch 28
+Training epoch 0 | batch 29
+Training epoch 0 | batch 30
+Training epoch 0 | batch 31
+Training epoch 0 | batch 32
+Training epoch 0 | batch 33
+Training epoch 0 | batch 34
+Training epoch 0 | batch 35
+Training epoch 0 | batch 36
+Training epoch 0 | batch 37
+Training epoch 0 | batch 38
+Training epoch 0 | batch 39
+Training epoch 0 | batch 40
+Training epoch 0 | batch 41
+Training epoch 0 | batch 42

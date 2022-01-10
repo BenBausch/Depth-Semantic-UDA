@@ -7,6 +7,8 @@ import abc
 # Own classes
 from abc import ABC
 
+from cfg.config_training import to_dictionary
+
 import models
 import dataloaders
 from dataloaders.datasamplers.CompletlyRandomSampler import CompletelyRandomSampler
@@ -19,7 +21,7 @@ import torch
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 
-from tensorboardX import SummaryWriter
+import wandb
 
 
 class TrainBase(metaclass=abc.ABCMeta):
@@ -54,7 +56,6 @@ class TrainBase(metaclass=abc.ABCMeta):
         self.training_start_time = current_time.strftime("%Y_%m_%d_%H_%M_%S")
 
         # See whether a checkpoint shall be used and load the corresponding weights
-
         # Load the checkpoint if one is provided
         if cfg.checkpoint.use_checkpoint:
             print("Using pretrained weights for the model and optimizer from \n",
@@ -64,6 +65,11 @@ class TrainBase(metaclass=abc.ABCMeta):
             io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
         else:
             print("No checkpoint is used. Training from scratch!")
+
+        # Logging
+        wandb.init(project=f"{self.cfg.experiment_name}", entity="benbausch", config=to_dictionary(self.cfg))
+        wandb.watch(self.model)
+
 
     @abc.abstractmethod
     def train(self):
@@ -171,16 +177,6 @@ class TrainSingleDatasetBase(TrainBase, ABC):
                                                                   cfg=self.cfg.datasets.configs[0])
         print(f'Length Validation Loader: {len(self.val_loader)}')
 
-        # Set up SummaryWriters to log data into the tensorboard events file
-        self.writer_train = SummaryWriter(os.path.join(self.path_save_folder,
-                                                       self.training_start_time + "_"
-                                                       + self.cfg.datasets.configs[0].dataset.name,
-                                                       "tensorboard", "train"))
-        self.writer_val = SummaryWriter(os.path.join(self.path_save_folder,
-                                                     self.training_start_time + "_" +
-                                                     self.cfg.datasets.configs[0].dataset.name,
-                                                     "tensorboard", "val"))
-
         # Get number of total steps to compute remaining training time later
         self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
 
@@ -239,18 +235,6 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.val.nof_workers,
                                 cfg=self.cfg.datasets.configs[0])
         print(f'Length Source Validation Loader: {len(self.source_val_loader)}')
-
-        # Set up SummaryWriters to log data into the tensorboard events file
-        self.writer_train = SummaryWriter(
-            os.path.join(self.path_save_folder,
-                         self.training_start_time + "_" + self.cfg.datasets.configs[0].dataset.name
-                         + "_" + self.cfg.datasets.configs[1].dataset.name,
-                         "tensorboard", "train"))
-        self.writer_val = SummaryWriter(
-            os.path.join(self.path_save_folder,
-                         self.training_start_time + "_" + self.cfg.datasets.configs[0].dataset.name
-                         + "_" + self.cfg.datasets.configs[1].dataset.name,
-                         "tensorboard", "val"))
 
         # Get number of total steps to compute remaining training time later
         # calculate time using target dataset length

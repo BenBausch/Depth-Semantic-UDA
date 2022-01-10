@@ -90,6 +90,20 @@ def disp_to_depth(disp, min_depth=0.1, max_depth=100):
     Convert network's sigmoid output into depth prediction.
     The formula for this conversion is given in the 'additional considerations'
     section of the paper'.
+
+    examples: disp = 1 # far objects
+    min_disp = 1 / 100 = 0.01
+    max_disp = 1 / 0.1 = 10
+    scaled_disp = 10
+    depth = 1 / 10 = 0.1
+
+    disp = 0 # close objects
+    min_disp = 1 / 100 = 0.01
+    max_disp = 1 / 0.1 = 10
+    scaled_disp = 0.01
+    depth = 1 / 10 = 100
+
+    --> inverse depth
     """
     min_disp = 1 / max_depth
     max_disp = 1 / min_depth

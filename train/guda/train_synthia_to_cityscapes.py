@@ -9,6 +9,7 @@ from losses import get_loss
 from io_utils import io_utils
 from eval import eval
 import camera_models
+import wandb
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
@@ -228,11 +229,11 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss = self.source_loss_weight * loss_source + self.target_loss_weight * loss_target
 
+        wandb.log({"loss": loss, "epoch": self.epoch})
+
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-
-
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
