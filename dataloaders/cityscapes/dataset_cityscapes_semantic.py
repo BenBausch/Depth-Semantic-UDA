@@ -360,7 +360,6 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToInt64Array(),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
@@ -399,7 +398,6 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
-                tf_prep.ToInt64Array(),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )

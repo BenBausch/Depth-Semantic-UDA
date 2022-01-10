@@ -138,6 +138,11 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
 
         self.ids = np.asarray([i for i in range(len(self.paths.paths_rgb))])
 
+        self.mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
+        self.var = torch.tensor([[[0.18696375, 0.19017339, 0.18720214]]]).transpose(0, 2)
+
+        self.do_normalization = self.cfg.dataset.img_norm
+
     def __len__(self):
         """
         :return: The number of ids in the split of the dataset.
@@ -188,7 +193,11 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         do_flip = random.random() > 0.5
 
         # Get the transformation objects
-        tf_rgb_train = self.tf_rgb_train(self.feed_img_size, do_flip, self.mean)
+        tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,
+                                         do_flip=do_flip,
+                                         do_normalization = self.do_normalization,
+                                         mean=self.mean,
+                                         var=self.var)
 
         rgb_dict_tf = {}
         for k, img in rgb_dict.items():
@@ -204,7 +213,10 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         :return: dict of transformed rgb images and transformed label
         """
         # Get the transformation objects
-        tf_rgb_val = self.tf_rgb_val(self.feed_img_size, self.mean)
+        tf_rgb_val = self.tf_rgb_val(tgt_size=self.feed_img_size,
+                                     do_normalization=self.do_normalization,
+                                     mean=self.mean,
+                                     var=self.var)
 
         rgb_dict_tf = {}
         for k, img in rgb_dict.items():
@@ -239,38 +251,40 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         return img
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, mean): # fixme add augmentations to train and val rgb transforms
+    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var): # fixme add augmentations to train and val rgb transforms
         """
         Transformations of the rgb image during training.
         :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
         :param do_flip: True if the image should be horizontally flipped else False
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToInt64Array(),
-                tf_prep.NormalizeRGB(mean, True),
-                tf_prep.PrepareForNet()
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
     @staticmethod
-    def tf_rgb_val(tgt_size, mean):
+    def tf_rgb_val(tgt_size, do_normalization, mean, var):
         """
         Transformations of the rgb image during validation.
         :param mean: mean of rgb images
         :param tgt_size: target size of the images after resize operation
+        :param do_normalization: true if image should be normalized
+        :param mean: mean of R,G,B of rgb images
+        :param var: variance in R,G,B of rgb images
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
-                tf_prep.ToInt64Array(),
-                tf_prep.NormalizeRGB(mean, True),
-                tf_prep.PrepareForNet()
+                tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
 
@@ -279,19 +293,10 @@ if __name__ == "__main__":
     from cfg.config_dataset import get_cfg_dataset_defaults
     cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_sequence.yaml')
+        r'cfg/yaml_files/train/guda/cityscapes_sequence.yaml')
     cfg.freeze()
     CITY_dataset = CityscapesSequenceDataset("train", None, cfg)
 
-    ds = DataLoader(CITY_dataset, batch_size=8, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
+    ds = DataLoader(CITY_dataset, batch_size=1, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
 
-    mean = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
-    var = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
-    for i, data in enumerate(ds):
-        print(i)
-        data = data[('rgb', 0)].to('cuda:0')
-        data = data.view(data.size(0), data.size(1), -1)
-        mean += data.mean(2).sum(0)
-        var += data.var(2).sum(0)
-    print(mean / len(ds))
-    print(var / len(ds))
+
