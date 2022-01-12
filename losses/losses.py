@@ -45,7 +45,11 @@ class BootstrappedCrossEntropy(nn.Module):
         return loss
 
 
-class SurfaceNormalRegularizationLoss(nn.Module):  # todo: test this implementation
+class SurfaceNormalRegularizationLoss(nn.Module):
+    """
+    Surface normal regularization loss as defined in the paper
+    "Geometric Unsupervised Domain Adaptation for Semantic Segmentation": https://arxiv.org/pdf/2103.16694.pdf
+    """
     def __init__(self, normalized_camera_model, device):
         super(SurfaceNormalRegularizationLoss, self).__init__()
         self.device = device
@@ -58,25 +62,41 @@ class SurfaceNormalRegularizationLoss(nn.Module):  # todo: test this implementat
         self.padder_w = torch.nn.ReflectionPad2d((0, 1, 0, 0))
 
     def get_normal_vectors(self, points3d):
-        diff_h = (points3d[:, :, 0:, :] - self.padder_h(points3d[:, :, 1:, :]))
-        diff_w = (points3d[:, :, :, 0:] - self.padder_w(points3d[:, :, :, 1:]))
+        """
+        Estimates the surface normal from 3D points as stated in https://arxiv.org/pdf/2103.16694.pdf
+        :param points3d: tensor of shape [batch_size, 3, image_height, image_width]
+        :return:
+        """
+        diff_h = (self.padder_h(points3d[:, :, 1:, :]) - points3d[:, :, 0:, :])
+        diff_w = (self.padder_w(points3d[:, :, :, 1:]) - points3d[:, :, :, 0:])
 
-        normals = torch.cross(diff_w, diff_h)
+        normals = torch.cross(diff_h, diff_w)
         vector_norms = torch.linalg.vector_norm(normals, dim=1).unsqueeze(1)
 
-        return normals / vector_norms
+        return torch.divide(normals, (vector_norms + 1e-09))
+
+    def cosine_similarity_guda(self, normals_pred, normals_gt):
+        """
+        Calculates the cosine similarity as stated in https://arxiv.org/pdf/2103.16694.pdf
+        :param normals_pred: normals calculated from predicted depth
+        :param normals_gt: normals calculated from ground truth depth
+        """
+        return torch.divide(torch.sum(1 - self.cos_sim(normals_pred, normals_gt), dim=(1, 2))
+                            , 2 * self.image_height * self.image_width)
 
     def forward(self, depth_prediction, depth_gt):
+        """
+        :param depth_prediction: predicted depth (not inverse depth!)
+        :param depth_gt: ground truth depth (not inverse depth!)
+        :return:
+        """
         points3d_prediction = self.img_to_pointcloud(depth_prediction)
         points3d_gt = self.img_to_pointcloud(depth_gt)
 
         normals_prediction = self.get_normal_vectors(points3d_prediction)
         normals_gt = self.get_normal_vectors(points3d_gt)
 
-        simi = torch.divide(torch.sum(1 - self.cos_sim(normals_prediction, normals_gt), dim=(1, 2))
-                            , 2 * self.image_height * self.image_width)
-
-        return simi
+        return self.cosine_similarity_guda(normals_pred=normals_prediction, normals_gt=normals_gt)
 
 
 # This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with

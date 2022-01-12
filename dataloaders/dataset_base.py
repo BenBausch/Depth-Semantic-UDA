@@ -79,11 +79,11 @@ class PathsHandlerDepthDense(PathsHandlerRGB):
 
         # Move parameters from cfg to local variables for readability
         self.use_sparse_depth = cfg.dataset.use_sparse_depth
-        if mode is 'train':
+        if mode == 'train':
             self.gt_depth_available = cfg.eval.train.gt_depth_available
-        elif mode is 'val':
+        elif mode == 'val':
             self.gt_depth_available = cfg.eval.val.gt_depth_available
-        elif mode is 'test':
+        elif mode == 'test':
             self.gt_depth_available = cfg.eval.test.gt_depth_available
         else:
             assert False, "There is no other mode than 'train', 'val' and 'test'"
@@ -113,11 +113,11 @@ class PathsHandlerSemantic(PathsHandlerRGB):
     def __init__(self, mode, split, cfg):
         super(PathsHandlerSemantic, self).__init__(mode, split, cfg)
         # Move parameters from cfg to local variables for readability
-        if mode is 'train':
+        if mode == 'train':
             self.gt_semantic_available = cfg.eval.train.gt_semantic_available
-        elif mode is 'val':
+        elif mode == 'val':
             self.gt_semantic_available = cfg.eval.val.gt_semantic_available
-        elif mode is 'test':
+        elif mode == 'test':
             self.gt_semantic_available = cfg.eval.test.gt_semantic_available
         else:
             assert False, "There is no other mode than 'train', 'val' and 'test'"

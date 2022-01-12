@@ -8,13 +8,6 @@ from models.helper_models.semantic_decoder import SemanticDecoder
 from models.helper_models.pose_decoder import PoseDecoder
 
 from models.helper_models.layers import *
-
-
-# ToDo: Das Netz wird an die Anzahl der Skalen angepasst, um entsprechende Tiefenkarten auszugeben. Wir skalieren jedoch
-#  die RGB Bilder und die ausgegebene Tiefenkarte herunter -> Die anzahl beider Skalen, d.h. die bezüglich der
-#  Netzstruktur und die zur BErechnung des photom. Fehlers ist an self.num_scales gebunden -> FIX THAT
-
-
 class Guda(SemanticDepthFromMotionModelBase):
 
     # --------------------------------------------------------------------------
@@ -79,6 +72,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.dataset_predict_depth = []
         self.dataset_predict_semantic = []
         self.dataset_predict_pose = []
+        self.dataset_min_max_depth = []
 
         # all datasets should have the same number of classes because they use the same semantic head
         self.num_classes = self.cfg.datasets.configs[0].dataset.num_classes
@@ -86,6 +80,9 @@ class Guda(SemanticDepthFromMotionModelBase):
         # collect the parameters from all the datasets
         for i, dcfg in enumerate(self.cfg.datasets.configs):
             self.rgb_frame_offsets.append(dcfg.dataset.rgb_frame_offsets)
+
+            # get the depth ranges for each dataset
+            self.dataset_min_max_depth.append([dcfg.dataset.min_depth, dcfg.dataset.max_depth])
 
             # in all these cases depth prediction is needed
             self.dataset_predict_depth.append(dcfg.dataset.use_sparse_depth or
@@ -170,11 +167,19 @@ class Guda(SemanticDepthFromMotionModelBase):
     def latent_features(self, images):
         return self.networks["resnet_encoder"](images)
 
-    def predict_depth(self, features):
+    def predict_depth(self, features, dataset_id):
+        """
+        Predicts inverse depth map.
+        :param features: features from the encoder.
+        :param dataset_id: the dataset for which to predict the depth
+        :return:
+        """
         # The network actually outputs the inverse depth!
         raw_sigmoid = self.networks["depth_decoder"](features)
         raw_sigmoid_scale_0 = raw_sigmoid[("disp", 0)]
-        _, depth_pred = disp_to_depth(raw_sigmoid_scale_0)
+        _, depth_pred = disp_to_depth(disp=raw_sigmoid_scale_0,
+                                      min_depth=self.dataset_min_max_depth[dataset_id][0],
+                                      max_depth=self.dataset_min_max_depth[dataset_id][1])
 
         return depth_pred, raw_sigmoid_scale_0
 
@@ -225,7 +230,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         results = {}
 
         if self.dataset_predict_depth[dataset_id]:
-            results['depth'] = self.predict_depth(latent_features_batch)
+            results['depth'] = self.predict_depth(latent_features_batch, dataset_id=dataset_id)
         else:
             results['depth'] = None
 

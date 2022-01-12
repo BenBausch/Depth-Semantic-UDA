@@ -1,5 +1,6 @@
 # Own files
 import torch
+import wandb
 from torch.utils.data import DataLoader
 
 from misc import transforms as tf_prep
@@ -241,8 +242,12 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         if offset != 0:
             tgt_frame_id = '{0:06d}'.format(int(frame_id) + offset)
 
-            tgt_path_file = self.paths.get_rgb_image_path(mode, cities=city, frame_ids=tgt_frame_id, seq_ids=seq_number,
-                                                          data_type=data_type, file_format=file_format)
+            tgt_path_file = self.paths.get_rgb_image_path(path_base=parent_dir,
+                                                          mode=mode, cities=city,
+                                                          frame_ids=tgt_frame_id,
+                                                          seq_ids=seq_number,
+                                                          data_type=data_type,
+                                                          file_format=file_format)
 
         if tgt_path_file is None:
             return None
@@ -297,6 +302,16 @@ if __name__ == "__main__":
     cfg.freeze()
     CITY_dataset = CityscapesSequenceDataset("train", None, cfg)
 
-    ds = DataLoader(CITY_dataset, batch_size=1, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
+    wandb.init(project='dataset-cityscapes-semantic')
 
+    ds = DataLoader(CITY_dataset, batch_size=1, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
 
+    wandb.log({'len_dataset': len(ds)})
+
+    for i, data in enumerate(ds):
+        img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB 0")
+        img_minus_1 = wandb.Image(data[('rgb', -1)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB -1")
+        img_plus_1 = wandb.Image(data[('rgb', 1)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB +1")
+        wandb.log({'images': [img0, img_minus_1, img_plus_1]})
+        if i == 10:
+            break

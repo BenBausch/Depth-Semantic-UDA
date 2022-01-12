@@ -67,8 +67,7 @@ class TrainBase(metaclass=abc.ABCMeta):
             print("No checkpoint is used. Training from scratch!")
 
         # Logging
-        wandb.init(project=f"{self.cfg.experiment_name}", entity="benbausch", config=to_dictionary(self.cfg))
-        wandb.watch(self.model)
+        wandb.init(project=f"{self.cfg.experiment_name}", config=to_dictionary(self.cfg))
 
 
     @abc.abstractmethod

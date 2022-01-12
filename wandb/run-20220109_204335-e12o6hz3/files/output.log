@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "C:/Users/benba/Documents/University/Masterarbeit/Depth-Semantic-UDA/scripts/guda_train.py", line 14, in <module>
-    depth_trainer = train_synthia_to_cityscapes.GUDATrainer(cfg)
-  File "C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\train\guda\train_synthia_to_cityscapes.py", line 16, in __init__
-    super(GUDATrainer, self).__init__(cfg=cfg)
-  File "C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\train\base\train_base.py", line 205, in __init__
-    name=self.cfg.datasets.configs[1].dataset.name,
-AttributeError: 'dict' object has no attribute 'dataset'

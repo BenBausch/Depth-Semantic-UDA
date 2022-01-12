@@ -1,5 +1,6 @@
 # Own packages
 from losses.losses import *
+from camera_models import PinholeCameraModel
 
 # Python packages
 import torch
@@ -7,6 +8,52 @@ import torch.nn as nn
 import unittest
 import numpy as np
 import math
+
+
+class TestSurfaceNormalRegularizationLoss(unittest.TestCase):
+
+    def test_cosine_similarity(self):
+        use_less_camera = PinholeCameraModel(2, 2, 1, 1, 1, 1)  # just needed for initializing the loss, not used in
+        # this test
+        loss = SurfaceNormalRegularizationLoss(use_less_camera, 'cpu')
+
+        normals_gt = torch.tensor(
+            [[[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+              [[1.0, 0.0, 0.0], [0.0, 3.0, 0.0]]]]
+        ).transpose(1, 3)
+
+        normals_pred = torch.tensor(
+            [[[[0.0, 0.0, 0.0], [3.0, 4.0, 0.0]],
+              [[4.0, 0.0, 3.0], [5.0, 0.0, 2.0]]]]
+        ).transpose(1, 3)
+
+        self.assertTrue(torch.equal(loss.cosine_similarity_guda(normals_pred, normals_gt), torch.tensor([0.325])))
+
+
+    def test_get_normal_vectors(self):
+        use_less_camera = PinholeCameraModel(4, 3, 1, 1, 1, 1)  # just needed for initializing the loss, not used in
+        # this test
+        loss = SurfaceNormalRegularizationLoss(use_less_camera, 'cpu')
+        points3d = torch.tensor([[[[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]],
+                                       [[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0]],
+                                       [[0.0, 0.0, 2.0], [0.0, 2.0, 1.0], [0.0, 2.0, 0.0], [1.0, 2.0, 0.0]]]]
+                                     ).transpose(1, 3)
+
+        normals_gt = torch.tensor(
+            [[[[0.0, 0.0, 0.0], [-0.707107, -0.707107, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]],
+              [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [-0.707107, 0.0, 0.707107], [1.0, 0.0, 0.0]],
+              [[-1.0, 0.0, 0.0], [-1.0, 0.0, 0.0], [0.0, -0.447214, -0.894427],
+               [0, 0.707107, 0.707107]]]]
+            ).transpose(1, 3)
+
+        normals = loss.get_normal_vectors(points3d)
+
+        precision = 4
+        rounded_gt = np.true_divide(np.floor(normals_gt * 10 ** precision), 10 ** precision)
+        rounded_normals = np.true_divide(np.floor(normals * 10 ** precision), 10 ** precision)
+
+        self.assertTrue(torch.equal(rounded_gt, rounded_normals))
+
 
 
 class TestBootstrappedCrossEntropy(unittest.TestCase):
@@ -43,7 +90,7 @@ class TestBootstrappedCrossEntropy(unittest.TestCase):
         loss_flat = [1.1733, 0.6922, 0.6184, 0.0]  # calculated using well implement cross_entropy loss from pytorch
         worst_2_avg = (loss_flat[0] + loss_flat[1]) / 2
 
-        loss_btce_value = math.floor(btce(prediction, target).item() * 100000) / 100000 # floor to 5 decimal points
+        loss_btce_value = math.floor(btce(prediction, target).item() * 100000) / 100000  # floor to 5 decimal points
 
         assert worst_2_avg == loss_btce_value
 
@@ -75,9 +122,9 @@ class TestL1Loss(unittest.TestCase):
         self.mask = depth > 0
 
     def test_masking(self):
-        print("Unmasked:", self.diff_tensor)
-        print("Mask:", self.mask)
-        print("Masked:", self.diff_tensor[self.mask])
+        #print("Unmasked:", self.diff_tensor)
+        #print("Mask:", self.mask)
+        #print("Masked:", self.diff_tensor[self.mask])
 
         mean_unmasked = self.diff_tensor.mean()
         mean_masked = self.diff_tensor[self.mask].mean()
@@ -85,11 +132,11 @@ class TestL1Loss(unittest.TestCase):
         self.assertAlmostEqual(mean_unmasked, 3.0)
         self.assertAlmostEqual(mean_masked, 4.5)
 
-        print("Expected unmasked mean:", 3.0)
-        print("Actual unmasked mean:", mean_unmasked)
+        #print("Expected unmasked mean:", 3.0)
+        #print("Actual unmasked mean:", mean_unmasked)
 
-        print("Expected masked mean:", 4.5)
-        print("Actual masked mean:", mean_masked)
+        #print("Expected masked mean:", 4.5)
+        #print("Actual masked mean:", mean_masked)
 
 
 if "__main__" == __name__:

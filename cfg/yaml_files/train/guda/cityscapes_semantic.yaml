@@ -11,7 +11,7 @@ dataset:
     shuffle: True
     num_classes: 19
     min_depth : 0.01
-    max_depth : 655.35
+    max_depth : 100.0
     rgb_frame_offsets: [0]
     sequence_dataset: False
 

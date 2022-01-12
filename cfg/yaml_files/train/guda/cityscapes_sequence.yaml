@@ -1,6 +1,6 @@
 dataset:
     name: 'cityscapes_sequence'
-    path: '/work/dlclarge1/bauschb-data/Cityscapes/leftImg8bit_sequence/'  # todo: change this to sequence path
+    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit_sequence' #'/work/dlclarge1/bauschb-data/Cityscapes/leftImg8bit_sequence/'
     feed_img_size: [ 544, 384 ]
     use_sparse_depth: False
     use_dense_depth: False
@@ -11,7 +11,7 @@ dataset:
     shuffle: True
     num_classes: 19
     min_depth : 0.01
-    max_depth : 100
+    max_depth : 100.0
     rgb_frame_offsets: [0, -1, +1]
     sequence_dataset: True
 

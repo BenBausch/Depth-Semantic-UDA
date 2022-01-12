@@ -177,12 +177,17 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.set_train()
 
+        for _, net in self.model.get_networks().items():
+            wandb.watch(net, log_freq=1)
+
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
             print(f"Training epoch {self.epoch} | batch {batch_idx}")
 
             self.training_step(data, batch_idx)
 
+            if batch_idx == 10:
+                break
 
         # Update the scheduler
         self.scheduler.step()
@@ -205,7 +210,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         semantic_pred = prediction['semantic']
 
-        loss_source = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
+        loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
                                                  semantic_pred, data[0]['semantic'])
 
         # -----------------------------------------------------------------------------------------------
@@ -221,7 +226,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
 
-        loss_target = self.compute_losses_target(data[1], depth_pred, pose_pred)
+        loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
 
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------------Optimization-------------------------------------------
@@ -229,31 +234,63 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss = self.source_loss_weight * loss_source + self.target_loss_weight * loss_target
 
-        wandb.log({"loss": loss, "epoch": self.epoch})
-
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
+        print(loss_source_dict)
+        print(loss_target_dict)
+        wandb.log({"total loss": loss})
+        wandb.log(loss_source_dict)
+        wandb.log(loss_target_dict)
+        #wandb.log({"epoch": self.epoch, "loss": loss}, step=batch_idx)
+
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
-        sillog_loss = self.source_silog_depth_weigth * self.source_silog_depth(pred=depth_pred,
-                                                                               target=depth_target)  # todo: get inverse depth
-        bce_loss = self.source_bce_weigth * self.source_bce(prediction=semantic_pred, target=semantic_gt)
-        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target)
+        inv_depth_target = 1 / (depth_target + 1e-09)  # ground truth is non-inverse depth map
+        inv_depth_pred = 1 / (depth_pred + 1e-09)  # network predicts inverse --> inv_depth_target is a non-inverse depth map
 
-        return sillog_loss + bce_loss + snr_loss
+        # inverse depth --> pixels close to the camera have a high value, far away pixels have a small value
+        # non-inverse depth map --> pixels far from the camera have a high value, close pixels have a small value
+
+        silog_loss = self.source_silog_depth_weigth * self.source_silog_depth(pred=depth_pred,
+                                                                               target=inv_depth_target)
+        loss_dict['silog_loss'] = silog_loss
+
+        bce_loss = self.source_bce_weigth * self.source_bce(prediction=semantic_pred, target=semantic_gt)
+        loss_dict['bce'] = bce_loss
+
+        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=inv_depth_pred, depth_gt=depth_target)
+        loss_dict['snr'] = snr_loss
+
+        if torch.isnan(silog_loss).item() or torch.isnan(bce_loss).item() or torch.isnan(snr_loss).item():
+            print(torch.min(inv_depth_target))
+            print(torch.max(inv_depth_target))
+            print(torch.min(depth_target))
+            print(torch.max(depth_target))
+            print(torch.min(inv_depth_pred))
+            print(torch.max(inv_depth_pred))
+            print(torch.min(depth_pred))
+            print(torch.max(depth_pred))
+            print(torch.min(semantic_gt))
+            print(torch.max(semantic_gt))
+            print(torch.min(semantic_pred))
+            print(torch.max(semantic_pred))
+            raise ValueError('Loss is Nan!')
+
+        return silog_loss + bce_loss + snr_loss, loss_dict
 
     def compute_losses_target(self, data, depth_pred, poses):
         loss_dict = {}
-        reconsruction_loss = \
+        reconsruction_loss = self.target_reconstruction_weight * \
             self.target_reconstruction_loss(batch_data=data,
                                             pred_depth=depth_pred,
                                             poses=poses,
                                             rgb_frame_offsets=self.cfg.datasets.configs[1].dataset.rgb_frame_offsets,
                                             use_automasking=self.target_reconstruction_use_automasking,
                                             use_ssim=self.target_reconstruction_use_ssim)
-        return self.target_reconstruction_weight * reconsruction_loss
+        loss_dict['reconstruction'] = reconsruction_loss
+        return reconsruction_loss, loss_dict
 
     def set_train(self):
         for m in self.model.networks.values():

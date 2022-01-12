@@ -371,7 +371,6 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToInt64Array(),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
@@ -410,7 +409,6 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
-                tf_prep.ToInt64Array(),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
@@ -442,6 +440,7 @@ if __name__ == "__main__":
         r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\gta5.yaml')
     cfg.freeze()
     gta_dataset = GTA5Dataset('train', 'train', cfg)
+    print((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
     plt.imshow((next(iter(gta_dataset))[("rgb", 0)].numpy().transpose(1, 2, 0)))
     plt.show()
     plt.imshow((next(iter(gta_dataset))[("rgb", 1)].numpy().transpose(1, 2, 0)))
