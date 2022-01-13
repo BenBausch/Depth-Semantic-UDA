@@ -247,29 +247,22 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
-        inv_depth_target = 1 / (depth_target + 1e-09)  # ground truth is non-inverse depth map
-        inv_depth_pred = 1 / (depth_pred + 1e-09)  # network predicts inverse --> inv_depth_target is a non-inverse depth map
-
         # inverse depth --> pixels close to the camera have a high value, far away pixels have a small value
         # non-inverse depth map --> pixels far from the camera have a high value, close pixels have a small value
 
         silog_loss = self.source_silog_depth_weigth * self.source_silog_depth(pred=depth_pred,
-                                                                               target=inv_depth_target)
+                                                                               target=depth_target)
         loss_dict['silog_loss'] = silog_loss
 
         bce_loss = self.source_bce_weigth * self.source_bce(prediction=semantic_pred, target=semantic_gt)
         loss_dict['bce'] = bce_loss
 
-        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=inv_depth_pred, depth_gt=depth_target)
+        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target)
         loss_dict['snr'] = snr_loss
 
         if torch.isnan(silog_loss).item() or torch.isnan(bce_loss).item() or torch.isnan(snr_loss).item():
-            print(torch.min(inv_depth_target))
-            print(torch.max(inv_depth_target))
             print(torch.min(depth_target))
             print(torch.max(depth_target))
-            print(torch.min(inv_depth_pred))
-            print(torch.max(inv_depth_pred))
             print(torch.min(depth_pred))
             print(torch.max(depth_pred))
             print(torch.min(semantic_gt))
