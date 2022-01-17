@@ -23,13 +23,11 @@ class CompletelyRandomSampler(Sampler):
         # dataset size might change at runtime
         if self._num_samples is None:
             return len(self.data_source)
-        if self._num_samples > len(self.data_source):
-            raise ValueError('num_samples can not be more than length of data_source!')
         return self._num_samples
 
     def __iter__(self):
         n = len(self.data_source)
-        return iter(torch.randperm(n, dtype=torch.int64)[: self.num_samples].tolist())
+        return iter(torch.randint(low=0, high=n, size=(self.num_samples,), dtype=torch.int64))
 
     def __len__(self):
         return self.num_samples
@@ -37,20 +35,12 @@ class CompletelyRandomSampler(Sampler):
 
 if __name__ == '__main__':
     from dataloaders.cityscapes.dataset_cityscapes_semantic import CityscapesSemanticDataset
-    from cfg.config_single_dataset import get_cfg_defaults
+    from cfg.config_dataset import get_cfg_dataset_defaults
     from torch.utils.data import Sampler
     import matplotlib.pyplot as plt
-    cfg = get_cfg_defaults()
+    cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train_cityscapes_semantic.yaml')
-    cfg.train.rgb_frame_offsets = [0]
-    cfg.eval.train.gt_depth_available = False
-    cfg.eval.val.gt_depth_available = False
-    cfg.eval.test.gt_depth_available = False
-    cfg.dataset.use_sparse_depth = False
-    cfg.eval.train.gt_semantic_available = False
-    cfg.eval.val.gt_semantic_available = False
-    cfg.eval.test.gt_semantic_available = False
+        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_semantic.yaml')
     cfg.freeze()
     CITY_dataset = CityscapesSemanticDataset("train", None, cfg)
 
@@ -58,7 +48,7 @@ if __name__ == '__main__':
     img_w = cfg.dataset.feed_img_size[0]
     batch_size = 1
     ds = DataLoader(CITY_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True,
-                    sampler=CompletelyRandomSampler(data_source=CITY_dataset, num_samples=1))
+                    sampler=CompletelyRandomSampler(data_source=CITY_dataset, num_samples=100000))
 
     for epoch in range(3):
         for i, data in enumerate(ds):
