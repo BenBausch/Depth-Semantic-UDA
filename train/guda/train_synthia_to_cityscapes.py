@@ -281,7 +281,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         soft_pred = F.softmax(prediction['semantic'], dim=1)
         self.miou.update(mask_pred=soft_pred, mask_gt=data['semantic'])
 
-
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
         # inverse depth --> pixels close to the camera have a high value, far away pixels have a small value
