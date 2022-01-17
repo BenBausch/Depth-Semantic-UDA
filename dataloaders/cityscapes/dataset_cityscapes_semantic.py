@@ -191,12 +191,6 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         self.img_size = cfg.dataset.feed_img_size
         self.img_norm = cfg.dataset.img_norm
 
-
-        # mean tensor([2.2948, 2.6006, 2.2707], device='cuda:0') / 8
-        # variance tensor([0.2621, 0.2749, 0.2669], device='cuda:0') / 8
-
-        # mean and std from https://github.com/inferno-pytorch/inferno/blob/master/inferno/io/box/cityscapes.py
-        # todo: validate these numbers
         self.mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
         self.var = torch.tensor([[[0.18696375, 0.19017339, 0.18720214]]]).transpose(0, 2)
 
@@ -243,7 +237,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         data = {}
 
         if gt_semantic is not None:
-            data["gt"] = gt_semantic
+            data["semantic"] = gt_semantic
 
         for offset, val in rgb_imgs.items():
             data[("rgb", offset)] = val
@@ -267,10 +261,10 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
                                          var=self.var)
         tf_semantic_train = self.tf_semantic_train(self.feed_img_size,
                                                    do_flip,
-                                                   self.void_classes,
                                                    self.valid_classes,
                                                    self.class_map,
-                                                   self.ignore_index)
+                                                   self.ignore_index,
+                                                   self.label_colours)
 
         rgb_dict_tf = {}
         for k, img in rgb_dict.items():
@@ -293,10 +287,10 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
                                      mean=self.mean,
                                      var=self.var)
         tf_semantic_val = self.tf_semantic_val(self.feed_img_size,
-                                               self.void_classes,
                                                self.valid_classes,
                                                self.class_map,
-                                               self.ignore_index)
+                                               self.ignore_index,
+                                               self.label_colours)
 
         rgb_dict_tf = {}
         for k, img in rgb_dict.items():
@@ -316,7 +310,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
             return None
         else:
             assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
-            label = pil.open(path_file)
+            label = pil.open(path_file).convert('RGB')
             return label
 
     def get_rgb(self, path_file, offset):
@@ -365,12 +359,12 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         )
 
     @staticmethod
-    def tf_semantic_train(tgt_size, do_flip, void_classes, valid_classes, class_map, ignore_index):
+    def tf_semantic_train(tgt_size, do_flip, valid_classes, class_map, ignore_index, label_colors):
         """
         Transformations of the label during training.
+        :param label_colors: dict mapping valid class id to its rgb color
         :param ignore_index: pixel will be labeled ignore_index if they are not part of a valid class
         :param class_map: dict mapping valid class ids to numbers
-        :param valid_classes: list of valid classes
         :param void_classes: list of non valid classes (such pixel will be set to ignore index)
         :param tgt_size: target size of the labels after resize operation
         :param do_flip: True if the image should be horizontally flipped else False
@@ -380,8 +374,8 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
             [
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.PILHorizontalFlip(do_flip),
-                tf_prep.ToInt64Array(),
-                tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
+                tf_prep.ToInt32Array(),
+                tf_prep.CityscapesEncodeSegmentation(valid_classes, class_map, ignore_index, label_colors)
             ]
         )
 
@@ -403,21 +397,21 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         )
 
     @staticmethod
-    def tf_semantic_val(tgt_size, void_classes, valid_classes, class_map, ignore_index):
+    def tf_semantic_val(tgt_size, valid_classes, class_map, ignore_index, label_colors):
         """
         Transformations of the labels during validation.
+        :param label_colors: dict mapping valid class id to its rgb color
         :param ignore_index: pixel will be labeled ignore_index if they are not part of a valid class
         :param class_map: dict mapping valid class ids to numbers
         :param valid_classes: list of valid classes
-        :param void_classes: list of non valid classes (such pixel will be set to ignore index)
         :param tgt_size: target size of the labels after resize operation
         :return: Transformation composition
         """
         return transforms.Compose(
             [
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
-                tf_prep.ToInt64Array(),
-                tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
+                tf_prep.ToInt32Array(),
+                tf_prep.CityscapesEncodeSegmentation(valid_classes, class_map, ignore_index, label_colors)
             ]
         )
 
@@ -451,18 +445,9 @@ if __name__ == "__main__":
 
     img_h = cfg.dataset.feed_img_size[1]
     img_w = cfg.dataset.feed_img_size[0]
-    batch_size = 32
+    batch_size = 1
     ds = DataLoader(CITY_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
 
-    mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2).to('cuda:0')
-
-    print('Calculating var:')
-    var = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
     for i, data in enumerate(ds):
-        print(i)
-        data = data[('rgb', 0)].to('cuda:0')
-        #data = data.view(data.size(0), data.size(1), -1)
-        var += torch.sum(((data - mean) ** 2), dim=(0, 2, 3)) / (batch_size * img_h * img_w)
-        print(var / (i + 1))
-    var = var / len(ds)
-    print(var)
+        plt.imshow(data['semantic'][0])
+        plt.show()

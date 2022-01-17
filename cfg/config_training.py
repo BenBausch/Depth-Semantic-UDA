@@ -126,16 +126,18 @@ def create_configuration(path_to_training_yaml):
         # process losses to be list of dictionary instead of list of multiple dictionaries for easier access without
         # slicing
         loss_dictionary = {}
-        for loss in dataset_config.losses.loss_names_and_parameters:
-            for k in loss.keys():
-                loss_dictionary[k] = loss[k]
-        dataset_config.losses.loss_names_and_parameters = [loss_dictionary]
+        if dataset_config.losses.loss_names_and_parameters is not None:
+            for loss in dataset_config.losses.loss_names_and_parameters:
+                for k in loss.keys():
+                    loss_dictionary[k] = loss[k]
+            dataset_config.losses.loss_names_and_parameters = [loss_dictionary]
 
         loss_weight_dictionary = {}
-        for loss in dataset_config.losses.loss_names_and_weights:
-            for k in loss.keys():
-                loss_weight_dictionary[k] = loss[k]
-        dataset_config.losses.loss_names_and_weights = [loss_weight_dictionary]
+        if dataset_config.losses.loss_names_and_weights is not None:
+            for loss in dataset_config.losses.loss_names_and_weights:
+                for k in loss.keys():
+                    loss_weight_dictionary[k] = loss[k]
+            dataset_config.losses.loss_names_and_weights = [loss_weight_dictionary]
 
         dataset_config.freeze()
 
@@ -147,6 +149,11 @@ def create_configuration(path_to_training_yaml):
     if len(configuration.datasets.configs) == 2:
         print(f'Two datasets specified: source is {configuration.datasets.configs[0].dataset.name} and '
               f'target is {configuration.datasets.configs[1].dataset.name}')
+
+    if len(configuration.datasets.configs) == 3:
+        print(f'Three datasets specified: source is {configuration.datasets.configs[0].dataset.name} and '
+              f'target is {configuration.datasets.configs[1].dataset.name} and '
+              f'validation dataset is {configuration.datasets.configs[2].dataset.name}')
 
     configuration.freeze()
     return configuration

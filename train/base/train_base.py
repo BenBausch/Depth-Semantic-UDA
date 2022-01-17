@@ -207,13 +207,14 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[1])
         print(f'Length Target Train Loader: {len(self.target_train_loader)}')
+
         self.target_val_loader, self.target_num_val_files = \
             self.get_dataloader(mode="val",
-                                name=self.cfg.datasets.configs[1].dataset.name,
-                                split=self.cfg.datasets.configs[1].dataset.split,
+                                name=self.cfg.datasets.configs[2].dataset.name,
+                                split=self.cfg.datasets.configs[2].dataset.split,
                                 bs=self.cfg.val.batch_size,
                                 num_workers=self.cfg.val.nof_workers,
-                                cfg=self.cfg.datasets.configs[1])
+                                cfg=self.cfg.datasets.configs[2])
         print(f'Length Target Validation Loader: {len(self.target_val_loader)}')
 
         self.source_train_loader, self.source_num_train_files = \
@@ -226,15 +227,6 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 sample_completely_random=True,
                                 num_samples=self.target_num_train_files)
         print(f'Length Source Train Loader: {len(self.source_train_loader)}')
-        self.source_val_loader, self.source_num_val_files = \
-            self.get_dataloader(mode="val",
-                                name=self.cfg.datasets.configs[0].dataset.name,
-                                split=self.cfg.datasets.configs[0].dataset.split,
-                                bs=self.cfg.val.batch_size,
-                                num_workers=self.cfg.val.nof_workers,
-                                cfg=self.cfg.datasets.configs[0])
-        print(f'Length Source Validation Loader: {len(self.source_val_loader)}')
-
         # Get number of total steps to compute remaining training time later
         # calculate time using target dataset length
         self.num_total_steps = self.target_num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs

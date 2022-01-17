@@ -490,6 +490,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
 if __name__ == "__main__":
     from cfg.config_dataset import get_cfg_dataset_defaults
+
     cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(
         r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\synthia.yaml')
@@ -499,32 +500,58 @@ if __name__ == "__main__":
     img_w = cfg.dataset.feed_img_size[0]
 
     ds = SynthiaRandCityscapesDataset(mode='val', split=None, cfg=cfg)
-    batch_size = 64
+    batch_size = 1
     ds = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
+    import wandb
+    from utils.plotting_utils import CITYSCAPES_ID_TO_NAME, CITYSCAPES_CLASS_IDS, CITYSCAPES_CLASS_NAMES, \
+    CITYSCAPES_ID_TO_COLOR
+    from utils.plotting_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
+    import matplotlib.patches as mpatches
+    import matplotlib.colors as colors
 
-    print(len(ds))
+    patches = [
+        mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[i]/255), label=f'{i}. {CITYSCAPES_CLASS_NAMES[i]}') for
+        i in
+        range(len(CITYSCAPES_CLASS_IDS) - 1)]
+    patches.append(
+        mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[250]/255), label=f'{250}. {CITYSCAPES_CLASS_NAMES[-1]}'))
+
+    wandb.init(project='synthia')
 
     torch.set_printoptions(precision=9)
 
+    for i, data in enumerate(ds):
+        img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB")
+        img_semantic = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0),
+                                   masks={'ground_truth': {
+                                       'mask_data': data['semantic'].squeeze(0).numpy(),
+                                       'class_labels': CITYSCAPES_ID_TO_NAME
+                                   }}, caption="Semantic")
+        img_depth = wandb.Image(data['depth_dense'].squeeze(0).numpy().transpose(1, 2, 0), caption="Depth")
+        wandb.log({'images': [img0, img_semantic, img_depth]})
+        plt.imshow(s_to_rgb(data['semantic']))
+        plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show()
+        if i == 10:
+            break
 
     """mean = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
     for i, data in enumerate(ds):
-        print(i)
+        #print(i)
         data = data[('rgb', 0)].to('cuda:0')
         data = data.view(data.size(0), data.size(1), -1)
         mean += data.mean(2).sum(0) / batch_size
-    print(mean / len(ds))"""
+    print(mean / len(ds))
 
     print('Calculating var:')
     var = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
     for i, data in enumerate(ds):
-        print(i)
+        #print(i)
         data = data[('rgb', 0)].to('cuda:0')
         # data = data.view(data.size(0), data.size(1), -1)
         var += torch.sum(((data - torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)) ** 2), dim=(0, 2, 3)) / (batch_size * img_h * img_w)
         print(var / (i + 1))
-    var = var / len(ds)
-    print(var)
+    var = var / len(ds)"""
     r"""data = next(iter(ds))
     for i, data in enumerate(ds):
         if i == 10:
@@ -534,16 +561,16 @@ if __name__ == "__main__":
     plt.imshow(data[('rgb', 0)].numpy().transpose(1, 2, 0))
     plt.subplot(2, 2, 2)
 
-    from utils.plotting_utils import cityscapes_class_names,cityscapes_colors,cityscapes_class_ids,\
+    from utils.plotting_utils import CITYSCAPES_CLASS_NAMES,CITYSCAPES_ID_TO_COLOR,CITYSCAPES_CLASS_IDS,\
         cityscapes_cmap_norm, cityscapes_cmap
     import matplotlib.patches as mpatches
     import matplotlib.colors as colors
 
-    patches = [mpatches.Patch(color=colors.to_rgba(cityscapes_colors[i]), label=f'{i}. {cityscapes_class_names[i]}') for
+    patches = [mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[i]), label=f'{i}. {CITYSCAPES_CLASS_NAMES[i]}') for
                i in
-               range(len(cityscapes_class_ids) - 1)]
+               range(len(CITYSCAPES_CLASS_IDS) - 1)]
     patches.append(
-        mpatches.Patch(color=colors.to_rgba(cityscapes_colors[250]), label=f'{250}. {cityscapes_class_names[-1]}'))
+        mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[250]), label=f'{250}. {CITYSCAPES_CLASS_NAMES[-1]}'))
 
     im = plt.imshow(data['semantic'], cmap=cityscapes_cmap, norm=cityscapes_cmap_norm)
 

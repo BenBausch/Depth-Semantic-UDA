@@ -1,7 +1,7 @@
 dataset:
     name: 'cityscapes_sequence'
-    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit_sequence' #'/work/dlclarge1/bauschb-data/Cityscapes/leftImg8bit_sequence/'
-    feed_img_size: [ 544, 384 ]
+    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit_sequence\'
+    feed_img_size: [ 512, 320 ]
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: True
@@ -32,8 +32,8 @@ eval:
     val:
         use_gt_scale: False
         gt_depth_available: False
-        gt_semantic_available: True
+        gt_semantic_available: False
     test:
         use_gt_scale: False
         gt_depth_available: False
-        gt_semantic_available: True
+        gt_semantic_available: False

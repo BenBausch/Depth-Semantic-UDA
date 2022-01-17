@@ -1,15 +1,21 @@
 # Python modules
 import time
 import os
+
+import numpy as np
 import torch
 
 # Own classes
+from matplotlib import pyplot as plt
+
+from losses.metrics import MIoU
 from train.base.train_base import TrainSourceTargetDatasetBase
 from losses import get_loss
 from io_utils import io_utils
 from eval import eval
 import camera_models
 import wandb
+import torch.nn.functional as F
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
@@ -148,6 +154,10 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.target_loss_weight = self.cfg.datasets.loss_weights[1]
 
+        # -------------------------Metrics-for-Validation---------------------------------------------
+
+        self.miou = MIoU(num_classes=self.cfg.datasets.configs[2].dataset.num_classes)
+
         # -------------------------Initializations----------------------------------------------------
 
         self.epoch = None  # current epoch
@@ -166,38 +176,46 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         for self.epoch in range(self.cfg.train.nof_epochs):
             self.train()
-
-            # self.validate()
+            print('Validation')
+            self.validate()
 
         print("Training done.")
 
     def train(self):
-
-        data = {}
-
         self.set_train()
 
         for _, net in self.model.get_networks().items():
-            wandb.watch(net, log_freq=1)
+            wandb.watch(net)
 
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
             print(f"Training epoch {self.epoch} | batch {batch_idx}")
 
-            self.training_step(data, batch_idx)
+            self.training_step(data)
 
-            if batch_idx == 10:
+            if batch_idx == 0:
                 break
 
         # Update the scheduler
         self.scheduler.step()
 
         # Create checkpoint after each epoch and save it
-        self.save_checkpoint()
+        # self.save_checkpoint()
 
-    def training_step(self, data, batch_idx):
-        before_op_time = time.time()
+    def validate(self):
+        self.set_eval()
 
+        # Main loop:
+        for batch_idx, data in enumerate(self.target_val_loader):
+            print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
+
+            self.validation_step(data, batch_idx)
+
+        mean_iou, iou = self.miou.get_miou()
+
+        wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
+
+    def training_step(self, data):
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------Virtual Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
@@ -211,7 +229,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         semantic_pred = prediction['semantic']
 
         loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
-                                                 semantic_pred, data[0]['semantic'])
+                                                                   semantic_pred, data[0]['semantic'])
 
         # -----------------------------------------------------------------------------------------------
         # -----------------------------------Real Sample Processing--------------------------------------
@@ -238,12 +256,31 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         loss.backward()
         self.optimizer.step()
 
-        print(loss_source_dict)
-        print(loss_target_dict)
+        loss_source_dict['epoch'] = self.epoch
+        loss_target_dict['epoch'] = self.epoch
         wandb.log({"total loss": loss})
         wandb.log(loss_source_dict)
         wandb.log(loss_target_dict)
-        #wandb.log({"epoch": self.epoch, "loss": loss}, step=batch_idx)
+
+    def validation_step(self, data, batch_idx):
+        for key, val in data.items():
+            data[key] = val.to(self.device)
+        if batch_idx == 1:
+            prediction = self.model.forward(data, dataset_id=2, predict_depth=True)
+            depth = prediction['depth'][0]
+            max = float(depth.max().cpu().data)
+            min = float(depth.min().cpu().data)
+            diff = max - min if max != min else 1e5
+            norm_depth_map = (depth - min) / diff
+            img = wandb.Image(norm_depth_map[0].cpu().detach().numpy().transpose(1, 2, 0),
+                              caption=f'Depth Map image with id {batch_idx}')
+            wandb.log({'epoch': self.epoch, 'depth example': img})
+        else:
+            prediction = self.model.forward(data, dataset_id=2, predict_depth=False)
+
+        soft_pred = F.softmax(prediction['semantic'], dim=1)
+        self.miou.update(mask_pred=soft_pred, mask_gt=data['semantic'])
+
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
@@ -251,10 +288,11 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # non-inverse depth map --> pixels far from the camera have a high value, close pixels have a small value
 
         silog_loss = self.source_silog_depth_weigth * self.source_silog_depth(pred=depth_pred,
-                                                                               target=depth_target)
+                                                                              target=depth_target)
         loss_dict['silog_loss'] = silog_loss
 
-        bce_loss = self.source_bce_weigth * self.source_bce(prediction=semantic_pred, target=semantic_gt)
+        soft_semantic_pred = F.softmax(semantic_pred, dim=1)
+        bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt)
         loss_dict['bce'] = bce_loss
 
         snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target)
@@ -276,12 +314,13 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
     def compute_losses_target(self, data, depth_pred, poses):
         loss_dict = {}
         reconsruction_loss = self.target_reconstruction_weight * \
-            self.target_reconstruction_loss(batch_data=data,
-                                            pred_depth=depth_pred,
-                                            poses=poses,
-                                            rgb_frame_offsets=self.cfg.datasets.configs[1].dataset.rgb_frame_offsets,
-                                            use_automasking=self.target_reconstruction_use_automasking,
-                                            use_ssim=self.target_reconstruction_use_ssim)
+                             self.target_reconstruction_loss(batch_data=data,
+                                                             pred_depth=depth_pred,
+                                                             poses=poses,
+                                                             rgb_frame_offsets=self.cfg.datasets.configs[
+                                                                 1].dataset.rgb_frame_offsets,
+                                                             use_automasking=self.target_reconstruction_use_automasking,
+                                                             use_ssim=self.target_reconstruction_use_ssim)
         loss_dict['reconstruction'] = reconsruction_loss
         return reconsruction_loss, loss_dict
 

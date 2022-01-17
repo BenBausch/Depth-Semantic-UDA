@@ -220,16 +220,19 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         return a
 
-    def forward(self, batch, dataset_id):
+    def forward(self, batch, dataset_id, predict_depth=False):
         """
         :param batch: batch of data to process
         :param dataset_id: number of datasets in the list of datasets (source: 0, target:1, ...)
+        :param predict_depth: used to manually enforce depth prediction (for example: during specific samples in
+        validation for visualization purposes) Note: Don't use to manage depth prediction per dataset -->
+        set use_..._depth to True in the config of that specific dataset!
         """
         latent_features_batch = self.latent_features(batch[("rgb", 0)])
 
         results = {}
 
-        if self.dataset_predict_depth[dataset_id]:
+        if self.dataset_predict_depth[dataset_id] or predict_depth:
             results['depth'] = self.predict_depth(latent_features_batch, dataset_id=dataset_id)
         else:
             results['depth'] = None

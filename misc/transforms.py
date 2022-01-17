@@ -1,3 +1,4 @@
+import numpy
 import numpy as np
 import torch
 import PIL.Image as pil
@@ -96,6 +97,38 @@ class ColorAug(object):
 # --------------------------Dataset specific transformations------------------------------
 # ----------------------------------------------------------------------------------------
 
+# --------------------------------------------Cityscapes----------------------------------
+class ToInt32Array(object):
+    def __init__(self):
+        pass
+
+    def __call__(self, sample):
+        return np.array(sample).astype('int32')
+
+
+class CityscapesEncodeSegmentation(object):
+    def __init__(self,valid_classes, class_map, ignore_index, label_color):
+        self.valid_classes = valid_classes
+        self.class_map = class_map
+        self.ignore_index = ignore_index
+        self.label_color = label_color
+
+    def encode_segmap(self, lbl):
+        """
+            Copied from https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
+            Removed potential overwriting bug.
+        """
+        lbl_copy = np.zeros(shape=(lbl.shape[0], lbl.shape[1])) + 250
+        for id, _i in enumerate(self.valid_classes):
+            mask = np.all(lbl == self.label_color[id], axis=-1)
+            lbl_copy[mask] = self.class_map[_i]
+        return lbl_copy
+
+    def __call__(self, sample):
+        sample = self.encode_segmap(sample)
+        return torch.LongTensor(sample)
+
+
 # -------------------------------Synthia Rand Cityscapes----------------------------------
 class Syntia_To_Cityscapes_Encoding(object):
     def __init__(self, s_to_c_mapping, valid_classes, void_classes, ignore_index):
@@ -110,6 +143,7 @@ class Syntia_To_Cityscapes_Encoding(object):
             label_copy[label == i] = self.ignore_index
         for i in self.valid_classes:
             label_copy[label == i] = self.s_to_c[i]
+        label_copy = torch.LongTensor(numpy.array(label_copy))
         return label_copy
 
 
@@ -127,7 +161,9 @@ class ToInt64Array(object):
         pass
 
     def __call__(self, sample):
-        return np.asarray(sample, dtype=np.int64)
+        sample = np.asarray(sample, dtype=np.int64)
+        return sample
+
 
 
 class EncodeSegmentation(object):
@@ -150,6 +186,7 @@ class EncodeSegmentation(object):
         return lbl_copy
 
     def __call__(self, sample):
+        sample = self.encode_segmap(sample)
         return self.encode_segmap(sample)
 
 

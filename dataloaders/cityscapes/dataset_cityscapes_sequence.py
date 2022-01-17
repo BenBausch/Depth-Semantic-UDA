@@ -100,13 +100,19 @@ class _PathsCityscapesSequence(dataset_base.PathsHandlerRGB):
         path = os.path.join(path_base, mode, cities, cities + '_' + seq_ids + '_' + frame_ids + '_' + data_type +
                             file_format)
         if os.path.exists(path) or \
-                not frame_ids.isnumeric() or \
-                not seq_ids.isnumeric() or \
+                not frame_ids.lstrip("-").isnumeric() or \
+                not seq_ids.lstrip("-").isnumeric() or \
                 data_type == '*' or \
                 cities == '*':
             # exact path exists or it is a path including '*'
+            # isnumeric returns false on negative numbers '-001'
             return path
         else:
+            if frame_ids == '-000001':
+                print(path)
+                print(os.path.exists(path))
+                print(f'Frame ids: {frame_ids.isnumeric()}, {frame_ids}')
+                print(f'Seq ids: {seq_ids.isnumeric()}, {seq_ids}')
             # path is a specific path, but it does not exist on the drive
             return None
 
@@ -302,7 +308,7 @@ if __name__ == "__main__":
     cfg.freeze()
     CITY_dataset = CityscapesSequenceDataset("train", None, cfg)
 
-    wandb.init(project='dataset-cityscapes-semantic')
+    wandb.init(project='dataset-cityscapes-sequence')
 
     ds = DataLoader(CITY_dataset, batch_size=1, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
 
