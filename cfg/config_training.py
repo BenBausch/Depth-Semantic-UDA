@@ -82,7 +82,7 @@ cfg.device.multiple_gpus = False
 # /----- IO
 # *******************************************************************
 cfg.io = CN()
-cfg.io.path_save = '/home/petek/trained_models/depth_estimation'
+cfg.io.path_save = ''
 cfg.io.save_frequency = 1  # number of epochs between each save
 cfg.io.log_frequency = 250
 
