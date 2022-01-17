@@ -490,10 +490,11 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
 if __name__ == "__main__":
     from cfg.config_dataset import get_cfg_dataset_defaults
+    import sys
 
+    path = sys.argv[1]
     cfg = get_cfg_dataset_defaults()
-    cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\synthia.yaml')
+    cfg.merge_from_file(path)
     cfg.freeze()
 
     img_h = cfg.dataset.feed_img_size[1]
@@ -529,9 +530,9 @@ if __name__ == "__main__":
                                    }}, caption="Semantic")
         img_depth = wandb.Image(data['depth_dense'].squeeze(0).numpy().transpose(1, 2, 0), caption="Depth")
         wandb.log({'images': [img0, img_semantic, img_depth]})
-        plt.imshow(s_to_rgb(data['semantic']))
-        plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.show()
+        # plt.imshow(s_to_rgb(data['semantic']))
+        # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        # plt.show()
         if i == 10:
             break
 

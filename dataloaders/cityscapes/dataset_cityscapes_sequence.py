@@ -302,10 +302,13 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
 
 if __name__ == "__main__":
     from cfg.config_dataset import get_cfg_dataset_defaults
+    import sys
+
+    path = sys.argv[1]
     cfg = get_cfg_dataset_defaults()
-    cfg.merge_from_file(
-        r'cfg/yaml_files/train/guda/cityscapes_sequence.yaml')
+    cfg.merge_from_file(path)
     cfg.freeze()
+
     CITY_dataset = CityscapesSequenceDataset("train", None, cfg)
 
     wandb.init(project='dataset-cityscapes-sequence')

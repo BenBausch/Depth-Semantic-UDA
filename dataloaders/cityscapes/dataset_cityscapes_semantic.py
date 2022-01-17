@@ -436,18 +436,33 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
 
 
 if __name__ == "__main__":
+    import wandb
     from cfg.config_dataset import get_cfg_dataset_defaults
+    from utils.plotting_utils import CITYSCAPES_ID_TO_NAME
+    import sys
+
+    path = sys.argv[1]
     cfg = get_cfg_dataset_defaults()
-    cfg.merge_from_file(
-        r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_semantic.yaml')
+    cfg.merge_from_file(path)
     cfg.freeze()
+
     CITY_dataset = CityscapesSemanticDataset("train", None, cfg)
 
     img_h = cfg.dataset.feed_img_size[1]
     img_w = cfg.dataset.feed_img_size[0]
     batch_size = 1
-    ds = DataLoader(CITY_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
+    ds = DataLoader(CITY_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
+
+    wandb.init(project='dataset-cityscapes-semantic')
 
     for i, data in enumerate(ds):
-        plt.imshow(data['semantic'][0])
-        plt.show()
+        img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB 0")
+        img_semantic = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0),
+                                   masks={'ground_truth': {
+                                       'mask_data': data['semantic'].squeeze(0).numpy(),
+                                       'class_labels': CITYSCAPES_ID_TO_NAME
+                                   }}, caption="Semantic")
+        wandb.log({'images': [img0, img_semantic]})
+        if i == 10:
+            break
+
