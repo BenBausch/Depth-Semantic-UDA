@@ -172,6 +172,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.start_time = time.time()
 
+        for _, net in self.model.get_networks().items():
+            wandb.watch(net)
+
         print("Training started...")
 
         for self.epoch in range(self.cfg.train.nof_epochs):
@@ -184,23 +187,17 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
     def train(self):
         self.set_train()
 
-        for _, net in self.model.get_networks().items():
-            wandb.watch(net)
-
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
             print(f"Training epoch {self.epoch} | batch {batch_idx}")
 
             self.training_step(data)
 
-            if batch_idx == 0:
-                break
-
         # Update the scheduler
         self.scheduler.step()
 
         # Create checkpoint after each epoch and save it
-        # self.save_checkpoint()
+        self.save_checkpoint()
 
     def validate(self):
         self.set_eval()
@@ -258,7 +255,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss_source_dict['epoch'] = self.epoch
         loss_target_dict['epoch'] = self.epoch
-        wandb.log({"total loss": loss})
+        wandb.log({"total loss": loss, 'epoch': self.epoch})
         wandb.log(loss_source_dict)
         wandb.log(loss_target_dict)
 

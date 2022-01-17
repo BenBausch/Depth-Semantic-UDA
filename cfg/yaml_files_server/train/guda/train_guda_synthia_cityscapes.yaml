@@ -15,9 +15,9 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files_server\train\guda\synthia.yaml', #source
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files_server\train\guda\cityscapes_sequence.yaml', # target
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files_server\train\guda\cityscapes_semantic.yaml'] # validation dataset
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/synthia.yaml', #source
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_sequence.yaml', # target
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_semantic.yaml'] # validation dataset
     loss_weights : [1, 1, 0]
 
 train:
