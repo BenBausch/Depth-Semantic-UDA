@@ -7,6 +7,7 @@ import torch
 
 # Own classes
 from matplotlib import pyplot as plt
+from utils.plotting_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
 
 from losses.metrics import MIoU
 from train.base.train_base import TrainSourceTargetDatasetBase
@@ -191,7 +192,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
             print(f"Training epoch {self.epoch} | batch {batch_idx}")
 
-            self.training_step(data)
+            self.training_step(data, batch_idx)
 
         # Update the scheduler
         self.scheduler.step()
@@ -212,7 +213,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
 
-    def training_step(self, data):
+    def training_step(self, data, batch_idx):
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------Virtual Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
@@ -227,6 +228,13 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
                                                                    semantic_pred, data[0]['semantic'])
+
+        # log samples
+        if batch_idx == 500:
+            rgb = wandb.Image(data[0][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
+            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Virtual')
+            sem_img = self.get_wandb_semantic_image(semantic_pred[0], batch_idx, 'Virtual')
+            wandb.log({'Virtual images': [rgb, depth_img, sem_img]}, step=batch_idx)
 
         # -----------------------------------------------------------------------------------------------
         # -----------------------------------Real Sample Processing--------------------------------------
@@ -243,6 +251,12 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
 
+        # log samples
+        if batch_idx == 500:
+            rgb = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Real RGB")
+            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Real')
+            wandb.log({'Real images': [rgb, depth_img]}, step=batch_idx)
+
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------------Optimization-------------------------------------------
         # -----------------------------------------------------------------------------------------------
@@ -255,9 +269,10 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss_source_dict['epoch'] = self.epoch
         loss_target_dict['epoch'] = self.epoch
-        wandb.log({"total loss": loss, 'epoch': self.epoch})
-        wandb.log(loss_source_dict)
-        wandb.log(loss_target_dict)
+        wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
+        wandb.log(loss_source_dict, step=batch_idx)
+        wandb.log(loss_target_dict, step=batch_idx)
+
 
     def validation_step(self, data, batch_idx):
         for key, val in data.items():
@@ -330,3 +345,18 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
     def set_from_checkpoint(self):
         pass
+
+    def get_wandb_depth_image(self, depth, batch_idx, vir_real):
+        max = float(depth.max().cpu().data)
+        min = float(depth.min().cpu().data)
+        diff = max - min if max != min else 1e5
+        norm_depth_map = (depth - min) / diff
+        img = wandb.Image(norm_depth_map.cpu().detach().numpy().transpose(1, 2, 0),
+                          caption=f'{vir_real} Depth Map image with id {batch_idx}')
+        return img
+
+    def get_wandb_semantic_image(self, semantic,  batch_idx, vir_real):
+        semantic = torch.argmax(F.softmax(semantic, dim=0), dim=0).unsqueeze(0)
+        img = wandb.Image(s_to_rgb(semantic.detach().cpu()),
+                          caption=f'{vir_real} Semantic Map image with id {batch_idx}')
+        return img

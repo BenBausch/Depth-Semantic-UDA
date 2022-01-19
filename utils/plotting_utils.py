@@ -81,7 +81,7 @@ CITYSCAPES_CLASS_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
 
 def semantic_id_tensor_to_rgb_numpy_array(tensor: torch.tensor):
     """
-    :param tensor: tensor of shape [1, 1, image_height, image_width] on the cpu.
+    :param tensor: tensor of shape [1, image_height, image_width] on the cpu.
     """
     if tensor.is_cuda:
         raise Exception('Tensor on gpu please call tensor.cpu()')
