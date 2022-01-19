@@ -230,7 +230,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                                    semantic_pred, data[0]['semantic'])
 
         # log samples
-        if batch_idx == 500:
+        if batch_idx % 500 == 0:
             rgb = wandb.Image(data[0][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Virtual')
             sem_img = self.get_wandb_semantic_image(semantic_pred[0], batch_idx, 'Virtual')
@@ -252,7 +252,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
 
         # log samples
-        if batch_idx == 500:
+        if batch_idx % 500 == 0:
             rgb = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Real RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Real')
             wandb.log({'Real images': [rgb, depth_img]}, step=batch_idx)
