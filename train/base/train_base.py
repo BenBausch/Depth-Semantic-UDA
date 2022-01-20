@@ -20,6 +20,7 @@ from utils.utils import info_gpu_memory
 import torch
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
+import torch.nn as nn
 
 import wandb
 
@@ -40,6 +41,9 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         # Initialize models and send to Cuda if possible
         self.model = models.get_model(self.cfg.model.type, self.device, self.cfg)
+
+        if not self.cfg.device.no_cuda:
+            print("Training will use ", torch.cuda.device_count(), "GPUs!")
 
         # Initialization of the optimizer and lr scheduler
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,

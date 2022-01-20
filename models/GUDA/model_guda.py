@@ -8,6 +8,8 @@ from models.helper_models.semantic_decoder import SemanticDecoder
 from models.helper_models.pose_decoder import PoseDecoder
 
 from models.helper_models.layers import *
+
+
 class Guda(SemanticDepthFromMotionModelBase):
 
     # --------------------------------------------------------------------------
@@ -107,7 +109,9 @@ class Guda(SemanticDepthFromMotionModelBase):
             self.num_layers_encoder, self.weights_init_encoder == "pretrained").double()
 
         if not self.no_cuda and self.multiple_gpus:
-            self.networks["resnet_encoder"] = torch.nn.DataParallel(self.networks["resnet_encoder"]).cuda()
+            self.networks["resnet_encoder"] = \
+                torch.nn.DataParallel(self.networks["resnet_encoder"],
+                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["resnet_encoder"].to(self.device)
 
@@ -118,7 +122,9 @@ class Guda(SemanticDepthFromMotionModelBase):
             self.networks["resnet_encoder"].num_ch_enc, range(self.num_scales), upsample_mode='bilinear').double()
 
         if not self.no_cuda and self.multiple_gpus:
-            self.networks["depth_decoder"] = torch.nn.DataParallel(self.networks["depth_decoder"]).cuda()
+            self.networks["depth_decoder"] = \
+                torch.nn.DataParallel(self.networks["depth_decoder"],
+                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["depth_decoder"].to(self.device)
 
@@ -129,7 +135,9 @@ class Guda(SemanticDepthFromMotionModelBase):
             self.networks["resnet_encoder"].num_ch_enc, self.num_classes, upsample_mode='bilinear').double()
 
         if not self.no_cuda and self.multiple_gpus:
-            self.networks["semantic_decoder"] = torch.nn.DataParallel(self.networks["semantic_decoder"]).cuda()
+            self.networks["semantic_decoder"] = \
+                torch.nn.DataParallel(self.networks["semantic_decoder"],
+                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["semantic_decoder"].to(self.device)
 
@@ -154,8 +162,12 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         # Specify device(s) to be used for training
         if not self.no_cuda and self.multiple_gpus:
-            self.networks["pose_encoder"] = torch.nn.DataParallel(self.networks["pose_encoder"]).cuda()
-            self.networks["pose_decoder"] = torch.nn.DataParallel(self.networks["pose_decoder"]).cuda()
+            self.networks["pose_encoder"] = \
+                torch.nn.DataParallel(self.networks["pose_encoder"],
+                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
+            self.networks["pose_decoder"] = \
+                torch.nn.DataParallel(self.networks["pose_decoder"],
+                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["pose_encoder"].to(self.device)
             self.networks["pose_decoder"].to(self.device)

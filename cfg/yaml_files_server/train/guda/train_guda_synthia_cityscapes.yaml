@@ -22,7 +22,8 @@ datasets:
 
 train:
     nof_epochs: 40
-    batch_size: 1
+    batch_size: 2
+    nof_workers: 0
 
     optimizer:
         type: 'Adam'
@@ -33,13 +34,15 @@ train:
         milestones: [30] # half the learning rate for the last 10 epochs
 
 val:
-    batch_size: 1
-    nof_workers: 4
+    batch_size: 2
+    nof_workers: 0
 
 checkpoint:
     use_checkpoint: False
 
+
+device:
+    multiple_gpus: True
+
 io:
     path_save: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes'
-#    path_base: '/home/petek/accepted_models/depth_estimation/2021_03_08_18_57_49_kitti_unsupervised_no_depth_input'
-#    filename: 'checkpoint_epoch_19.pth'

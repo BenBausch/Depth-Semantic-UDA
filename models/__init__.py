@@ -16,7 +16,7 @@ def get_model(model_name, *args):
         try:
             return available_models[model_name](*args)
         except:
-            raise Warning('PLease implement 2 dataset version of your model, e.g. guda!')
+            raise Warning('PLease implement multiple dataset version of your model, e.g. guda!')
             return available_models[model_name](*args)
 
 
