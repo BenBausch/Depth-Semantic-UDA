@@ -23,11 +23,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
     def __init__(self, cfg):
         super(GUDATrainer, self).__init__(cfg=cfg)
 
-        # check if one batch per gpu
-        if self.cfg.device.multiple_gpus:
-            assert torch.cuda.device_count() == self.cfg.train.batch_size
-            assert torch.cuda.device_count() == self.cfg.val.batch_size
-
         # -------------------------Source dataset parameters------------------------------------------
         assert self.cfg.datasets.configs[0].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
 

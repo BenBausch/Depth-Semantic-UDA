@@ -45,8 +45,8 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         self.device = device
 
-        self.networks = {}
-        self.parameters_to_train = []
+        self.networks = nn.ModuleDict()
+        self.parameters_to_train = nn.ModuleList()
 
         # create and add the different parts of the depth and segmentation network.
         self.create_Encoder()  # has to be called first before Depth and Semantic
@@ -108,38 +108,17 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.networks["resnet_encoder"] = ResnetEncoder(
             self.num_layers_encoder, self.weights_init_encoder == "pretrained").double()
 
-        if not self.no_cuda and self.multiple_gpus:
-            self.networks["resnet_encoder"] = \
-                MyDataParallel(self.networks["resnet_encoder"],
-                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
-        else:
-            self.networks["resnet_encoder"].to(self.device)
-
         self.parameters_to_train += list(self.networks["resnet_encoder"].parameters())
 
     def create_DepthNet(self):
         self.networks["depth_decoder"] = DepthDecoder(
             self.networks["resnet_encoder"].num_ch_enc, range(self.num_scales), upsample_mode='bilinear').double()
 
-        if not self.no_cuda and self.multiple_gpus:
-            self.networks["depth_decoder"] = \
-                MyDataParallel(self.networks["depth_decoder"],
-                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
-        else:
-            self.networks["depth_decoder"].to(self.device)
-
         self.parameters_to_train += list(self.networks["depth_decoder"].parameters())
 
     def create_SemanticNet(self):
         self.networks["semantic_decoder"] = SemanticDecoder(
             self.networks["resnet_encoder"].num_ch_enc, self.num_classes, upsample_mode='bilinear').double()
-
-        if not self.no_cuda and self.multiple_gpus:
-            self.networks["semantic_decoder"] = \
-                MyDataParallel(self.networks["semantic_decoder"],
-                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
-        else:
-            self.networks["semantic_decoder"].to(self.device)
 
         self.parameters_to_train += list(self.networks["semantic_decoder"].parameters())
 
@@ -159,18 +138,6 @@ class Guda(SemanticDepthFromMotionModelBase):
         # Specify parameters to be trained
         self.parameters_to_train += list(self.networks["pose_encoder"].parameters())
         self.parameters_to_train += list(self.networks["pose_decoder"].parameters())
-
-        # Specify device(s) to be used for training
-        if not self.no_cuda and self.multiple_gpus:
-            self.networks["pose_encoder"] = \
-                MyDataParallel(self.networks["pose_encoder"],
-                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
-            self.networks["pose_decoder"] = \
-                MyDataParallel(self.networks["pose_decoder"],
-                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
-        else:
-            self.networks["pose_encoder"].to(self.device)
-            self.networks["pose_decoder"].to(self.device)
 
     # --------------------------------------------------------------------------
     # ---------------------------Prediction-Methods-----------------------------

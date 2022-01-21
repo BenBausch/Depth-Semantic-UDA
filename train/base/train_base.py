@@ -12,6 +12,7 @@ from cfg.config_training import to_dictionary
 import models
 import dataloaders
 from dataloaders.datasamplers.CompletlyRandomSampler import CompletelyRandomSampler
+from models.helper_models.custom_data_parallel import MyDataParallel
 from io_utils import io_utils
 
 from datetime import datetime
@@ -44,6 +45,18 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         if not self.cfg.device.no_cuda:
             print("Training will use ", torch.cuda.device_count(), "GPUs!")
+
+        # check if one batch per gpu
+        if self.cfg.device.multiple_gpus:
+            assert torch.cuda.device_count() <= self.cfg.train.batch_size
+            assert torch.cuda.device_count() <= self.cfg.val.batch_size
+
+        if not self.cfg.device.no_cuda and self.cfg.device.multiple_gpus:
+            self.model = \
+                MyDataParallel(self.model,
+                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
+        else:
+            self.model.to(self.device)
 
         # Initialization of the optimizer and lr scheduler
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
