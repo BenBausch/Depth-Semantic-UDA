@@ -6,7 +6,7 @@ from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoder
 from models.helper_models.semantic_decoder import SemanticDecoder
 from models.helper_models.pose_decoder import PoseDecoder
-
+from models.helper_models.custom_data_parallel import MyDataParallel
 from models.helper_models.layers import *
 
 
@@ -110,7 +110,7 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         if not self.no_cuda and self.multiple_gpus:
             self.networks["resnet_encoder"] = \
-                torch.nn.DataParallel(self.networks["resnet_encoder"],
+                MyDataParallel(self.networks["resnet_encoder"],
                                       device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["resnet_encoder"].to(self.device)
@@ -123,7 +123,7 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         if not self.no_cuda and self.multiple_gpus:
             self.networks["depth_decoder"] = \
-                torch.nn.DataParallel(self.networks["depth_decoder"],
+                MyDataParallel(self.networks["depth_decoder"],
                                       device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["depth_decoder"].to(self.device)
@@ -136,7 +136,7 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         if not self.no_cuda and self.multiple_gpus:
             self.networks["semantic_decoder"] = \
-                torch.nn.DataParallel(self.networks["semantic_decoder"],
+                MyDataParallel(self.networks["semantic_decoder"],
                                       device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["semantic_decoder"].to(self.device)
@@ -163,10 +163,10 @@ class Guda(SemanticDepthFromMotionModelBase):
         # Specify device(s) to be used for training
         if not self.no_cuda and self.multiple_gpus:
             self.networks["pose_encoder"] = \
-                torch.nn.DataParallel(self.networks["pose_encoder"],
+                MyDataParallel(self.networks["pose_encoder"],
                                       device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
             self.networks["pose_decoder"] = \
-                torch.nn.DataParallel(self.networks["pose_decoder"],
+                MyDataParallel(self.networks["pose_decoder"],
                                       device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
         else:
             self.networks["pose_encoder"].to(self.device)
