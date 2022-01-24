@@ -46,7 +46,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.device = device
 
         self.networks = nn.ModuleDict()
-        self.parameters_to_train = nn.ModuleList()
+        self.parameters_to_train = []
 
         # create and add the different parts of the depth and segmentation network.
         self.create_Encoder()  # has to be called first before Depth and Semantic

@@ -214,6 +214,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
 
     def training_step(self, data, batch_idx):
+        start = time.time()
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------Virtual Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
@@ -263,9 +264,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss = self.source_loss_weight * loss_source + self.target_loss_weight * loss_target
 
+        print(loss)
+
         self.optimizer.zero_grad()
-        loss.backward()
+        loss.backward()  # mean over individual gpu losses
         self.optimizer.step()
+
+        end = time.time()
+        print(f'Time needed for the batch {end - start}')
 
         loss_source_dict['epoch'] = self.epoch
         loss_target_dict['epoch'] = self.epoch
@@ -299,26 +305,15 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # non-inverse depth map --> pixels far from the camera have a high value, close pixels have a small value
 
         silog_loss = self.source_silog_depth_weigth * self.source_silog_depth(pred=depth_pred,
-                                                                              target=depth_target)
+                                                                              target=depth_target).mean()
         loss_dict['silog_loss'] = silog_loss
 
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)
-        bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt)
+        bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt).mean()
         loss_dict['bce'] = bce_loss
 
-        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target)
+        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target).mean()
         loss_dict['snr'] = snr_loss
-
-        if torch.isnan(silog_loss).item() or torch.isnan(bce_loss).item() or torch.isnan(snr_loss).item():
-            print(torch.min(depth_target))
-            print(torch.max(depth_target))
-            print(torch.min(depth_pred))
-            print(torch.max(depth_pred))
-            print(torch.min(semantic_gt))
-            print(torch.max(semantic_gt))
-            print(torch.min(semantic_pred))
-            print(torch.max(semantic_pred))
-            raise ValueError('Loss is Nan!')
 
         return silog_loss + bce_loss + snr_loss, loss_dict
 
@@ -331,7 +326,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                              rgb_frame_offsets=self.cfg.datasets.configs[
                                                                  1].dataset.rgb_frame_offsets,
                                                              use_automasking=self.target_reconstruction_use_automasking,
-                                                             use_ssim=self.target_reconstruction_use_ssim)
+                                                             use_ssim=self.target_reconstruction_use_ssim).mean()
         loss_dict['reconstruction'] = reconsruction_loss
         return reconsruction_loss, loss_dict
 

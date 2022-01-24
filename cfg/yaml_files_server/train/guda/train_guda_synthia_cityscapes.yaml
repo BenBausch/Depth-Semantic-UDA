@@ -22,7 +22,7 @@ datasets:
 
 train:
     nof_epochs: 40
-    batch_size: 2
+    batch_size: 4
     nof_workers: 0
 
     optimizer:
@@ -34,7 +34,7 @@ train:
         milestones: [30] # half the learning rate for the last 10 epochs
 
 val:
-    batch_size: 2
+    batch_size: 4
     nof_workers: 0
 
 checkpoint:

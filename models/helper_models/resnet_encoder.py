@@ -54,10 +54,10 @@ class ResnetEncoder(nn.Module):
         # Torchvisions resnet implements 4 layer blocks with 4 different channel values [64, 128, 256, 512]
         # each layer block halves the resolution of the input e.g an input of 1080x1920 has resolution 540x960 after
         # first block
-        self.scales_to_layers = {1: self.encoder.layer1,
-                                 2: self.encoder.layer2,
-                                 3: self.encoder.layer3,
-                                 4: self.encoder.layer4}
+        self.scales_to_layers = nn.ModuleDict({'1': self.encoder.layer1,
+                                 '2': self.encoder.layer2,
+                                 '3': self.encoder.layer3,
+                                 '4': self.encoder.layer4})
 
         if num_layers > 34:
             # for large resnets increase the channels
@@ -75,7 +75,7 @@ class ResnetEncoder(nn.Module):
                 x = self.encoder.maxpool(features[-1])
             else:
                 x = features[-1]
-            features.append(self.scales_to_layers[i](x))
+            features.append(self.scales_to_layers[str(i)](x))
         return features
 
     def get_channels_of_forward_features(self):

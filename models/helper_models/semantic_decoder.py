@@ -31,14 +31,14 @@ class SemanticDecoder(nn.Module):
         self.ordered_layers = []
 
         # decoder
-        self.convs = OrderedDict()
+        self.convs = nn.ModuleDict()
         for i in range(4, -1, -1):
 
             # upconv_0: convolution over the previous layer
             num_ch_in = self.num_ch_enc[-1] if i == 4 else self.num_ch_dec[i + 1]
             num_ch_out = self.num_ch_dec[i]
-            self.convs[("upconv", i, 0)] = ConvBlock(num_ch_in, num_ch_out)
-            self.ordered_layers.append(("upconv", i, 0))
+            self.convs[f"upconv_{i}_0"] = ConvBlock(num_ch_in, num_ch_out)
+            self.ordered_layers.append(f"upconv_{i}_0")
 
             # upconv_1: convolution over the previous layer plus the feature of encoder at the same scale as previous
             # layer output
@@ -47,13 +47,13 @@ class SemanticDecoder(nn.Module):
                 num_ch_in += self.num_ch_enc[i - 1]
             num_ch_out = self.num_ch_dec[i]
 
-            self.convs[("upconv", i, 1)] = ConvBlock(num_ch_in, num_ch_out)
-            self.ordered_layers.append(("upconv", i, 1))
+            self.convs[f"upconv_{i}_1"] = ConvBlock(num_ch_in, num_ch_out)
+            self.ordered_layers.append(f"upconv_{i}_1")
 
         # final convolution for semantic segmentation
         channels_of_last_4_scales_added = np.sum(self.num_ch_dec[:-1])
-        self.convs[("final_conv",)] = Conv3x3(channels_of_last_4_scales_added, self.num_output_channels)
-        self.ordered_layers.append(("final_conv",))
+        self.convs["final_conv"] = Conv3x3(channels_of_last_4_scales_added, self.num_output_channels)
+        self.ordered_layers.append("final_conv")
 
         self.decoder = nn.ModuleList(list(self.convs.values()))
 
@@ -66,7 +66,7 @@ class SemanticDecoder(nn.Module):
         for i in range(4, -1, -1):
 
             # Convolution of the previous layer
-            x = self.convs[("upconv", i, 0)](x)
+            x = self.convs[f"upconv_{i}_0"](x)
             x = [upsample(x, self.upsample_mode)]
 
             if self.use_skips and i > 0:
@@ -75,7 +75,7 @@ class SemanticDecoder(nn.Module):
 
             x = torch.cat(x, dim=1)
             # convolve over concatenated input
-            x = self.convs[("upconv", i, 1)](x)
+            x = self.convs[f"upconv_{i}_1"](x)
 
             if i in self.inputs_to_last_layer:
                 # concat all output, but not the first convolution output
@@ -84,7 +84,7 @@ class SemanticDecoder(nn.Module):
 
         x = torch.cat(outputs, 1)
 
-        return self.convs[("final_conv",)](x)
+        return self.convs["final_conv"](x)
 
     def __str__(self):
         description = ''

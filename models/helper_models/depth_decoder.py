@@ -28,14 +28,14 @@ class DepthDecoder(nn.Module):
         self.ordered_layers = []
 
         # decoder
-        self.convs = OrderedDict()
+        self.convs = nn.ModuleDict()
         for i in range(4, -1, -1):
 
             # upconv_0: convolution over the previous layer
             num_ch_in = self.num_ch_enc[-1] if i == 4 else self.num_ch_dec[i + 1]
             num_ch_out = self.num_ch_dec[i]
-            self.convs[("upconv", i, 0)] = ConvBlock(num_ch_in, num_ch_out)
-            self.ordered_layers.append(("upconv", i, 0))
+            self.convs[f"upconv_{i}_0"] = ConvBlock(num_ch_in, num_ch_out)
+            self.ordered_layers.append(f"upconv_{i}_0")
 
             # upconv_1: convolution over the previous layer plus the feature of encoder at the same scale as previous
             # layer output
@@ -44,12 +44,12 @@ class DepthDecoder(nn.Module):
                 num_ch_in += self.num_ch_enc[i - 1]
             num_ch_out = self.num_ch_dec[i]
 
-            self.convs[("upconv", i, 1)] = ConvBlock(num_ch_in, num_ch_out)
-            self.ordered_layers.append(("upconv", i, 1))
+            self.convs[f"upconv_{i}_1"] = ConvBlock(num_ch_in, num_ch_out)
+            self.ordered_layers.append(f"upconv_{i}_1")
 
             if i in self.scales:
-                self.convs[("dispconv", i)] = Conv3x3(self.num_ch_dec[i], self.num_output_channels)
-                self.ordered_layers.append(("dispconv", i))
+                self.convs[f"dispconv_{i}"] = Conv3x3(self.num_ch_dec[i], self.num_output_channels)
+                self.ordered_layers.append(f"dispconv_{i}")
 
         self.decoder = nn.ModuleList(list(self.convs.values()))
         self.sigmoid = nn.Sigmoid()
@@ -62,7 +62,7 @@ class DepthDecoder(nn.Module):
         for i in range(4, -1, -1):
 
             # Convolution of the previous layer
-            x = self.convs[("upconv", i, 0)](x)
+            x = self.convs[f"upconv_{i}_0"](x)
             x = [upsample(x, self.upsample_mode)]
 
             if self.use_skips and i > 0:
@@ -71,10 +71,10 @@ class DepthDecoder(nn.Module):
 
             x = torch.cat(x, dim=1)
             # convolve over concatenated input
-            x = self.convs[("upconv", i, 1)](x)
+            x = self.convs[f"upconv_{i}_1"](x)
             # if scale shall be part of output convolve to get 1 channel output dept
             if i in self.scales:
-                outputs[("disp", i)] = self.sigmoid(self.convs[("dispconv", i)](x))
+                outputs[("disp", i)] = self.sigmoid(self.convs[f"dispconv_{i}"](x))
 
         return outputs
 
