@@ -506,33 +506,25 @@ if __name__ == "__main__":
     import wandb
     from utils.plotting_utils import CITYSCAPES_ID_TO_NAME, CITYSCAPES_CLASS_IDS, CITYSCAPES_CLASS_NAMES, \
     CITYSCAPES_ID_TO_COLOR
-    from utils.plotting_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
+    from utils.plotting_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb, visu_depth_prediction
     import matplotlib.patches as mpatches
     import matplotlib.colors as colors
 
-    patches = [
-        mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[i]/255), label=f'{i}. {CITYSCAPES_CLASS_NAMES[i]}') for
-        i in
-        range(len(CITYSCAPES_CLASS_IDS) - 1)]
-    patches.append(
-        mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[250]/255), label=f'{250}. {CITYSCAPES_CLASS_NAMES[-1]}'))
-
-    wandb.init(project='synthia')
+    #wandb.init(project='synthia')
 
     torch.set_printoptions(precision=9)
 
     for i, data in enumerate(ds):
-        img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB")
-        img_semantic = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0),
-                                   masks={'ground_truth': {
-                                       'mask_data': data['semantic'].squeeze(0).numpy(),
-                                       'class_labels': CITYSCAPES_ID_TO_NAME
-                                   }}, caption="Semantic")
-        img_depth = wandb.Image(data['depth_dense'].squeeze(0).numpy().transpose(1, 2, 0), caption="Depth")
-        wandb.log({'images': [img0, img_semantic, img_depth]})
-        # plt.imshow(s_to_rgb(data['semantic']))
-        # plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        # plt.show()
+        #img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB")
+        #img_semantic = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0),
+        #                           masks={'ground_truth': {
+        #                               'mask_data': data['semantic'].squeeze(0).numpy(),
+        #                               'class_labels': CITYSCAPES_ID_TO_NAME
+        #                           }}, caption="Semantic")
+        #img_depth = wandb.Image(data['depth_dense'].squeeze(0).numpy().transpose(1, 2, 0), caption="Depth")
+        #wandb.log({'images': [img0, img_semantic, img_depth]})
+        plt.imshow(visu_depth_prediction(1/data['depth_dense'][0]))
+        plt.show()
         if i == 10:
             break
 

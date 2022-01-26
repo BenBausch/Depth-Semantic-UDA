@@ -1,7 +1,6 @@
-import torch.nn as nn
+from torch.nn.parallel import DistributedDataParallel as DDP
 
-
-class MyDataParallel(nn.DataParallel):
+class CustomDistributedDataParallel(DDP):
     def __getattr__(self, name):
         try:
             return super().__getattr__(name)

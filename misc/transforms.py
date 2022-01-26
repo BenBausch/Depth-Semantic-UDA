@@ -5,7 +5,6 @@ import PIL.Image as pil
 from torchvision import transforms as tf
 import cv2
 
-
 class PrepareForNet(object):
     def __init__(self, do_normaliazion=False, mean=None, var=None):
         self.to_tensor = tf.transforms.ToTensor()
@@ -58,10 +57,10 @@ class PILHorizontalFlip(object):
 
     def __call__(self, sample):
         if self.do_flip:
-            return sample.transpose(pil.FLIP_LEFT_RIGHT)
+            sample = sample.transpose(pil.FLIP_LEFT_RIGHT)
         else:
-            return sample
-
+            sample = sample
+        return sample
 
 # Wrapper for the CV2 flip method to be able to use it in the Compose structure later
 class CV2HorizontalFlip(object):

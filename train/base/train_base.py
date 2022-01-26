@@ -12,7 +12,6 @@ from cfg.config_training import to_dictionary
 import models
 import dataloaders
 from dataloaders.datasamplers.CompletlyRandomSampler import CompletelyRandomSampler
-from models.helper_models.custom_data_parallel import MyDataParallel
 from io_utils import io_utils
 
 from datetime import datetime
@@ -22,42 +21,62 @@ import torch
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 import torch.nn as nn
-from torch.nn.parallel import DistributedDataParallel as DDP
+from models.helper_models.custom_data_parallel import CustomDistributedDataParallel
 import torch.distributed as dist
 import wandb
 
 
+def setup_multi_processing():
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12344'
+
+
+def run_trainer(device_id, cfg, world_size, TrainerClass):
+    trainer = TrainerClass(device_id, cfg, world_size)
+    trainer.run()
+
+
 class TrainBase(metaclass=abc.ABCMeta):
-    def __init__(self, cfg, dataset_type):
+    def __init__(self, device_id, cfg, world_size):
         self.cfg = cfg
+
+        #  setup Multi_device
+        self.world_size = world_size
+        self.rank = device_id  # fixme this supports only single node training
+        torch.cuda.set_device(device_id)
+        torch.manual_seed(0)  # fixme add seed to cfg
+        try:
+            dist.init_process_group(
+                backend='nccl',
+                init_method='env://',
+                world_size=world_size,
+                rank=self.rank
+            )
+        except:
+            # if run on windows we need to use gloo
+            dist.init_process_group(
+                backend='gloo',
+                init_method='env://',
+                world_size=world_size,
+                rank=self.rank
+            )
 
         # Specify the device to perform computations on
         if not self.cfg.device.no_cuda and not torch.cuda.is_available():
             raise Exception("There is no GPU available for usage.")
 
-        self.device = torch.device("cuda" if not self.cfg.device.no_cuda else "cpu")
+        self.device = f"cuda:{device_id}"
         torch.backends.cudnn.benchmark = True if not self.cfg.device.no_cuda else False
 
         print("Using '{}' for computation.".format(self.device))
         print("Using cudnn.benchmark? '{}'".format(torch.backends.cudnn.benchmark))
 
         # Initialize models and send to Cuda if possible
-        self.model = models.get_model(self.cfg.model.type, self.device, self.cfg)
+        self.model = models.get_model(self.cfg.model.type, self.cfg)
 
-        if not self.cfg.device.no_cuda:
-            print("Training will use ", torch.cuda.device_count(), "GPUs!")
+        self.model.to(self.device)
 
-        # check if one batch per gpu
-        if self.cfg.device.multiple_gpus:
-            assert torch.cuda.device_count() <= self.cfg.train.batch_size
-            assert torch.cuda.device_count() <= self.cfg.val.batch_size
-
-        if not self.cfg.device.no_cuda and self.cfg.device.multiple_gpus:
-            self.model = \
-                MyDataParallel(self.model,
-                                      device_ids=[i for i in range(torch.cuda.device_count())]).cuda()
-        else:
-            self.model.to(self.device)
+        self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id])
 
         # Initialization of the optimizer and lr scheduler
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
@@ -84,9 +103,10 @@ class TrainBase(metaclass=abc.ABCMeta):
         else:
             print("No checkpoint is used. Training from scratch!")
 
-        # Logging
-        wandb.init(project=f"{self.cfg.experiment_name}", config=to_dictionary(self.cfg))
-
+        # Logging only on the first gpu process
+        if device_id == 0:
+            print("Training will use ", torch.cuda.device_count(), "GPUs!")
+            wandb.init(project=f"{self.cfg.experiment_name}", config=to_dictionary(self.cfg))
 
     @abc.abstractmethod
     def train(self):
@@ -99,23 +119,11 @@ class TrainBase(metaclass=abc.ABCMeta):
                "cfg": self.cfg})
 
         self.io_handler.save_checkpoint(
-            {"epoch": self.epoch, "time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
+            {"epoch": self.epoch, "time": self.training_start_time,
+             "dataset": self.cfg.datasets.configs[0].dataset.name},
             checkpoint)
 
-
-    def setup_parallel_process(rank, world_size):
-        os.environ['MASTER_ADDR'] = 'localhost'
-        os.environ['MASTER_PORT'] = '12344'
-
-        # initialize the process group
-        dist.init_process_group("gloo", rank=rank, world_size=world_size)
-
-    def cleanup():
-        dist.destroy_process_group()
-
-
-    @staticmethod
-    def get_dataloader(mode, name, split, bs, num_workers, cfg, sample_completely_random=False, num_samples=None):
+    def get_dataloader(self, mode, name, split, bs, num_workers, cfg, sample_completely_random=False, num_samples=None):
         """
         Creates a dataloader.
         :param cfg: configuration of the dataset (not the whole configuration of training!)
@@ -130,27 +138,40 @@ class TrainBase(metaclass=abc.ABCMeta):
         """
         dataset = dataloaders.get_dataset(name, mode, split, cfg)
 
+        if mode == "train":
+            shuffle = True
+        else:
+            shuffle = False
+
+        # set the data sampler
         if sample_completely_random:
             if num_samples is None:
                 num_samples = len(dataset)
-                raise Warning('num_samples is set to None, if wanted please ignore this message!')
-            if mode == "train":
-                return DataLoader(dataset, batch_size=bs, num_workers=num_workers,
-                                  pin_memory=True, drop_last=False,
-                                  sampler=CompletelyRandomSampler(data_source=dataset, num_samples=num_samples)), \
-                        num_samples
-            else:
-                return DataLoader(dataset, batch_size=bs,
-                                  num_workers=num_workers, pin_memory=True, drop_last=False,
-                                  sampler=CompletelyRandomSampler(data_source=dataset, num_samples=num_samples)), \
-                        num_samples
+
+            sampler = CompletelyRandomSampler(
+                data_source=dataset,
+                num_samples=num_samples)
+
         else:
-            if mode == "train":
-                return DataLoader(dataset, batch_size=bs, shuffle=True, num_workers=num_workers,
-                                  pin_memory=True, drop_last=False), len(dataset)
-            else:
-                return DataLoader(dataset, batch_size=bs, shuffle=False,
-                                  num_workers=num_workers, pin_memory=True, drop_last=False), len(dataset)
+            sampler = torch.utils.data.distributed.DistributedSampler(
+                dataset,
+                num_replicas=self.world_size,
+                rank=self.rank,
+                shuffle=shuffle
+            )
+        sampler = torch.utils.data.distributed.DistributedSampler(
+            dataset,
+            num_replicas=self.world_size,
+            rank=self.rank,
+            shuffle=shuffle
+        )
+
+        loader = DataLoader(dataset, batch_size=bs, num_workers=num_workers,
+                          pin_memory=True, drop_last=False,
+                          sampler=sampler)
+
+        return loader, len(loader)
+
 
     # Define those methods that can be used for any kind of depth estimation algorithms
     @staticmethod
@@ -187,8 +208,8 @@ class TrainBase(metaclass=abc.ABCMeta):
 # TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
 #  are normalized...
 class TrainSingleDatasetBase(TrainBase, ABC):
-    def __init__(self, cfg, dataset_type='single'):
-        super(TrainSingleDatasetBase, self).__init__(cfg=cfg, dataset_type=dataset_type)
+    def __init__(self, device_id, cfg, world_size):
+        super(TrainSingleDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
 
         # Get training and validation datasets
         self.train_loader, self.num_train_files = self.get_dataloader(mode="train",
@@ -210,8 +231,9 @@ class TrainSingleDatasetBase(TrainBase, ABC):
         self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
 
         # Save the current configuration of arguments
-        self.io_handler.save_cfg({"time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
-                                 self.cfg)
+        self.io_handler.save_cfg(
+            {"time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
+            self.cfg)
 
         # Load the checkpoint if one is provided
         if cfg.checkpoint.use_checkpoint:
@@ -225,9 +247,8 @@ class TrainSingleDatasetBase(TrainBase, ABC):
 
 
 class TrainSourceTargetDatasetBase(TrainBase, ABC):
-    def __init__(self, cfg, dataset_type='target'):
-        super(TrainSourceTargetDatasetBase, self).__init__(cfg=cfg, dataset_type=dataset_type)
-
+    def __init__(self, device_id, cfg, world_size):
+        super(TrainSourceTargetDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
         # Get training and validation datasets for source and target
         self.target_train_loader, self.target_num_train_files = \
             self.get_dataloader(mode="train",
@@ -263,7 +284,8 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
 
         # Save the current configuration of arguments
         self.io_handler.save_cfg({"time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name
-                                  + "_" + self.cfg.datasets.configs[1].dataset.name}, self.cfg)
+                                                                               + "_" + self.cfg.datasets.configs[
+                                                                                   1].dataset.name}, self.cfg)
 
         # Load the checkpoint if one is provided
         if cfg.checkpoint.use_checkpoint:
