@@ -1,6 +1,8 @@
 import matplotlib.pyplot
 from torch.utils.data import DataLoader
 
+import time
+
 from models.base.model_base import SemanticDepthFromMotionModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoder
@@ -207,6 +209,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         validation for visualization purposes) Note: Don't use to manage depth prediction per dataset -->
         set use_..._depth to True in the config of that specific dataset!
         """
+        start = time.time()
         latent_features_batch = self.latent_features(batch[("rgb", 0)])
 
         results = {}
@@ -225,7 +228,9 @@ class Guda(SemanticDepthFromMotionModelBase):
             results['semantic'] = self.predict_semantic(latent_features_batch)
         else:
             results['semantic'] = None
+        end = time.time()
 
+        print(f'Batch on Device {batch[("rgb", 0)].get_device()} computed in {end - start} seconds.')
         return results
 
     # --------------------------------------------------------------------------

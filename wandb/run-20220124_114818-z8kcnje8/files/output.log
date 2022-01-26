@@ -1,0 +1,162 @@
+Length Target Train Loader: 89250
+Length Target Validation Loader: 500
+Length Source Train Loader: 89250
+No checkpoint is used. Training from scratch!
+[{'silog_depth': {'weight': 0.85}, 'bce': {'r': 0.3, 'ignore_index': 250}, 'snr': 'None'}]
+[{'silog_depth': 1, 'bce': 0.001, 'snr': 0.01}]
+Training supervised on source dataset using dense depth!
+Training supervised on source dataset using semantic annotations!
+Source ground truth scale is used for computing depth errors while training.
+Source ground truth scale is used for computing depth errors while validating.
+Training unsupervised on target dataset using self supervised depth!
+Training started...
+Training epoch 0 | batch 0
+tensor(10.0647, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 8.311875581741333
+Training epoch 0 | batch 1
+tensor(10.6727, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5285277366638184
+Training epoch 0 | batch 2
+tensor(9.1380, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.527320146560669
+Training epoch 0 | batch 3
+tensor(8.4544, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5216307640075684
+Training epoch 0 | batch 4
+tensor(6.8353, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5283308029174805
+Training epoch 0 | batch 5
+tensor(11.3386, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5274362564086914
+Training epoch 0 | batch 6
+tensor(7.8116, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.527822971343994
+Training epoch 0 | batch 7
+tensor(7.1029, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5249454975128174
+Training epoch 0 | batch 8
+tensor(6.3397, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526735782623291
+Training epoch 0 | batch 9
+tensor(7.1644, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.525890588760376
+Training epoch 0 | batch 10
+tensor(7.1622, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.520164728164673
+Training epoch 0 | batch 11
+tensor(6.9823, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5263867378234863
+Training epoch 0 | batch 12
+tensor(6.4602, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5269198417663574
+Training epoch 0 | batch 13
+tensor(5.8061, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.525869607925415
+Training epoch 0 | batch 14
+tensor(5.8639, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5205183029174805
+Training epoch 0 | batch 15
+tensor(5.0208, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.519749641418457
+Training epoch 0 | batch 16
+tensor(5.7359, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5269527435302734
+Training epoch 0 | batch 17
+tensor(3.8673, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5273518562316895
+Training epoch 0 | batch 18
+tensor(3.2992, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526430606842041
+Training epoch 0 | batch 19
+tensor(3.2502, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.519732713699341
+Training epoch 0 | batch 20
+tensor(3.2851, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5278964042663574
+Training epoch 0 | batch 21
+tensor(2.4233, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526559352874756
+Training epoch 0 | batch 22
+tensor(2.1798, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.527843713760376
+Training epoch 0 | batch 23
+tensor(1.4999, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5262951850891113
+Training epoch 0 | batch 24
+tensor(3.0262, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5237863063812256
+Training epoch 0 | batch 25
+tensor(1.6502, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5262670516967773
+Training epoch 0 | batch 26
+tensor(1.2466, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526184320449829
+Training epoch 0 | batch 27
+tensor(0.9077, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5264153480529785
+Training epoch 0 | batch 28
+tensor(1.0570, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5271334648132324
+Training epoch 0 | batch 29
+tensor(0.6425, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5270180702209473
+Training epoch 0 | batch 30
+tensor(1.4167, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5271966457366943
+Training epoch 0 | batch 31
+tensor(1.9103, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5252346992492676
+Training epoch 0 | batch 32
+tensor(1.2803, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5269367694854736
+Training epoch 0 | batch 33
+tensor(0.9957, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5204734802246094
+Training epoch 0 | batch 34
+tensor(0.8370, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.52472186088562
+Training epoch 0 | batch 35
+tensor(1.0440, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526082992553711
+Training epoch 0 | batch 36
+tensor(0.7320, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5271952152252197
+Training epoch 0 | batch 37
+tensor(0.7234, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5195422172546387
+Training epoch 0 | batch 38
+tensor(1.2415, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5281119346618652
+Training epoch 0 | batch 39
+tensor(1.0606, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5273826122283936
+Training epoch 0 | batch 40
+tensor(1.2082, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5226664543151855
+Training epoch 0 | batch 41
+tensor(1.5779, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5268969535827637
+Training epoch 0 | batch 42
+tensor(0.6957, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.525359630584717
+Training epoch 0 | batch 43
+tensor(0.7272, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5260448455810547
+Training epoch 0 | batch 44
+tensor(0.6958, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526780843734741
+Training epoch 0 | batch 45
+tensor(0.7845, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526566505432129
+Training epoch 0 | batch 46
+tensor(0.7768, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.526029109954834
+Training epoch 0 | batch 47
+tensor(0.9898, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5270960330963135
+Training epoch 0 | batch 48
+tensor(0.6978, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.525996685028076
+Training epoch 0 | batch 49
+tensor(0.8525, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.5200695991516113

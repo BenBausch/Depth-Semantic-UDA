@@ -1,0 +1,1 @@
+{"len_dataset": 89250, "_runtime": 17, "_timestamp": 1642099487, "_step": 11, "images": {"_type": "images/separated", "width": 544, "height": 384, "format": "png", "count": 3, "captions": ["RGB 0", "RGB -1", "RGB +1"]}, "_wandb": {"runtime": 17}}

@@ -1,0 +1,368 @@
+2022-01-17 15:47:28,682 INFO    MainThread:706925 [internal.py:wandb_internal():87] W&B internal server running at pid: 706925, started at: 2022-01-17 15:47:28.681316
+2022-01-17 15:47:28,684 INFO    WriterThread:706925 [datastore.py:open_for_write():77] open: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/run-3djmy9hs.wandb
+2022-01-17 15:47:28,684 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: check_version
+2022-01-17 15:47:28,686 DEBUG   SenderThread:706925 [sender.py:send():234] send: header
+2022-01-17 15:47:28,686 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: check_version
+2022-01-17 15:47:28,788 DEBUG   SenderThread:706925 [sender.py:send():234] send: run
+2022-01-17 15:47:29,070 INFO    SenderThread:706925 [dir_watcher.py:__init__():169] watching files in: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files
+2022-01-17 15:47:29,070 INFO    SenderThread:706925 [sender.py:_start_run_threads():804] run started: 3djmy9hs with start time 1642430847
+2022-01-17 15:47:29,070 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:29,072 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:29,072 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: run_start
+2022-01-17 15:47:29,073 DEBUG   HandlerThread:706925 [meta.py:__init__():40] meta init
+2022-01-17 15:47:29,073 DEBUG   HandlerThread:706925 [meta.py:__init__():54] meta init done
+2022-01-17 15:47:29,073 DEBUG   HandlerThread:706925 [meta.py:probe():214] probe
+2022-01-17 15:47:29,075 DEBUG   HandlerThread:706925 [meta.py:_setup_git():204] setup git
+2022-01-17 15:47:29,095 DEBUG   HandlerThread:706925 [meta.py:_setup_git():211] setup git done
+2022-01-17 15:47:29,095 DEBUG   HandlerThread:706925 [meta.py:_save_pip():58] save pip
+2022-01-17 15:47:29,097 DEBUG   HandlerThread:706925 [meta.py:_save_pip():72] save pip done
+2022-01-17 15:47:29,098 DEBUG   HandlerThread:706925 [meta.py:_save_conda():79] save conda
+2022-01-17 15:47:30,073 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/conda-environment.yaml
+2022-01-17 15:47:30,073 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:30,073 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/requirements.txt
+2022-01-17 15:47:30,770 DEBUG   HandlerThread:706925 [meta.py:_save_conda():89] save conda done
+2022-01-17 15:47:30,770 DEBUG   HandlerThread:706925 [meta.py:probe():252] probe done
+2022-01-17 15:47:30,777 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:30,777 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-metadata.json with policy now
+2022-01-17 15:47:30,785 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: stop_status
+2022-01-17 15:47:30,785 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: stop_status
+2022-01-17 15:47:31,073 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/conda-environment.yaml
+2022-01-17 15:47:31,073 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-metadata.json
+2022-01-17 15:47:31,073 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/output.log
+2022-01-17 15:47:31,233 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:31,233 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_0_0.png with policy now
+2022-01-17 15:47:31,239 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:31,240 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_0_1.png with policy now
+2022-01-17 15:47:31,240 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:31,240 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_0_10.mask.png with policy now
+2022-01-17 15:47:31,241 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:31,254 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:31,255 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:31,256 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:31,314 INFO    Thread-11 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/wl9srgtg-wandb-metadata.json
+2022-01-17 15:47:31,727 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:31,727 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_1_0.png with policy now
+2022-01-17 15:47:31,733 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:31,733 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_1_1.png with policy now
+2022-01-17 15:47:31,734 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:31,734 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_1_10.mask.png with policy now
+2022-01-17 15:47:31,735 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:31,748 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:31,749 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:31,750 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:31,787 INFO    Thread-14 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/wo8m3yvk-media/images/mask/images_0_10.mask.png
+2022-01-17 15:47:31,808 INFO    Thread-12 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/yeht58zi-media/images/images_0_0.png
+2022-01-17 15:47:31,828 INFO    Thread-13 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2d8l923q-media/images/images_0_1.png
+2022-01-17 15:47:32,075 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_1_1.png
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_1_10.mask.png
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_0_1.png
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_0_0.png
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_0_10.mask.png
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_1_0.png
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask
+2022-01-17 15:47:32,076 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media
+2022-01-17 15:47:32,155 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,156 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_2_0.png with policy now
+2022-01-17 15:47:32,161 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,162 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_2_1.png with policy now
+2022-01-17 15:47:32,162 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,162 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_2_10.mask.png with policy now
+2022-01-17 15:47:32,163 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:32,176 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:32,176 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:32,178 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:32,276 INFO    Thread-17 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/1vdwi2ug-media/images/mask/images_1_10.mask.png
+2022-01-17 15:47:32,325 INFO    Thread-16 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/ttqykbrv-media/images/images_1_1.png
+2022-01-17 15:47:32,504 INFO    Thread-15 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/4hm0j9w4-media/images/images_1_0.png
+2022-01-17 15:47:32,573 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,574 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_3_0.png with policy now
+2022-01-17 15:47:32,579 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,579 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_3_1.png with policy now
+2022-01-17 15:47:32,581 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,581 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_3_10.mask.png with policy now
+2022-01-17 15:47:32,581 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:32,624 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:32,624 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:32,629 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:32,690 INFO    Thread-20 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/1tna52t2-media/images/mask/images_2_10.mask.png
+2022-01-17 15:47:32,906 INFO    Thread-18 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2qugixlt-media/images/images_2_0.png
+2022-01-17 15:47:32,971 INFO    Thread-19 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/3h9jvqfw-media/images/images_2_1.png
+2022-01-17 15:47:32,987 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,987 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_4_0.png with policy now
+2022-01-17 15:47:32,993 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,993 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_4_1.png with policy now
+2022-01-17 15:47:32,994 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:32,994 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_4_10.mask.png with policy now
+2022-01-17 15:47:32,995 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:33,008 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:33,008 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:33,010 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:33,078 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:33,078 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_3_1.png
+2022-01-17 15:47:33,078 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_2_1.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_4_10.mask.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_3_10.mask.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_2_0.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_4_1.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_4_0.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_3_0.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_2_10.mask.png
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images
+2022-01-17 15:47:33,079 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask
+2022-01-17 15:47:33,150 INFO    Thread-23 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2ej3ybgj-media/images/mask/images_3_10.mask.png
+2022-01-17 15:47:33,354 INFO    Thread-21 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/qv0t0d0j-media/images/images_3_0.png
+2022-01-17 15:47:33,360 INFO    Thread-22 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/m9wywm76-media/images/images_3_1.png
+2022-01-17 15:47:33,397 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:33,398 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_5_0.png with policy now
+2022-01-17 15:47:33,403 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:33,404 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_5_1.png with policy now
+2022-01-17 15:47:33,405 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:33,405 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_5_10.mask.png with policy now
+2022-01-17 15:47:33,406 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:33,418 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:33,419 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:33,420 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:33,565 INFO    Thread-26 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2fc7xqeg-media/images/mask/images_4_10.mask.png
+2022-01-17 15:47:33,586 INFO    Thread-25 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/12hoy38l-media/images/images_4_1.png
+2022-01-17 15:47:33,603 INFO    Thread-24 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/23z0caaa-media/images/images_4_0.png
+2022-01-17 15:47:33,823 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:33,823 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_6_0.png with policy now
+2022-01-17 15:47:33,829 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:33,829 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_6_1.png with policy now
+2022-01-17 15:47:33,831 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:33,831 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_6_10.mask.png with policy now
+2022-01-17 15:47:33,832 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:33,846 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:33,846 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:33,848 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:33,932 INFO    Thread-29 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/35kw2zl2-media/images/mask/images_5_10.mask.png
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_6_10.mask.png
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_6_0.png
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_6_1.png
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_5_1.png
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_5_0.png
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_5_10.mask.png
+2022-01-17 15:47:34,081 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images
+2022-01-17 15:47:34,082 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask
+2022-01-17 15:47:34,153 INFO    Thread-27 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/3exuy0ll-media/images/images_5_0.png
+2022-01-17 15:47:34,193 INFO    Thread-28 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/eaz3pogj-media/images/images_5_1.png
+2022-01-17 15:47:34,236 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:34,236 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_7_0.png with policy now
+2022-01-17 15:47:34,242 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:34,242 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_7_1.png with policy now
+2022-01-17 15:47:34,243 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:34,243 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_7_10.mask.png with policy now
+2022-01-17 15:47:34,244 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:34,257 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:34,257 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:34,259 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:34,403 INFO    Thread-32 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/1aab3nfx-media/images/mask/images_6_10.mask.png
+2022-01-17 15:47:34,418 INFO    Thread-31 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/12alglg4-media/images/images_6_1.png
+2022-01-17 15:47:34,659 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:34,659 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_8_0.png with policy now
+2022-01-17 15:47:34,663 INFO    Thread-30 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/32mz3k2v-media/images/images_6_0.png
+2022-01-17 15:47:34,663 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:34,663 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_8_1.png with policy now
+2022-01-17 15:47:34,668 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:34,668 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_8_10.mask.png with policy now
+2022-01-17 15:47:34,669 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:34,680 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:34,681 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:34,682 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:34,823 INFO    Thread-33 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/of144epx-media/images/images_7_0.png
+2022-01-17 15:47:34,824 INFO    Thread-35 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/fhh78p1n-media/images/mask/images_7_10.mask.png
+2022-01-17 15:47:34,985 INFO    Thread-34 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/3u0pf9az-media/images/images_7_1.png
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_7_10.mask.png
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_8_10.mask.png
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_8_1.png
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_7_0.png
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_8_0.png
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_7_1.png
+2022-01-17 15:47:35,085 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images
+2022-01-17 15:47:35,086 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask
+2022-01-17 15:47:35,099 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:35,099 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_9_0.png with policy now
+2022-01-17 15:47:35,105 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:35,105 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_9_1.png with policy now
+2022-01-17 15:47:35,106 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:35,106 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_9_10.mask.png with policy now
+2022-01-17 15:47:35,107 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:35,120 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:35,120 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:35,122 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:35,194 INFO    Thread-38 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/1bvvwusi-media/images/mask/images_8_10.mask.png
+2022-01-17 15:47:35,391 INFO    Thread-36 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2v3y8gmy-media/images/images_8_0.png
+2022-01-17 15:47:35,474 INFO    Thread-37 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2hsmb6il-media/images/images_8_1.png
+2022-01-17 15:47:35,522 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:35,523 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_10_0.png with policy now
+2022-01-17 15:47:35,529 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:35,529 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/images_10_1.png with policy now
+2022-01-17 15:47:35,530 DEBUG   SenderThread:706925 [sender.py:send():234] send: files
+2022-01-17 15:47:35,530 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file media/images/mask/images_10_10.mask.png with policy now
+2022-01-17 15:47:35,531 DEBUG   SenderThread:706925 [sender.py:send():234] send: config
+2022-01-17 15:47:35,543 DEBUG   SenderThread:706925 [sender.py:send():234] send: history
+2022-01-17 15:47:35,544 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:35,546 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:35,655 INFO    Thread-41 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2gbw8cvt-media/images/mask/images_9_10.mask.png
+2022-01-17 15:47:35,676 INFO    Thread-40 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/1hcuitex-media/images/images_9_1.png
+2022-01-17 15:47:35,855 INFO    Thread-39 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/14ameq1u-media/images/images_9_0.png
+2022-01-17 15:47:36,080 INFO    Thread-44 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/t3iwmjym-media/images/mask/images_10_10.mask.png
+2022-01-17 15:47:36,088 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:36,088 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_10_1.png
+2022-01-17 15:47:36,089 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_9_1.png
+2022-01-17 15:47:36,089 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_9_0.png
+2022-01-17 15:47:36,089 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_10_10.mask.png
+2022-01-17 15:47:36,089 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_10_0.png
+2022-01-17 15:47:36,089 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_9_10.mask.png
+2022-01-17 15:47:36,089 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images
+2022-01-17 15:47:36,089 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask
+2022-01-17 15:47:36,283 INFO    Thread-42 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/2wktpj4f-media/images/images_10_0.png
+2022-01-17 15:47:36,326 INFO    Thread-43 :706925 [upload_job.py:push():137] Uploaded file /tmp/tmpvtm8a96xwandb/11j8v5do-media/images/images_10_1.png
+2022-01-17 15:47:37,798 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:37,798 DEBUG   SenderThread:706925 [sender.py:send():234] send: telemetry
+2022-01-17 15:47:37,799 DEBUG   SenderThread:706925 [sender.py:send():234] send: exit
+2022-01-17 15:47:37,799 INFO    SenderThread:706925 [sender.py:send_exit():366] handling exit code: 0
+2022-01-17 15:47:37,799 INFO    SenderThread:706925 [sender.py:send_exit():368] handling runtime: 8
+2022-01-17 15:47:37,802 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:37,802 INFO    SenderThread:706925 [sender.py:send_exit():374] send defer
+2022-01-17 15:47:37,802 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:37,803 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:37,803 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 0
+2022-01-17 15:47:37,803 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:37,803 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 0
+2022-01-17 15:47:37,803 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 1
+2022-01-17 15:47:37,803 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:37,803 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 1
+2022-01-17 15:47:37,901 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:37,901 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 1
+2022-01-17 15:47:37,901 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 2
+2022-01-17 15:47:37,901 DEBUG   SenderThread:706925 [sender.py:send():234] send: stats
+2022-01-17 15:47:37,901 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:37,901 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 2
+2022-01-17 15:47:37,901 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:37,901 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 2
+2022-01-17 15:47:37,902 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 3
+2022-01-17 15:47:37,902 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:37,902 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 3
+2022-01-17 15:47:37,902 DEBUG   SenderThread:706925 [sender.py:send():234] send: summary
+2022-01-17 15:47:37,904 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:37,904 INFO    SenderThread:706925 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-17 15:47:37,905 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:37,905 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 3
+2022-01-17 15:47:37,905 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 4
+2022-01-17 15:47:37,905 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:37,905 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:37,905 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 4
+2022-01-17 15:47:37,906 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:37,906 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 4
+2022-01-17 15:47:38,006 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:38,093 INFO    Thread-8  :706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:38,108 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 5
+2022-01-17 15:47:38,108 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:38,109 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:38,109 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 5
+2022-01-17 15:47:38,109 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:38,109 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 5
+2022-01-17 15:47:38,109 INFO    SenderThread:706925 [dir_watcher.py:finish():283] shutting down directory watcher
+2022-01-17 15:47:38,210 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,106 INFO    SenderThread:706925 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/config.yaml
+2022-01-17 15:47:39,106 INFO    SenderThread:706925 [dir_watcher.py:finish():313] scan: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files
+2022-01-17 15:47:39,106 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/conda-environment.yaml conda-environment.yaml
+2022-01-17 15:47:39,107 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/config.yaml config.yaml
+2022-01-17 15:47:39,107 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json wandb-summary.json
+2022-01-17 15:47:39,107 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/output.log output.log
+2022-01-17 15:47:39,107 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/requirements.txt requirements.txt
+2022-01-17 15:47:39,107 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-metadata.json wandb-metadata.json
+2022-01-17 15:47:39,116 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_9_0.png media/images/images_9_0.png
+2022-01-17 15:47:39,116 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_1_1.png media/images/images_1_1.png
+2022-01-17 15:47:39,116 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_1_0.png media/images/images_1_0.png
+2022-01-17 15:47:39,116 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_7_0.png media/images/images_7_0.png
+2022-01-17 15:47:39,116 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_8_1.png media/images/images_8_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_6_0.png media/images/images_6_0.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_9_1.png media/images/images_9_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_0_0.png media/images/images_0_0.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_2_0.png media/images/images_2_0.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_5_0.png media/images/images_5_0.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_0_1.png media/images/images_0_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_7_1.png media/images/images_7_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_4_1.png media/images/images_4_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_6_1.png media/images/images_6_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_10_1.png media/images/images_10_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_4_0.png media/images/images_4_0.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_8_0.png media/images/images_8_0.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_3_0.png media/images/images_3_0.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_5_1.png media/images/images_5_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_3_1.png media/images/images_3_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_2_1.png media/images/images_2_1.png
+2022-01-17 15:47:39,117 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/images_10_0.png media/images/images_10_0.png
+2022-01-17 15:47:39,121 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_8_10.mask.png media/images/mask/images_8_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_1_10.mask.png media/images/mask/images_1_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_0_10.mask.png media/images/mask/images_0_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_6_10.mask.png media/images/mask/images_6_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_3_10.mask.png media/images/mask/images_3_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_10_10.mask.png media/images/mask/images_10_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_5_10.mask.png media/images/mask/images_5_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_7_10.mask.png media/images/mask/images_7_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_2_10.mask.png media/images/mask/images_2_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_4_10.mask.png media/images/mask/images_4_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/media/images/mask/images_9_10.mask.png media/images/mask/images_9_10.mask.png
+2022-01-17 15:47:39,122 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 6
+2022-01-17 15:47:39,122 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,128 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:39,128 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 6
+2022-01-17 15:47:39,128 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:39,128 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 6
+2022-01-17 15:47:39,129 INFO    SenderThread:706925 [file_pusher.py:finish():177] shutting down file pusher
+2022-01-17 15:47:39,228 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,229 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,330 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,331 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,432 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,432 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,534 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,534 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,636 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,636 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,669 INFO    Thread-46 :706925 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/config.yaml
+2022-01-17 15:47:39,675 INFO    Thread-45 :706925 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/conda-environment.yaml
+2022-01-17 15:47:39,706 INFO    Thread-48 :706925 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/requirements.txt
+2022-01-17 15:47:39,708 INFO    Thread-47 :706925 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/files/wandb-summary.json
+2022-01-17 15:47:39,738 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,738 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,840 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:39,840 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:39,909 INFO    Thread-7  :706925 [sender.py:transition_state():387] send defer: 7
+2022-01-17 15:47:39,909 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:39,910 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 7
+2022-01-17 15:47:39,910 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:39,910 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 7
+2022-01-17 15:47:39,942 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:40,351 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 8
+2022-01-17 15:47:40,351 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:40,352 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:40,352 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 8
+2022-01-17 15:47:40,352 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:40,352 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 8
+2022-01-17 15:47:40,352 INFO    SenderThread:706925 [sender.py:transition_state():387] send defer: 9
+2022-01-17 15:47:40,353 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: defer
+2022-01-17 15:47:40,353 INFO    HandlerThread:706925 [handler.py:handle_request_defer():147] handle defer: 9
+2022-01-17 15:47:40,353 DEBUG   SenderThread:706925 [sender.py:send():234] send: final
+2022-01-17 15:47:40,353 DEBUG   SenderThread:706925 [sender.py:send():234] send: footer
+2022-01-17 15:47:40,353 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: defer
+2022-01-17 15:47:40,353 INFO    SenderThread:706925 [sender.py:send_request_defer():383] handle sender defer: 9
+2022-01-17 15:47:40,453 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-17 15:47:40,453 DEBUG   SenderThread:706925 [sender.py:send_request():248] send_request: poll_exit
+2022-01-17 15:47:40,453 INFO    SenderThread:706925 [file_pusher.py:join():182] waiting for file pusher
+2022-01-17 15:47:41,000 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: get_summary
+2022-01-17 15:47:41,001 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: sampled_history
+2022-01-17 15:47:41,002 DEBUG   HandlerThread:706925 [handler.py:handle_request():130] handle_request: shutdown
+2022-01-17 15:47:41,002 INFO    HandlerThread:706925 [handler.py:finish():731] shutting down handler
+2022-01-17 15:47:41,353 INFO    WriterThread:706925 [datastore.py:close():281] close: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_154727-3djmy9hs/run-3djmy9hs.wandb
+2022-01-17 15:47:41,999 INFO    SenderThread:706925 [sender.py:finish():1070] shutting down sender
+2022-01-17 15:47:41,999 INFO    SenderThread:706925 [file_pusher.py:finish():177] shutting down file pusher
+2022-01-17 15:47:42,000 INFO    SenderThread:706925 [file_pusher.py:join():182] waiting for file pusher
+2022-01-17 15:47:42,004 INFO    MainThread:706925 [internal.py:handle_exit():77] Internal process exited

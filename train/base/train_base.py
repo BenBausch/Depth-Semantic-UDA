@@ -22,7 +22,8 @@ import torch
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 import torch.nn as nn
-
+from torch.nn.parallel import DistributedDataParallel as DDP
+import torch.distributed as dist
 import wandb
 
 
@@ -100,6 +101,18 @@ class TrainBase(metaclass=abc.ABCMeta):
         self.io_handler.save_checkpoint(
             {"epoch": self.epoch, "time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
             checkpoint)
+
+
+    def setup_parallel_process(rank, world_size):
+        os.environ['MASTER_ADDR'] = 'localhost'
+        os.environ['MASTER_PORT'] = '12344'
+
+        # initialize the process group
+        dist.init_process_group("gloo", rank=rank, world_size=world_size)
+
+    def cleanup():
+        dist.destroy_process_group()
+
 
     @staticmethod
     def get_dataloader(mode, name, split, bs, num_workers, cfg, sample_completely_random=False, num_samples=None):

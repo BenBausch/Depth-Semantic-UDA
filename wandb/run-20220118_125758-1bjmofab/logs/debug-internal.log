@@ -1,0 +1,150 @@
+2022-01-18 12:57:59,781 INFO    MainThread:2058229 [internal.py:wandb_internal():87] W&B internal server running at pid: 2058229, started at: 2022-01-18 12:57:59.781124
+2022-01-18 12:57:59,784 INFO    WriterThread:2058229 [datastore.py:open_for_write():77] open: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/run-1bjmofab.wandb
+2022-01-18 12:57:59,784 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: check_version
+2022-01-18 12:57:59,786 DEBUG   SenderThread:2058229 [sender.py:send():234] send: header
+2022-01-18 12:57:59,786 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: check_version
+2022-01-18 12:57:59,884 DEBUG   SenderThread:2058229 [sender.py:send():234] send: run
+2022-01-18 12:58:00,091 INFO    SenderThread:2058229 [dir_watcher.py:__init__():169] watching files in: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files
+2022-01-18 12:58:00,091 INFO    SenderThread:2058229 [sender.py:_start_run_threads():804] run started: 1bjmofab with start time 1642507078
+2022-01-18 12:58:00,092 DEBUG   SenderThread:2058229 [sender.py:send():234] send: summary
+2022-01-18 12:58:00,093 INFO    SenderThread:2058229 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-18 12:58:00,095 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: run_start
+2022-01-18 12:58:00,110 DEBUG   HandlerThread:2058229 [meta.py:__init__():40] meta init
+2022-01-18 12:58:00,110 DEBUG   HandlerThread:2058229 [meta.py:__init__():54] meta init done
+2022-01-18 12:58:00,110 DEBUG   HandlerThread:2058229 [meta.py:probe():214] probe
+2022-01-18 12:58:00,122 DEBUG   HandlerThread:2058229 [meta.py:_setup_git():204] setup git
+2022-01-18 12:58:00,149 DEBUG   HandlerThread:2058229 [meta.py:_setup_git():211] setup git done
+2022-01-18 12:58:00,149 DEBUG   HandlerThread:2058229 [meta.py:_save_pip():58] save pip
+2022-01-18 12:58:00,151 DEBUG   HandlerThread:2058229 [meta.py:_save_pip():72] save pip done
+2022-01-18 12:58:00,151 DEBUG   HandlerThread:2058229 [meta.py:_save_conda():79] save conda
+2022-01-18 12:58:01,094 INFO    Thread-8  :2058229 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/wandb-summary.json
+2022-01-18 12:58:01,095 INFO    Thread-8  :2058229 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/requirements.txt
+2022-01-18 12:58:01,095 INFO    Thread-8  :2058229 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/conda-environment.yaml
+2022-01-18 12:58:01,878 DEBUG   HandlerThread:2058229 [meta.py:_save_conda():89] save conda done
+2022-01-18 12:58:01,878 DEBUG   HandlerThread:2058229 [meta.py:probe():252] probe done
+2022-01-18 12:58:01,885 DEBUG   SenderThread:2058229 [sender.py:send():234] send: files
+2022-01-18 12:58:01,885 INFO    SenderThread:2058229 [sender.py:_save_file():939] saving file wandb-metadata.json with policy now
+2022-01-18 12:58:01,894 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: stop_status
+2022-01-18 12:58:01,895 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: stop_status
+2022-01-18 12:58:02,097 INFO    Thread-8  :2058229 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/conda-environment.yaml
+2022-01-18 12:58:02,098 INFO    Thread-8  :2058229 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/wandb-metadata.json
+2022-01-18 12:58:02,098 INFO    Thread-8  :2058229 [dir_watcher.py:_on_file_created():217] file/dir created: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/output.log
+2022-01-18 12:58:02,522 INFO    Thread-11 :2058229 [upload_job.py:push():137] Uploaded file /tmp/slurm_12108762/tmpg_mv_w14wandb/12gyepi6-wandb-metadata.json
+2022-01-18 12:58:17,109 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: stop_status
+2022-01-18 12:58:17,109 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: stop_status
+2022-01-18 12:58:20,119 INFO    Thread-8  :2058229 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/output.log
+2022-01-18 12:58:21,428 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:21,429 DEBUG   SenderThread:2058229 [sender.py:send():234] send: telemetry
+2022-01-18 12:58:21,429 DEBUG   SenderThread:2058229 [sender.py:send():234] send: exit
+2022-01-18 12:58:21,429 INFO    SenderThread:2058229 [sender.py:send_exit():366] handling exit code: 1
+2022-01-18 12:58:21,429 INFO    SenderThread:2058229 [sender.py:send_exit():368] handling runtime: 21
+2022-01-18 12:58:21,431 INFO    SenderThread:2058229 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-18 12:58:21,432 INFO    SenderThread:2058229 [sender.py:send_exit():374] send defer
+2022-01-18 12:58:21,432 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:21,432 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:21,433 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 0
+2022-01-18 12:58:21,433 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:21,433 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 0
+2022-01-18 12:58:21,433 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 1
+2022-01-18 12:58:21,434 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:21,434 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 1
+2022-01-18 12:58:21,587 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:21,587 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 1
+2022-01-18 12:58:21,587 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 2
+2022-01-18 12:58:21,588 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:21,588 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:21,588 DEBUG   SenderThread:2058229 [sender.py:send():234] send: stats
+2022-01-18 12:58:21,590 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:21,590 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 2
+2022-01-18 12:58:21,590 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:21,590 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 2
+2022-01-18 12:58:21,590 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 3
+2022-01-18 12:58:21,590 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:21,591 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 3
+2022-01-18 12:58:21,591 DEBUG   SenderThread:2058229 [sender.py:send():234] send: summary
+2022-01-18 12:58:21,592 INFO    SenderThread:2058229 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-01-18 12:58:21,593 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:21,593 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 3
+2022-01-18 12:58:21,593 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 4
+2022-01-18 12:58:21,593 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:21,593 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 4
+2022-01-18 12:58:21,594 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:21,594 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 4
+2022-01-18 12:58:21,690 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:21,791 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 5
+2022-01-18 12:58:21,791 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:21,791 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:21,791 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 5
+2022-01-18 12:58:21,792 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:21,792 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 5
+2022-01-18 12:58:21,792 INFO    SenderThread:2058229 [dir_watcher.py:finish():283] shutting down directory watcher
+2022-01-18 12:58:21,892 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,120 INFO    SenderThread:2058229 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/config.yaml
+2022-01-18 12:58:22,120 INFO    SenderThread:2058229 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/wandb-summary.json
+2022-01-18 12:58:22,121 INFO    SenderThread:2058229 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/output.log
+2022-01-18 12:58:22,121 INFO    SenderThread:2058229 [dir_watcher.py:finish():313] scan: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files
+2022-01-18 12:58:22,121 INFO    SenderThread:2058229 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/conda-environment.yaml conda-environment.yaml
+2022-01-18 12:58:22,121 INFO    SenderThread:2058229 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/config.yaml config.yaml
+2022-01-18 12:58:22,122 INFO    SenderThread:2058229 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/wandb-summary.json wandb-summary.json
+2022-01-18 12:58:22,127 INFO    SenderThread:2058229 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/output.log output.log
+2022-01-18 12:58:22,129 INFO    SenderThread:2058229 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/requirements.txt requirements.txt
+2022-01-18 12:58:22,132 INFO    SenderThread:2058229 [dir_watcher.py:finish():327] scan save: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/wandb-metadata.json wandb-metadata.json
+2022-01-18 12:58:22,132 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 6
+2022-01-18 12:58:22,132 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,133 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:22,133 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 6
+2022-01-18 12:58:22,144 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:22,144 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 6
+2022-01-18 12:58:22,145 INFO    SenderThread:2058229 [file_pusher.py:finish():177] shutting down file pusher
+2022-01-18 12:58:22,234 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,235 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,336 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,336 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,438 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,438 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,539 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,539 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,641 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,641 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,731 INFO    Thread-13 :2058229 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/config.yaml
+2022-01-18 12:58:22,742 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,742 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,760 INFO    Thread-16 :2058229 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/requirements.txt
+2022-01-18 12:58:22,779 INFO    Thread-12 :2058229 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/conda-environment.yaml
+2022-01-18 12:58:22,803 INFO    Thread-15 :2058229 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/output.log
+2022-01-18 12:58:22,805 INFO    Thread-14 :2058229 [upload_job.py:push():137] Uploaded file /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/files/wandb-summary.json
+2022-01-18 12:58:22,844 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,844 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:22,945 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:22,945 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:23,005 INFO    Thread-7  :2058229 [sender.py:transition_state():387] send defer: 7
+2022-01-18 12:58:23,006 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:23,006 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 7
+2022-01-18 12:58:23,006 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:23,006 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 7
+2022-01-18 12:58:23,047 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:23,177 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 8
+2022-01-18 12:58:23,177 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:23,178 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:23,178 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 8
+2022-01-18 12:58:23,178 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:23,178 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 8
+2022-01-18 12:58:23,178 INFO    SenderThread:2058229 [sender.py:transition_state():387] send defer: 9
+2022-01-18 12:58:23,179 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: defer
+2022-01-18 12:58:23,179 INFO    HandlerThread:2058229 [handler.py:handle_request_defer():147] handle defer: 9
+2022-01-18 12:58:23,179 DEBUG   SenderThread:2058229 [sender.py:send():234] send: final
+2022-01-18 12:58:23,179 DEBUG   SenderThread:2058229 [sender.py:send():234] send: footer
+2022-01-18 12:58:23,179 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: defer
+2022-01-18 12:58:23,179 INFO    SenderThread:2058229 [sender.py:send_request_defer():383] handle sender defer: 9
+2022-01-18 12:58:23,279 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: poll_exit
+2022-01-18 12:58:23,279 DEBUG   SenderThread:2058229 [sender.py:send_request():248] send_request: poll_exit
+2022-01-18 12:58:23,279 INFO    SenderThread:2058229 [file_pusher.py:join():182] waiting for file pusher
+2022-01-18 12:58:23,676 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: get_summary
+2022-01-18 12:58:23,677 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: sampled_history
+2022-01-18 12:58:23,678 DEBUG   HandlerThread:2058229 [handler.py:handle_request():130] handle_request: shutdown
+2022-01-18 12:58:23,678 INFO    HandlerThread:2058229 [handler.py:finish():731] shutting down handler
+2022-01-18 12:58:24,180 INFO    WriterThread:2058229 [datastore.py:close():281] close: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220118_125758-1bjmofab/run-1bjmofab.wandb
+2022-01-18 12:58:24,675 INFO    SenderThread:2058229 [sender.py:finish():1070] shutting down sender
+2022-01-18 12:58:24,675 INFO    SenderThread:2058229 [file_pusher.py:finish():177] shutting down file pusher
+2022-01-18 12:58:24,675 INFO    SenderThread:2058229 [file_pusher.py:join():182] waiting for file pusher
+2022-01-18 12:58:24,677 INFO    MainThread:2058229 [internal.py:handle_exit():77] Internal process exited

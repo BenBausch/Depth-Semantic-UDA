@@ -1,0 +1,26 @@
+{
+    "os": "Linux-5.13.0-25-generic-x86_64-with-glibc2.17",
+    "python": "3.8.12",
+    "heartbeatAt": "2022-01-17T18:51:51.777818",
+    "startedAt": "2022-01-17T18:51:50.277301",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 2080 Ti",
+    "gpu_count": 8,
+    "cpu_count": 64,
+    "cuda": "11.0.228",
+    "args": [
+        "/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/train_guda_synthia_cityscapes.yaml"
+    ],
+    "state": "running",
+    "program": "/home/bauschb/Masterthesis/Depth-Semantic-UDA/scripts/guda_train.py",
+    "codePath": "scripts/guda_train.py",
+    "git": {
+        "remote": "https://github.com/BenBausch/Depth-Semantic-UDA.git",
+        "commit": "faa94f48ecda4dddb78571b4b05a3b135430bf91"
+    },
+    "email": null,
+    "root": "/home/bauschb/Masterthesis/Depth-Semantic-UDA",
+    "host": "dlcgpu39",
+    "username": "bauschb",
+    "executable": "/home/bauschb/miniconda3/envs/Masterthesis/bin/python"
+}

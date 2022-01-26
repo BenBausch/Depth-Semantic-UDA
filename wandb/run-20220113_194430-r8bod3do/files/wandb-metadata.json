@@ -1,0 +1,24 @@
+{
+    "os": "Linux-5.13.0-25-generic-x86_64-with-glibc2.17",
+    "python": "3.8.12",
+    "heartbeatAt": "2022-01-13T18:44:32.307417",
+    "startedAt": "2022-01-13T18:44:30.911209",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 2080 Ti",
+    "gpu_count": 8,
+    "cpu_count": 64,
+    "cuda": "11.0.228",
+    "args": [],
+    "state": "running",
+    "program": "/home/bauschb/Masterthesis/Depth-Semantic-UDA/dataloaders/cityscapes/dataset_cityscapes_sequence.py",
+    "codePath": "dataloaders/cityscapes/dataset_cityscapes_sequence.py",
+    "git": {
+        "remote": "https://github.com/BenBausch/Depth-Semantic-UDA.git",
+        "commit": "a02e3e8194cc5b48ff03a4ed3e9c536b2b0f7d27"
+    },
+    "email": null,
+    "root": "/home/bauschb/Masterthesis/Depth-Semantic-UDA",
+    "host": "dlcgpu25",
+    "username": "bauschb",
+    "executable": "/home/bauschb/miniconda3/envs/Masterthesis/bin/python"
+}

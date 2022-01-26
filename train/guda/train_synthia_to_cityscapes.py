@@ -188,11 +188,17 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
     def train(self):
         self.set_train()
 
+        start_10_steps = time.time()
+
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
             print(f"Training epoch {self.epoch} | batch {batch_idx}")
 
             self.training_step(data, batch_idx)
+
+            if batch_idx == 9:
+                end_10_steps = time.time()
+                print(f'Total time for 10 batches {end_10_steps - start_10_steps}')
 
         # Update the scheduler
         self.scheduler.step()
@@ -227,8 +233,11 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         semantic_pred = prediction['semantic']
 
+        start_loss_source = time.time()
         loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
                                                                    semantic_pred, data[0]['semantic'])
+        end_loss_source = time.time()
+        print(f'Time for loss calculation for source: {end_loss_source - start_loss_source}')
 
         # log samples
         if batch_idx % 500 == 0:
@@ -250,7 +259,10 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
 
+        start_loss_target = time.time()
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
+        end_loss_target = time.time()
+        print(f'Time for loss calculation for target: {end_loss_target - start_loss_target}')
 
         # log samples
         if batch_idx % 500 == 0:
@@ -266,18 +278,26 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         print(loss)
 
+        start_back = time.time()
         self.optimizer.zero_grad()
         loss.backward()  # mean over individual gpu losses
         self.optimizer.step()
+        end_back = time.time()
+        print(f'Time for Loss backward: {end_back - start_back}')
 
         end = time.time()
         print(f'Time needed for the batch {end - start}')
+
+        start_logging = time.time()
 
         loss_source_dict['epoch'] = self.epoch
         loss_target_dict['epoch'] = self.epoch
         wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
         wandb.log(loss_source_dict, step=batch_idx)
         wandb.log(loss_target_dict, step=batch_idx)
+
+        end_logging = time.time()
+        print(f'Time needed for logging {end_logging - start_logging}')
 
 
     def validation_step(self, data, batch_idx):

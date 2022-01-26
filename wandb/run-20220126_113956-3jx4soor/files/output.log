@@ -1,0 +1,611 @@
+Length Target Train Loader: 44625
+Length Target Validation Loader: 250
+Length Source Train Loader: 44625
+No checkpoint is used. Training from scratch!
+[{'silog_depth': {'weight': 0.85}, 'bce': {'r': 0.3, 'ignore_index': 250}, 'snr': 'None'}]
+[{'silog_depth': 1, 'bce': 0.001, 'snr': 0.01}]
+Training supervised on source dataset using dense depth!
+Training supervised on source dataset using semantic annotations!
+Source ground truth scale is used for computing depth errors while training.
+Source ground truth scale is used for computing depth errors while validating.
+Training unsupervised on target dataset using self supervised depth!
+Training started...
+Training epoch 0 | batch 0
+Batch on Device 0 computed in 2.6040091514587402 seconds.
+Batch on Device 1 computed in 2.9502768516540527 seconds.
+Time for loss calculation for source: 0.18838858604431152
+Batch on Device 1 computed in 0.4817638397216797 seconds.
+Batch on Device 0 computed in 0.4848339557647705 seconds.
+Time for loss calculation for target: 0.029951810836791992
+tensor(7.0517, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 12.659850358963013
+Time needed for logging 3.24249267578125e-05
+Training epoch 0 | batch 1
+Batch on Device 1 computed in 0.024934768676757812 seconds.
+Batch on Device 0 computed in 0.046128273010253906 seconds.
+Time for loss calculation for source: 0.5551528930664062
+Batch on Device 1 computed in 0.04558610916137695 seconds.
+Batch on Device 0 computed in 0.05669522285461426 seconds.
+Time for loss calculation for target: 0.3982987403869629
+tensor(8.0894, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.0295634269714355
+Time needed for logging 0.05057883262634277
+Training epoch 0 | batch 2
+Batch on Device 1 computed in 0.024050474166870117 seconds.
+Batch on Device 0 computed in 0.026503324508666992 seconds.
+Time for loss calculation for source: 0.6389601230621338
+Batch on Device 0 computed in 0.034085988998413086 seconds.
+Batch on Device 1 computed in 0.033876657485961914 seconds.
+Time for loss calculation for target: 0.42504358291625977
+tensor(8.4005, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.9852938652038574
+Time needed for logging 0.01121377944946289
+Training epoch 0 | batch 3
+Batch on Device 0 computed in 0.029996395111083984 seconds.
+Batch on Device 1 computed in 0.032614707946777344 seconds.
+Time for loss calculation for source: 0.625328779220581
+Batch on Device 1 computed in 0.03477621078491211 seconds.
+Batch on Device 0 computed in 0.03858590126037598 seconds.
+Time for loss calculation for target: 0.42004871368408203
+tensor(6.6339, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.9917263984680176
+Time needed for logging 0.011589288711547852
+Training epoch 0 | batch 4
+Batch on Device 1 computed in 0.027512788772583008 seconds.
+Batch on Device 0 computed in 0.033437252044677734 seconds.
+Time for loss calculation for source: 0.6331396102905273
+Batch on Device 1 computed in 0.04352259635925293 seconds.
+Batch on Device 0 computed in 0.049065589904785156 seconds.
+Time for loss calculation for target: 0.40746068954467773
+tensor(8.8598, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.992297887802124
+Time needed for logging 0.011404991149902344
+Training epoch 0 | batch 5
+Batch on Device 1 computed in 0.024165868759155273 seconds.
+Batch on Device 0 computed in 0.02619791030883789 seconds.
+Time for loss calculation for source: 0.639521598815918
+Batch on Device 1 computed in 0.028469085693359375 seconds.
+Batch on Device 0 computed in 0.029720544815063477 seconds.
+Time for loss calculation for target: 0.43059420585632324
+tensor(7.3403, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.002753019332886
+Time needed for logging 0.011122941970825195
+Training epoch 0 | batch 6
+Batch on Device 0 computed in 0.0297849178314209 seconds.
+Batch on Device 1 computed in 0.029351472854614258 seconds.
+Time for loss calculation for source: 0.6393387317657471
+Batch on Device 0 computed in 0.03521251678466797 seconds.
+Batch on Device 1 computed in 0.037738800048828125 seconds.
+Time for loss calculation for target: 0.4212179183959961
+tensor(7.4347, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.001033544540405
+Time needed for logging 0.01188349723815918
+Training epoch 0 | batch 7
+Batch on Device 1 computed in 0.027391672134399414 seconds.
+Batch on Device 0 computed in 0.030029296875 seconds.
+Time for loss calculation for source: 0.6397333145141602
+Batch on Device 0 computed in 0.030952930450439453 seconds.
+Batch on Device 1 computed in 0.032698869705200195 seconds.
+Time for loss calculation for target: 0.4258244037628174
+tensor(8.0702, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.001512765884399
+Time needed for logging 0.011022806167602539
+Training epoch 0 | batch 8
+Batch on Device 1 computed in 0.0320892333984375 seconds.
+Batch on Device 0 computed in 0.03328990936279297 seconds.
+Time for loss calculation for source: 0.6356551647186279
+Batch on Device 1 computed in 0.02904200553894043 seconds.
+Batch on Device 0 computed in 0.03267264366149902 seconds.
+Time for loss calculation for target: 0.4253849983215332
+tensor(7.5713, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.005594491958618
+Time needed for logging 0.011182546615600586
+Training epoch 0 | batch 9
+Batch on Device 1 computed in 0.027729034423828125 seconds.
+Batch on Device 0 computed in 0.0293424129486084 seconds.
+Time for loss calculation for source: 0.638139009475708
+Batch on Device 0 computed in 0.03560376167297363 seconds.
+Batch on Device 1 computed in 0.03662276268005371 seconds.
+Time for loss calculation for target: 0.4234733581542969
+tensor(6.8349, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.004943132400513
+Time needed for logging 0.01141500473022461
+Total time for 10 batches 51.29689812660217
+Training epoch 0 | batch 10
+Batch on Device 1 computed in 0.02831411361694336 seconds.
+Batch on Device 0 computed in 0.030501127243041992 seconds.
+Time for loss calculation for source: 0.64005446434021
+Batch on Device 1 computed in 0.027777910232543945 seconds.
+Batch on Device 0 computed in 0.028119802474975586 seconds.
+Time for loss calculation for target: 0.43279528617858887
+tensor(8.3999, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.004699230194092
+Time needed for logging 0.011588096618652344
+Training epoch 0 | batch 11
+Batch on Device 0 computed in 0.028645038604736328 seconds.
+Batch on Device 1 computed in 0.02727508544921875 seconds.
+Time for loss calculation for source: 0.6416909694671631
+Batch on Device 0 computed in 0.034413814544677734 seconds.
+Batch on Device 1 computed in 0.03478217124938965 seconds.
+Time for loss calculation for target: 0.42487549781799316
+tensor(6.7061, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.9994006156921387
+Time needed for logging 0.01148366928100586
+Training epoch 0 | batch 12
+Batch on Device 1 computed in 0.028367996215820312 seconds.
+Batch on Device 0 computed in 0.037468910217285156 seconds.
+Time for loss calculation for source: 0.6320042610168457
+Batch on Device 0 computed in 0.029625415802001953 seconds.
+Batch on Device 1 computed in 0.029448747634887695 seconds.
+Time for loss calculation for target: 0.36110901832580566
+tensor(5.1678, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.016886234283447
+Time needed for logging 0.010896682739257812
+Training epoch 0 | batch 13
+Batch on Device 0 computed in 0.029405832290649414 seconds.
+Batch on Device 1 computed in 0.02826547622680664 seconds.
+Time for loss calculation for source: 0.6401846408843994
+Batch on Device 0 computed in 0.03388690948486328 seconds.
+Batch on Device 1 computed in 0.0340428352355957 seconds.
+Time for loss calculation for target: 0.4243030548095703
+tensor(7.7517, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.000973701477051
+Time needed for logging 0.011620044708251953
+Training epoch 0 | batch 14
+Batch on Device 1 computed in 0.01802659034729004 seconds.
+Batch on Device 0 computed in 0.0221405029296875 seconds.
+Time for loss calculation for source: 0.6482093334197998
+Batch on Device 0 computed in 0.02981400489807129 seconds.
+Batch on Device 1 computed in 0.03036975860595703 seconds.
+Time for loss calculation for target: 0.4287996292114258
+tensor(5.3412, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.000796318054199
+Time needed for logging 0.011817693710327148
+Training epoch 0 | batch 15
+Batch on Device 0 computed in 0.0290374755859375 seconds.
+Batch on Device 1 computed in 0.032125234603881836 seconds.
+Time for loss calculation for source: 0.636258602142334
+Batch on Device 1 computed in 0.030058622360229492 seconds.
+Batch on Device 0 computed in 0.03571510314941406 seconds.
+Time for loss calculation for target: 0.42317962646484375
+tensor(3.7346, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.007189512252808
+Time needed for logging 0.011414766311645508
+Training epoch 0 | batch 16
+Batch on Device 1 computed in 0.031682491302490234 seconds.
+Batch on Device 0 computed in 0.034996986389160156 seconds.
+Time for loss calculation for source: 0.6337621212005615
+Batch on Device 0 computed in 0.03406643867492676 seconds.
+Batch on Device 1 computed in 0.03744935989379883 seconds.
+Time for loss calculation for target: 0.42244672775268555
+tensor(4.0953, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.9998626708984375
+Time needed for logging 0.011113643646240234
+Training epoch 0 | batch 17
+Batch on Device 0 computed in 0.025119543075561523 seconds.
+Batch on Device 1 computed in 0.028654098510742188 seconds.
+Time for loss calculation for source: 0.6389017105102539
+Batch on Device 0 computed in 0.0342259407043457 seconds.
+Batch on Device 1 computed in 0.03443336486816406 seconds.
+Time for loss calculation for target: 0.4243924617767334
+tensor(6.4172, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.974114179611206
+Time needed for logging 0.011847972869873047
+Training epoch 0 | batch 18
+Batch on Device 1 computed in 0.022828340530395508 seconds.
+Batch on Device 0 computed in 0.02932286262512207 seconds.
+Time for loss calculation for source: 0.6361894607543945
+Batch on Device 1 computed in 0.029401302337646484 seconds.
+Batch on Device 0 computed in 0.030295610427856445 seconds.
+Time for loss calculation for target: 0.42786502838134766
+tensor(4.5447, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.010478258132935
+Time needed for logging 0.006204366683959961
+Training epoch 0 | batch 19
+Batch on Device 0 computed in 0.02481985092163086 seconds.
+Batch on Device 1 computed in 0.02481532096862793 seconds.
+Time for loss calculation for source: 0.6418905258178711
+Batch on Device 0 computed in 0.03815174102783203 seconds.
+Batch on Device 1 computed in 0.03807783126831055 seconds.
+Time for loss calculation for target: 0.42189812660217285
+tensor(2.4183, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.004841089248657
+Time needed for logging 0.011844158172607422
+Training epoch 0 | batch 20
+Batch on Device 0 computed in 0.027202606201171875 seconds.
+Batch on Device 1 computed in 0.027318239212036133 seconds.
+Time for loss calculation for source: 0.6395208835601807
+Batch on Device 1 computed in 0.04927968978881836 seconds.
+Batch on Device 0 computed in 0.05080842971801758 seconds.
+Time for loss calculation for target: 0.3869326114654541
+tensor(2.4946, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.99858021736145
+Time needed for logging 0.011255025863647461
+Training epoch 0 | batch 21
+Batch on Device 1 computed in 0.029068946838378906 seconds.
+Batch on Device 0 computed in 0.030817747116088867 seconds.
+Time for loss calculation for source: 0.5718576908111572
+Batch on Device 0 computed in 0.034523725509643555 seconds.
+Batch on Device 1 computed in 0.03525805473327637 seconds.
+Time for loss calculation for target: 0.4244980812072754
+tensor(2.8710, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.024726629257202
+Time needed for logging 0.012026309967041016
+Training epoch 0 | batch 22
+Batch on Device 1 computed in 0.02787494659423828 seconds.
+Batch on Device 0 computed in 0.029390573501586914 seconds.
+Time for loss calculation for source: 0.6407833099365234
+Batch on Device 1 computed in 0.030239343643188477 seconds.
+Batch on Device 0 computed in 0.03132462501525879 seconds.
+Time for loss calculation for target: 0.4271712303161621
+tensor(2.5279, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.003666162490845
+Time needed for logging 0.011818170547485352
+Training epoch 0 | batch 23
+Batch on Device 1 computed in 0.028445959091186523 seconds.
+Batch on Device 0 computed in 0.030664682388305664 seconds.
+Time for loss calculation for source: 0.638873815536499
+Batch on Device 1 computed in 0.03482556343078613 seconds.
+Batch on Device 0 computed in 0.0367734432220459 seconds.
+Time for loss calculation for target: 0.42336177825927734
+tensor(2.2906, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.002724885940552
+Time needed for logging 0.012093305587768555
+Training epoch 0 | batch 24
+Batch on Device 0 computed in 0.02341294288635254 seconds.
+Batch on Device 1 computed in 0.02692103385925293 seconds.
+Time for loss calculation for source: 0.6405153274536133
+Batch on Device 0 computed in 0.04006505012512207 seconds.
+Batch on Device 1 computed in 0.04032111167907715 seconds.
+Time for loss calculation for target: 0.4181387424468994
+tensor(2.6719, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.00278902053833
+Time needed for logging 0.011501789093017578
+Training epoch 0 | batch 25
+Batch on Device 0 computed in 0.026573657989501953 seconds.
+Batch on Device 1 computed in 0.02814459800720215 seconds.
+Time for loss calculation for source: 0.6398718357086182
+Batch on Device 1 computed in 0.04008078575134277 seconds.
+Batch on Device 0 computed in 0.04076695442199707 seconds.
+Time for loss calculation for target: 0.41950321197509766
+tensor(2.6438, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.003852844238281
+Time needed for logging 0.011797666549682617
+Training epoch 0 | batch 26
+Batch on Device 0 computed in 0.024468183517456055 seconds.
+Batch on Device 1 computed in 0.024164676666259766 seconds.
+Time for loss calculation for source: 0.6410305500030518
+Batch on Device 0 computed in 0.03632020950317383 seconds.
+Batch on Device 1 computed in 0.03963923454284668 seconds.
+Time for loss calculation for target: 0.41910219192504883
+tensor(2.3075, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.0080389976501465
+Time needed for logging 0.011218547821044922
+Training epoch 0 | batch 27
+Batch on Device 1 computed in 0.024042129516601562 seconds.
+Batch on Device 0 computed in 0.027434349060058594 seconds.
+Time for loss calculation for source: 0.6493029594421387
+Batch on Device 0 computed in 0.03405046463012695 seconds.
+Batch on Device 1 computed in 0.03703451156616211 seconds.
+Time for loss calculation for target: 0.42490601539611816
+tensor(2.4821, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.028717041015625
+Time needed for logging 0.01086735725402832
+Training epoch 0 | batch 28
+Batch on Device 0 computed in 0.025437355041503906 seconds.
+Batch on Device 1 computed in 0.029325485229492188 seconds.
+Time for loss calculation for source: 0.6425347328186035
+Batch on Device 1 computed in 0.03635692596435547 seconds.
+Batch on Device 0 computed in 0.03743100166320801 seconds.
+Time for loss calculation for target: 0.42601919174194336
+tensor(1.0333, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.02505898475647
+Time needed for logging 0.011031389236450195
+Training epoch 0 | batch 29
+Batch on Device 0 computed in 0.024912118911743164 seconds.
+Batch on Device 1 computed in 0.023793458938598633 seconds.
+Time for loss calculation for source: 0.6482803821563721
+Batch on Device 0 computed in 0.033675193786621094 seconds.
+Batch on Device 1 computed in 0.03493237495422363 seconds.
+Time for loss calculation for target: 0.36011743545532227
+tensor(1.2871, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.041213512420654
+Time needed for logging 0.01150059700012207
+Training epoch 0 | batch 30
+Batch on Device 1 computed in 0.023935794830322266 seconds.
+Batch on Device 0 computed in 0.026731252670288086 seconds.
+Time for loss calculation for source: 0.6463942527770996
+Batch on Device 0 computed in 0.03643012046813965 seconds.
+Batch on Device 1 computed in 0.03745913505554199 seconds.
+Time for loss calculation for target: 0.4245178699493408
+tensor(1.0521, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 3.9667580127716064
+Time needed for logging 0.011736869812011719
+Training epoch 0 | batch 31
+Batch on Device 1 computed in 0.028297901153564453 seconds.
+Batch on Device 0 computed in 0.031032085418701172 seconds.
+Time for loss calculation for source: 0.642951250076294
+Batch on Device 0 computed in 0.02891683578491211 seconds.
+Batch on Device 1 computed in 0.02952098846435547 seconds.
+Time for loss calculation for target: 0.43167996406555176
+tensor(1.3383, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.0256383419036865
+Time needed for logging 0.011768579483032227
+Training epoch 0 | batch 32
+Batch on Device 1 computed in 0.023447275161743164 seconds.
+Batch on Device 0 computed in 0.025090694427490234 seconds.
+Time for loss calculation for source: 0.6410062313079834
+Batch on Device 0 computed in 0.03535747528076172 seconds.
+Batch on Device 1 computed in 0.03825807571411133 seconds.
+Time for loss calculation for target: 0.42444610595703125
+tensor(1.1585, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.026342153549194
+Time needed for logging 0.011686563491821289
+Training epoch 0 | batch 33
+Batch on Device 1 computed in 0.028816938400268555 seconds.
+Batch on Device 0 computed in 0.031598806381225586 seconds.
+Time for loss calculation for source: 0.6424131393432617
+Batch on Device 0 computed in 0.031094074249267578 seconds.
+Batch on Device 1 computed in 0.04314088821411133 seconds.
+Time for loss calculation for target: 0.4191114902496338
+tensor(1.4867, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.025813102722168
+Time needed for logging 0.011993646621704102
+Training epoch 0 | batch 34
+Batch on Device 1 computed in 0.033818721771240234 seconds.
+Batch on Device 0 computed in 0.03925967216491699 seconds.
+Time for loss calculation for source: 0.6331357955932617
+Batch on Device 0 computed in 0.0343625545501709 seconds.
+Batch on Device 1 computed in 0.034348487854003906 seconds.
+Time for loss calculation for target: 0.42784905433654785
+tensor(1.3980, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.025399208068848
+Time needed for logging 0.011838436126708984
+Training epoch 0 | batch 35
+Batch on Device 0 computed in 0.030936479568481445 seconds.
+Batch on Device 1 computed in 0.02992534637451172 seconds.
+Time for loss calculation for source: 0.6425654888153076
+Batch on Device 1 computed in 0.03492593765258789 seconds.
+Batch on Device 0 computed in 0.03769969940185547 seconds.
+Time for loss calculation for target: 0.4257063865661621
+tensor(1.5154, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.025920867919922
+Time needed for logging 0.011708736419677734
+Training epoch 0 | batch 36
+Batch on Device 1 computed in 0.02790975570678711 seconds.
+Batch on Device 0 computed in 0.029570341110229492 seconds.
+Time for loss calculation for source: 0.577106237411499
+Batch on Device 0 computed in 0.039628028869628906 seconds.
+Batch on Device 1 computed in 0.03955888748168945 seconds.
+Time for loss calculation for target: 0.42336320877075195
+tensor(0.9040, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.059084415435791
+Time needed for logging 0.010833501815795898
+Training epoch 0 | batch 37
+Batch on Device 1 computed in 0.02372145652770996 seconds.
+Batch on Device 0 computed in 0.028978586196899414 seconds.
+Time for loss calculation for source: 0.6442089080810547
+Batch on Device 1 computed in 0.037505149841308594 seconds.
+Batch on Device 0 computed in 0.041892290115356445 seconds.
+Time for loss calculation for target: 0.4202251434326172
+tensor(1.3764, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.026550531387329
+Time needed for logging 0.011844158172607422
+Training epoch 0 | batch 38
+Batch on Device 1 computed in 0.027703285217285156 seconds.
+Batch on Device 0 computed in 0.030055761337280273 seconds.
+Time for loss calculation for source: 0.6437258720397949
+Batch on Device 1 computed in 0.02864360809326172 seconds.
+Batch on Device 0 computed in 0.032953739166259766 seconds.
+Time for loss calculation for target: 0.42848658561706543
+tensor(0.6700, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.026215076446533
+Time needed for logging 0.011135339736938477
+Training epoch 0 | batch 39
+Batch on Device 1 computed in 0.0239107608795166 seconds.
+Batch on Device 0 computed in 0.027159690856933594 seconds.
+Time for loss calculation for source: 0.6453227996826172
+Batch on Device 0 computed in 0.03440046310424805 seconds.
+Batch on Device 1 computed in 0.03892970085144043 seconds.
+Time for loss calculation for target: 0.42377638816833496
+tensor(0.9642, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.027037858963013
+Time needed for logging 0.011503934860229492
+Training epoch 0 | batch 40
+Batch on Device 1 computed in 0.02290821075439453 seconds.
+Batch on Device 0 computed in 0.027428865432739258 seconds.
+Time for loss calculation for source: 0.6458773612976074
+Batch on Device 1 computed in 0.03419661521911621 seconds.
+Batch on Device 0 computed in 0.0353851318359375 seconds.
+Time for loss calculation for target: 0.427232027053833
+tensor(1.0394, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.029491901397705
+Time needed for logging 0.011420011520385742
+Training epoch 0 | batch 41
+Batch on Device 1 computed in 0.02864837646484375 seconds.
+Batch on Device 0 computed in 0.031107425689697266 seconds.
+Time for loss calculation for source: 0.6432530879974365
+Batch on Device 0 computed in 0.05134320259094238 seconds.
+Batch on Device 1 computed in 0.05674028396606445 seconds.
+Time for loss calculation for target: 0.3963766098022461
+tensor(0.5298, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.023151159286499
+Time needed for logging 0.010937213897705078
+Training epoch 0 | batch 42
+Batch on Device 1 computed in 0.0224001407623291 seconds.
+Batch on Device 0 computed in 0.024364233016967773 seconds.
+Time for loss calculation for source: 0.6506853103637695
+Batch on Device 1 computed in 0.03490853309631348 seconds.
+Batch on Device 0 computed in 0.03593802452087402 seconds.
+Time for loss calculation for target: 0.35882067680358887
+tensor(1.0431, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.039713144302368
+Time needed for logging 0.011790990829467773
+Training epoch 0 | batch 43
+Batch on Device 1 computed in 0.0252382755279541 seconds.
+Batch on Device 0 computed in 0.030397415161132812 seconds.
+Time for loss calculation for source: 0.6337592601776123
+Batch on Device 0 computed in 0.0254364013671875 seconds.
+Batch on Device 1 computed in 0.029104948043823242 seconds.
+Time for loss calculation for target: 0.43248820304870605
+tensor(0.9811, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.0247063636779785
+Time needed for logging 0.011406421661376953
+Training epoch 0 | batch 44
+Batch on Device 0 computed in 0.02275681495666504 seconds.
+Batch on Device 1 computed in 0.02298569679260254 seconds.
+Time for loss calculation for source: 0.6500959396362305
+Batch on Device 1 computed in 0.03673362731933594 seconds.
+Batch on Device 0 computed in 0.03792428970336914 seconds.
+Time for loss calculation for target: 0.42533278465270996
+tensor(1.2342, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.024739503860474
+Time needed for logging 0.012115001678466797
+Training epoch 0 | batch 45
+Batch on Device 1 computed in 0.02768850326538086 seconds.
+Batch on Device 0 computed in 0.036798954010009766 seconds.
+Time for loss calculation for source: 0.6373951435089111
+Batch on Device 1 computed in 0.036876678466796875 seconds.
+Batch on Device 0 computed in 0.040635108947753906 seconds.
+Time for loss calculation for target: 0.42221927642822266
+tensor(0.6498, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.025599002838135
+Time needed for logging 0.011200904846191406
+Training epoch 0 | batch 46
+Batch on Device 0 computed in 0.027625322341918945 seconds.
+Batch on Device 1 computed in 0.027822017669677734 seconds.
+Time for loss calculation for source: 0.6459951400756836
+Batch on Device 1 computed in 0.02466416358947754 seconds.
+Batch on Device 0 computed in 0.028502941131591797 seconds.
+Time for loss calculation for target: 0.4328958988189697
+tensor(0.7126, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.027534008026123
+Time needed for logging 0.011554479598999023
+Training epoch 0 | batch 47
+Batch on Device 0 computed in 0.030842304229736328 seconds.
+Batch on Device 1 computed in 0.032462120056152344 seconds.
+Time for loss calculation for source: 0.6400949954986572
+Batch on Device 0 computed in 0.03444385528564453 seconds.
+Batch on Device 1 computed in 0.03466200828552246 seconds.
+Time for loss calculation for target: 0.42839717864990234
+tensor(1.1115, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.02629017829895
+Time needed for logging 0.011810302734375
+Training epoch 0 | batch 48
+Batch on Device 1 computed in 0.027588367462158203 seconds.
+Batch on Device 0 computed in 0.030246734619140625 seconds.
+Time for loss calculation for source: 0.5769176483154297
+Batch on Device 0 computed in 0.03682684898376465 seconds.
+Batch on Device 1 computed in 0.03887367248535156 seconds.
+Time for loss calculation for target: 0.424297571182251
+tensor(0.4568, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.042860746383667
+Time needed for logging 0.01091313362121582
+Training epoch 0 | batch 49
+Batch on Device 0 computed in 0.028801918029785156 seconds.
+Batch on Device 1 computed in 0.029819488525390625 seconds.
+Time for loss calculation for source: 0.6436293125152588
+Batch on Device 1 computed in 0.03149294853210449 seconds.
+Batch on Device 0 computed in 0.03538370132446289 seconds.
+Time for loss calculation for target: 0.4267704486846924
+tensor(1.4954, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.02549409866333
+Time needed for logging 0.011338472366333008
+Training epoch 0 | batch 50
+Batch on Device 1 computed in 0.02717733383178711 seconds.
+Batch on Device 0 computed in 0.03293466567993164 seconds.
+Time for loss calculation for source: 0.6406974792480469
+Batch on Device 0 computed in 0.03505110740661621 seconds.
+Batch on Device 1 computed in 0.037328481674194336 seconds.
+Time for loss calculation for target: 0.4246068000793457
+tensor(0.9286, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.0252697467803955
+Time needed for logging 0.011777400970458984
+Training epoch 0 | batch 51
+Batch on Device 1 computed in 0.02814626693725586 seconds.
+Batch on Device 0 computed in 0.029329776763916016 seconds.
+Time for loss calculation for source: 0.6442053318023682
+Batch on Device 1 computed in 0.03672504425048828 seconds.
+Batch on Device 0 computed in 0.04033946990966797 seconds.
+Time for loss calculation for target: 0.42344117164611816
+tensor(0.8424, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.02639627456665
+Time needed for logging 0.011358976364135742
+Training epoch 0 | batch 52
+Batch on Device 1 computed in 0.022379159927368164 seconds.
+Batch on Device 0 computed in 0.02567005157470703 seconds.
+Time for loss calculation for source: 0.6491909027099609
+Batch on Device 1 computed in 0.03604578971862793 seconds.
+Batch on Device 0 computed in 0.038041114807128906 seconds.
+Time for loss calculation for target: 0.4250965118408203
+tensor(0.8949, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.026949167251587
+Time needed for logging 0.011643648147583008
+Training epoch 0 | batch 53
+Batch on Device 0 computed in 0.025742530822753906 seconds.
+Batch on Device 1 computed in 0.02735447883605957 seconds.
+Time for loss calculation for source: 0.6447358131408691
+Batch on Device 1 computed in 0.039014577865600586 seconds.
+Batch on Device 0 computed in 0.040770530700683594 seconds.
+Time for loss calculation for target: 0.41840052604675293
+tensor(0.7826, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.024966716766357
+Time needed for logging 0.011258363723754883
+Training epoch 0 | batch 54
+Batch on Device 0 computed in 0.023615360260009766 seconds.
+Batch on Device 1 computed in 0.024430274963378906 seconds.
+Time for loss calculation for source: 0.6509935855865479
+Batch on Device 1 computed in 0.03094482421875 seconds.
+Batch on Device 0 computed in 0.03351306915283203 seconds.
+Time for loss calculation for target: 0.43036317825317383
+tensor(0.7599, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.024750709533691
+Time needed for logging 0.01148533821105957
+Training epoch 0 | batch 55
+Batch on Device 1 computed in 0.01838088035583496 seconds.
+Batch on Device 0 computed in 0.02420639991760254 seconds.
+Time for loss calculation for source: 0.6519670486450195
+Batch on Device 0 computed in 0.04780077934265137 seconds.
+Batch on Device 1 computed in 0.04772233963012695 seconds.
+Time for loss calculation for target: 0.4155890941619873
+tensor(0.8491, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.026918649673462
+Time needed for logging 0.011030912399291992
+Training epoch 0 | batch 56
+Batch on Device 0 computed in 0.03134512901306152 seconds.
+Batch on Device 1 computed in 0.03150200843811035 seconds.
+Time for loss calculation for source: 0.6413655281066895
+Batch on Device 0 computed in 0.03629302978515625 seconds.
+Batch on Device 1 computed in 0.03695964813232422 seconds.
+Time for loss calculation for target: 0.42644762992858887
+tensor(0.9069, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.0253870487213135
+Time needed for logging 0.011139154434204102
+Training epoch 0 | batch 57
+Batch on Device 1 computed in 0.028701066970825195 seconds.
+Batch on Device 0 computed in 0.03313636779785156 seconds.
+Time for loss calculation for source: 0.6350677013397217
+Batch on Device 0 computed in 0.03450179100036621 seconds.
+Batch on Device 1 computed in 0.04127812385559082 seconds.
+Time for loss calculation for target: 0.42146754264831543
+tensor(0.6666, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.049162149429321
+Time needed for logging 0.005591869354248047
+Training epoch 0 | batch 58
+Batch on Device 1 computed in 0.03083658218383789 seconds.
+Batch on Device 0 computed in 0.03275942802429199 seconds.
+Time for loss calculation for source: 0.6288437843322754
+Batch on Device 0 computed in 0.03470635414123535 seconds.
+Batch on Device 1 computed in 0.03859114646911621 seconds.
+Time for loss calculation for target: 0.42331576347351074
+tensor(0.5121, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 4.034248113632202
+Time needed for logging 0.011452198028564453
+Training epoch 0 | batch 59
+Batch on Device 1 computed in 0.029795169830322266 seconds.
+Batch on Device 0 computed in 0.03099370002746582 seconds.
+Time for loss calculation for source: 0.6418657302856445
+Batch on Device 0 computed in 0.03398418426513672 seconds.
+Batch on Device 1 computed in 0.034845590591430664 seconds.
+Time for loss calculation for target: 0.42625856399536133
+tensor(1.0715, device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)

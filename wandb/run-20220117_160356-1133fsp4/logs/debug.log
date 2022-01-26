@@ -1,0 +1,178 @@
+2022-01-17 16:03:56,666 INFO    MainThread:1260246 [wandb_setup.py:_flush():71] setting env: {}
+2022-01-17 16:03:56,666 INFO    MainThread:1260246 [wandb_setup.py:_flush():71] setting login settings: {}
+2022-01-17 16:03:56,666 INFO    MainThread:1260246 [wandb_init.py:_log_setup():371] Logging user logs to /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_160356-1133fsp4/logs/debug.log
+2022-01-17 16:03:56,666 INFO    MainThread:1260246 [wandb_init.py:_log_setup():372] Logging internal logs to /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220117_160356-1133fsp4/logs/debug-internal.log
+2022-01-17 16:03:56,667 INFO    MainThread:1260246 [wandb_init.py:init():404] calling init triggers
+2022-01-17 16:03:56,667 INFO    MainThread:1260246 [wandb_init.py:init():409] wandb.init called with sweep_config: {}
+config: {}
+2022-01-17 16:03:56,667 INFO    MainThread:1260246 [wandb_init.py:init():460] starting backend
+2022-01-17 16:03:56,667 INFO    MainThread:1260246 [backend.py:_multiprocessing_setup():99] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2022-01-17 16:03:56,684 INFO    MainThread:1260246 [backend.py:ensure_launched():216] starting backend process...
+2022-01-17 16:03:56,695 INFO    MainThread:1260246 [backend.py:ensure_launched():221] started backend process with pid: 1260262
+2022-01-17 16:03:56,698 INFO    MainThread:1260246 [wandb_init.py:init():469] backend started and connected
+2022-01-17 16:03:56,701 INFO    MainThread:1260246 [wandb_init.py:init():533] updated telemetry
+2022-01-17 16:03:56,728 INFO    MainThread:1260246 [wandb_init.py:init():563] communicating current version
+2022-01-17 16:03:57,786 INFO    MainThread:1260246 [wandb_init.py:init():568] got version response 
+2022-01-17 16:03:57,787 INFO    MainThread:1260246 [wandb_init.py:init():578] communicating run to backend with 30 second timeout
+2022-01-17 16:03:57,993 INFO    MainThread:1260246 [wandb_init.py:init():606] starting run threads in backend
+2022-01-17 16:03:59,825 INFO    MainThread:1260246 [wandb_run.py:_console_start():1810] atexit reg
+2022-01-17 16:03:59,826 INFO    MainThread:1260246 [wandb_run.py:_redirect():1684] redirect: SettingsConsole.REDIRECT
+2022-01-17 16:03:59,826 INFO    MainThread:1260246 [wandb_run.py:_redirect():1689] Redirecting console.
+2022-01-17 16:03:59,828 INFO    MainThread:1260246 [wandb_run.py:_redirect():1745] Redirects installed.
+2022-01-17 16:03:59,828 INFO    MainThread:1260246 [wandb_init.py:init():633] run started, returning control to user process
+2022-01-17 16:04:21,696 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:21,922 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:22,157 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:22,380 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:22,600 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:22,842 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:23,064 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:23,292 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:23,530 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:23,809 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:24,054 INFO    MainThread:1260246 [wandb_run.py:_config_callback():956] config_cb None None {'_wandb': {'mask/class_labels': {'images_wandb_delimeter_ground_truth': {'type': 'mask/class_labels', 'key': 'images_wandb_delimeter_ground_truth', 'value': {0: 'road', 1: 'sidewalk', 2: 'building', 3: 'wall', 4: 'fence', 5: 'pole', 6: 'traffic_light', 7: 'traffic_sign', 8: 'vegetation', 9: 'terrain', 10: 'sky', 11: 'person', 12: 'rider', 13: 'car', 14: 'truck', 15: 'bus', 16: 'train', 17: 'motorcycle', 18: 'bicycle', 250: 'ignore_index'}}}}}
+2022-01-17 16:04:24,076 INFO    MainThread:1260246 [wandb_run.py:_atexit_cleanup():1780] got exitcode: 0
+2022-01-17 16:04:24,077 INFO    MainThread:1260246 [wandb_run.py:_restore():1752] restore
+2022-01-17 16:04:26,865 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 1
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5160583
+  total_bytes: 5160583
+}
+
+2022-01-17 16:04:27,023 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 1
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5160583
+  total_bytes: 5160583
+}
+
+2022-01-17 16:04:27,226 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 1
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5160583
+  total_bytes: 5160583
+}
+
+2022-01-17 16:04:28,077 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5160583
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,179 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5160583
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,286 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5160583
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,388 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5165590
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,492 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5165590
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,593 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5167764
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,695 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5167764
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,797 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5167764
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:28,898 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5167764
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:29,000 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5167764
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:29,525 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5167764
+  total_bytes: 5167764
+}
+
+2022-01-17 16:04:30,019 INFO    MainThread:1260246 [wandb_run.py:_wait_for_finish():1912] got exit ret: done: true
+exit_result {
+}
+file_counts {
+  wandb_count: 5
+  media_count: 44
+}
+pusher_stats {
+  uploaded_bytes: 5167764
+  total_bytes: 5167764
+}
+local_info {
+}
+
+2022-01-17 16:04:31,137 INFO    MainThread:1260246 [wandb_run.py:_append_history():2130] rendering history
+2022-01-17 16:04:31,137 INFO    MainThread:1260246 [wandb_run.py:_append_summary():2085] rendering summary
+2022-01-17 16:04:31,137 INFO    MainThread:1260246 [wandb_run.py:_append_files():2180] logging synced files

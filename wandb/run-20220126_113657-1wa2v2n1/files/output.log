@@ -1,0 +1,15 @@
+Length Target Train Loader: 44625
+Length Target Validation Loader: 250
+Length Source Train Loader: 44625
+No checkpoint is used. Training from scratch!
+[{'silog_depth': {'weight': 0.85}, 'bce': {'r': 0.3, 'ignore_index': 250}, 'snr': 'None'}]
+[{'silog_depth': 1, 'bce': 0.001, 'snr': 0.01}]
+Training supervised on source dataset using dense depth!
+Training supervised on source dataset using semantic annotations!
+Source ground truth scale is used for computing depth errors while training.
+Source ground truth scale is used for computing depth errors while validating.
+Training unsupervised on target dataset using self supervised depth!
+Training started...
+Training epoch 0 | batch 0
+/home/bauschb/miniconda3/envs/Masterthesis/lib/python3.8/site-packages/torch/nn/functional.py:3631: UserWarning: Default upsampling behavior when mode=bilinear is changed to align_corners=False since 0.4.0. Please specify align_corners=True if the old behavior is desired. See the documentation of nn.Upsample for details.
+  warnings.warn(
