@@ -1,1 +1,0 @@
-{"Virtual images": {"_type": "images/separated", "width": 512, "height": 320, "format": "png", "count": 3, "captions": ["Virtual RGB", "Virtual Depth Map image with id 0", "Virtual Semantic Map image with id 0"]}, "_runtime": 20, "_timestamp": 1642772141, "_step": 0, "_wandb": {"runtime": 21}}
