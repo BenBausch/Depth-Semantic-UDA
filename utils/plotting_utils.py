@@ -1,6 +1,8 @@
 # Package imports
 import matplotlib
 import numpy as np
+import matplotlib as mpl
+from matplotlib import pyplot as plt
 
 # names of the cityscapes classes ordered by id, road has id = 0, ..., bicycle has id = 18
 # the void class has id = 250 all void (non-valid) cityscapes classes will have this labels
@@ -93,3 +95,11 @@ def semantic_id_tensor_to_rgb_numpy_array(tensor: torch.tensor):
         mask = np.all(id_array == cls, axis=-1)
         rgb_array[mask] = CITYSCAPES_ID_TO_COLOR[cls]
     return rgb_array
+
+def visu_depth_prediction(inv_depth_pred):
+    disp_np = inv_depth_pred[:, :, :].squeeze().cpu().detach().numpy()
+    vmax = np.percentile(disp_np, 95)
+    normalizer = mpl.colors.Normalize(vmin=disp_np.min(), vmax=vmax)
+    mapper = plt.cm.ScalarMappable(norm=normalizer, cmap='magma')
+    colormapped_img = (mapper.to_rgba(disp_np)[:, :, :3] * 255).astype(np.uint8)
+    return colormapped_img

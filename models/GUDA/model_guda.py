@@ -8,7 +8,6 @@ from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoder
 from models.helper_models.semantic_decoder import SemanticDecoder
 from models.helper_models.pose_decoder import PoseDecoder
-from models.helper_models.custom_data_parallel import MyDataParallel
 from models.helper_models.layers import *
 
 
@@ -17,10 +16,9 @@ class Guda(SemanticDepthFromMotionModelBase):
     # --------------------------------------------------------------------------
     # ------------------------Initialization-Methods----------------------------
     # --------------------------------------------------------------------------
-    def __init__(self, device, cfg):
+    def __init__(self, cfg):
         """
         Constructor for guda network.
-        :param device: device on which to run the network
         :param cfg: the config file
         :param dataset: 0 if only one dataset used
                         0 if source dataset parameters shall be considered in case of 2 datasets
@@ -45,7 +43,7 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         self.get_dataset_parameters()
 
-        self.device = device
+
 
         self.networks = nn.ModuleDict()
         self.parameters_to_train = []
@@ -59,8 +57,6 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.num_pose_frames = self.get_number_of_posenet_input_frames(cfg)
 
         self.create_PoseNet()
-
-        print(f'Device: {self.device}')
         print('After creating networks')
 
     def get_dataset_parameters(self):  # todo move this into the base class

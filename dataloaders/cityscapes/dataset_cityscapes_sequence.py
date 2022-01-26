@@ -15,7 +15,6 @@ import scipy.io as io
 import numpy as np
 import re
 import ntpath
-
 # Image processing
 import PIL.Image as pil
 from torchvision import transforms
@@ -108,11 +107,6 @@ class _PathsCityscapesSequence(dataset_base.PathsHandlerRGB):
             # isnumeric returns false on negative numbers '-001'
             return path
         else:
-            if frame_ids == '-000001':
-                print(path)
-                print(os.path.exists(path))
-                print(f'Frame ids: {frame_ids.isnumeric()}, {frame_ids}')
-                print(f'Seq ids: {seq_ids.isnumeric()}, {seq_ids}')
             # path is a specific path, but it does not exist on the drive
             return None
 
@@ -166,7 +160,6 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         """
         # get the shuffled id, index and id are the same if cfg.dataset.shuffle set to false
         index = self.ids[index]
-
         rgb_imgs = {}
         for offset in self.rgb_frame_offsets:
             if self.get_rgb(self.paths.paths_rgb[index], offset) is not None:
@@ -187,10 +180,10 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
 
         for offset, val in rgb_imgs.items():
             data[("rgb", offset)] = val
-
         return data
 
     def transform_train(self, rgb_dict):
+
         """
         Transforms the rgb images and the semantic ground truth for training.
         :param rgb_dict: dict of rgb images of a sequence.

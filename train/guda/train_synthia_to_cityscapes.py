@@ -1,6 +1,7 @@
 # Python modules
 import time
 import os
+import traceback
 
 import numpy as np
 import torch
@@ -20,8 +21,8 @@ import torch.nn.functional as F
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
-    def __init__(self, cfg):
-        super(GUDATrainer, self).__init__(cfg=cfg)
+    def __init__(self, device_id, cfg, world_size):
+        super(GUDATrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 
         # -------------------------Source dataset parameters------------------------------------------
         assert self.cfg.datasets.configs[0].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
@@ -173,8 +174,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.start_time = time.time()
 
-        for _, net in self.model.get_networks().items():
-            wandb.watch(net)
+        if self.rank == 0:
+            for _, net in self.model.get_networks().items():
+                wandb.watch(net)
 
         print("Training started...")
 
@@ -196,7 +198,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
             self.training_step(data, batch_idx)
 
-            if batch_idx == 9:
+            if batch_idx == 9 and self.rank == 0:
                 end_10_steps = time.time()
                 print(f'Total time for 10 batches {end_10_steps - start_10_steps}')
 
@@ -217,7 +219,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         mean_iou, iou = self.miou.get_miou()
 
-        wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
+        if self.rank == 0:
+            wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
 
     def training_step(self, data, batch_idx):
         start = time.time()
@@ -237,10 +240,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
                                                                    semantic_pred, data[0]['semantic'])
         end_loss_source = time.time()
-        print(f'Time for loss calculation for source: {end_loss_source - start_loss_source}')
 
         # log samples
-        if batch_idx % 500 == 0:
+        if batch_idx % 500 == 0 and self.rank == 0:
             rgb = wandb.Image(data[0][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Virtual')
             sem_img = self.get_wandb_semantic_image(semantic_pred[0], batch_idx, 'Virtual')
@@ -253,7 +255,11 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # Move batch to device
         for key, val in data[1].items():
             data[1][key] = val.to(self.device)
-        prediction = self.model.forward(data[1], dataset_id=1)
+        try:
+            prediction = self.model.forward(data[1], dataset_id=1)
+        except Exception as e:
+            traceback.print_exc()
+
 
         pose_pred = prediction['poses']
 
@@ -262,10 +268,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         start_loss_target = time.time()
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
         end_loss_target = time.time()
-        print(f'Time for loss calculation for target: {end_loss_target - start_loss_target}')
 
         # log samples
-        if batch_idx % 500 == 0:
+        if batch_idx % 500 == 0 and self.rank == 0:
             rgb = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Real RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Real')
             wandb.log({'Real images': [rgb, depth_img]}, step=batch_idx)
@@ -283,21 +288,23 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         loss.backward()  # mean over individual gpu losses
         self.optimizer.step()
         end_back = time.time()
-        print(f'Time for Loss backward: {end_back - start_back}')
 
         end = time.time()
-        print(f'Time needed for the batch {end - start}')
 
         start_logging = time.time()
+        if self.rank == 0:
+            print(f'Time for loss calculation for source: {end_loss_source - start_loss_source}')
+            print(f'Time for loss calculation for target: {end_loss_target - start_loss_target}')
+            print(f'Time for Loss backward: {end_back - start_back}')
+            print(f'Time needed for the batch {end - start}')
+            loss_source_dict['epoch'] = self.epoch
+            loss_target_dict['epoch'] = self.epoch
+            wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
+            wandb.log(loss_source_dict, step=batch_idx)
+            wandb.log(loss_target_dict, step=batch_idx)
 
-        loss_source_dict['epoch'] = self.epoch
-        loss_target_dict['epoch'] = self.epoch
-        wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
-        wandb.log(loss_source_dict, step=batch_idx)
-        wandb.log(loss_target_dict, step=batch_idx)
-
-        end_logging = time.time()
-        print(f'Time needed for logging {end_logging - start_logging}')
+            end_logging = time.time()
+            print(f'Time needed for logging {end_logging - start_logging}')
 
 
     def validation_step(self, data, batch_idx):
@@ -325,14 +332,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # non-inverse depth map --> pixels far from the camera have a high value, close pixels have a small value
 
         silog_loss = self.source_silog_depth_weigth * self.source_silog_depth(pred=depth_pred,
-                                                                              target=depth_target).mean()
+                                                                              target=depth_target)
         loss_dict['silog_loss'] = silog_loss
 
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)
-        bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt).mean()
+        bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt)
         loss_dict['bce'] = bce_loss
 
-        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target).mean()
+        snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target)
         loss_dict['snr'] = snr_loss
 
         return silog_loss + bce_loss + snr_loss, loss_dict
@@ -346,7 +353,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                              rgb_frame_offsets=self.cfg.datasets.configs[
                                                                  1].dataset.rgb_frame_offsets,
                                                              use_automasking=self.target_reconstruction_use_automasking,
-                                                             use_ssim=self.target_reconstruction_use_ssim).mean()
+                                                             use_ssim=self.target_reconstruction_use_ssim)
         loss_dict['reconstruction'] = reconsruction_loss
         return reconsruction_loss, loss_dict
 
