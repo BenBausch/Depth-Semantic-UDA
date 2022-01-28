@@ -22,8 +22,8 @@ datasets:
 
 train:
     nof_epochs: 40
-    batch_size: 8
-    nof_workers: 32
+    batch_size: 1
+    nof_workers: 5
 
     optimizer:
         type: 'Adam'
@@ -34,12 +34,11 @@ train:
         milestones: [30] # half the learning rate for the last 10 epochs
 
 val:
-    batch_size: 8
-    nof_workers: 32
+    batch_size: 1
+    nof_workers: 5
 
 checkpoint:
     use_checkpoint: False
-
 
 device:
     multiple_gpus: True

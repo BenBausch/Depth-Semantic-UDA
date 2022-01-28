@@ -197,7 +197,7 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         return a
 
-    def forward(self, batch, dataset_id, predict_depth=False):
+    def forward(self, data, predict_depth=False):
         """
         :param batch: batch of data to process
         :param dataset_id: number of datasets in the list of datasets (source: 0, target:1, ...)
@@ -206,28 +206,32 @@ class Guda(SemanticDepthFromMotionModelBase):
         set use_..._depth to True in the config of that specific dataset!
         """
         start = time.time()
-        latent_features_batch = self.latent_features(batch[("rgb", 0)])
+        all_results = []
+        for dataset_id, batch in enumerate(data):
 
-        results = {}
+            latent_features_batch = self.latent_features(batch[("rgb", 0)])
 
-        if self.dataset_predict_depth[dataset_id] or predict_depth:
-            results['depth'] = self.predict_depth(latent_features_batch, dataset_id=dataset_id)
-        else:
-            results['depth'] = None
+            results = {}
 
-        if self.dataset_predict_pose[dataset_id]:
-            results['poses'] = self.predict_poses(batch, dataset_id=dataset_id)
-        else:
-            results['poses'] = None
+            if self.dataset_predict_depth[dataset_id] or predict_depth:
+                results['depth'] = self.predict_depth(latent_features_batch, dataset_id=dataset_id)
+            else:
+                results['depth'] = None
 
-        if self.dataset_predict_semantic[dataset_id]:
-            results['semantic'] = self.predict_semantic(latent_features_batch)
-        else:
-            results['semantic'] = None
+            if self.dataset_predict_pose[dataset_id]:
+                results['poses'] = self.predict_poses(batch, dataset_id=dataset_id)
+            else:
+                results['poses'] = None
+
+            if self.dataset_predict_semantic[dataset_id]:
+                results['semantic'] = self.predict_semantic(latent_features_batch)
+            else:
+                results['semantic'] = None
+            all_results.append(results)
         end = time.time()
 
-        print(f'Batch on Device {batch[("rgb", 0)].get_device()} computed in {end - start} seconds.')
-        return results
+        print(f'Batch on Device {data[0][("rgb", 0)].get_device()} computed in {end - start} seconds.')
+        return all_results
 
     # --------------------------------------------------------------------------
     # -----------------------------Helper-Methods-------------------------------

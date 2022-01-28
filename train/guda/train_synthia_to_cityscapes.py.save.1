@@ -230,15 +230,13 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # Move batch to device
         for key, val in data[0].items():
             data[0][key] = val.to(self.device)
-        for key, val in data[1].items():
-            data[1][key] = val.to(self.device)
-        prediction = self.model.forward(data)
+        for key, val in data[1}.items():
 
-        prediction_s = prediction[0]
+        prediction = self.model.forward(data[0], dataset_id=0)
 
-        depth_pred, raw_sigmoid = prediction_s['depth'][0], prediction_s['depth'][1]
+        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
 
-        semantic_pred = prediction_s['semantic']
+        semantic_pred = prediction['semantic']
 
         start_loss_source = time.time()
         loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
@@ -257,11 +255,11 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # -----------------------------------------------------------------------------------------------
 
         # Move batch to device
-        prediction_t = prediction[1]
+        prediction = self.model.forward(data[1], dataset_id=1)
 
-        pose_pred = prediction_t['poses']
+        pose_pred = prediction['poses']
 
-        depth_pred, raw_sigmoid = prediction_t['depth'][0], prediction_t['depth'][1]
+        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
 
         start_loss_target = time.time()
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)

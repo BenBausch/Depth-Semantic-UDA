@@ -71,7 +71,7 @@ class SemanticDecoder(nn.Module):
 
             if self.use_skips and i > 0:
                 # join the previous layer and same scale latent features
-                x += [input_features[i - 1]]
+                x = x + [input_features[i - 1]]
 
             x = torch.cat(x, dim=1)
             # convolve over concatenated input
