@@ -197,7 +197,7 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         return a
 
-    def forward(self, data, predict_depth=False):
+    def forward(self, data, predict_depth=False, dataset_id=3, train=True):
         """
         :param batch: batch of data to process
         :param dataset_id: number of datasets in the list of datasets (source: 0, target:1, ...)
@@ -207,31 +207,35 @@ class Guda(SemanticDepthFromMotionModelBase):
         """
         start = time.time()
         all_results = []
-        for dataset_id, batch in enumerate(data):
-
-            latent_features_batch = self.latent_features(batch[("rgb", 0)])
-
-            results = {}
-
-            if self.dataset_predict_depth[dataset_id] or predict_depth:
-                results['depth'] = self.predict_depth(latent_features_batch, dataset_id=dataset_id)
-            else:
-                results['depth'] = None
-
-            if self.dataset_predict_pose[dataset_id]:
-                results['poses'] = self.predict_poses(batch, dataset_id=dataset_id)
-            else:
-                results['poses'] = None
-
-            if self.dataset_predict_semantic[dataset_id]:
-                results['semantic'] = self.predict_semantic(latent_features_batch)
-            else:
-                results['semantic'] = None
-            all_results.append(results)
+        if train:
+            for dataset_id, batch in enumerate(data):
+                all_results.append(self.single_forward(batch, dataset_id, predict_depth))
+        else:
+            all_results.append(self.single_forward(data, dataset_id, predict_depth))
         end = time.time()
-
-        print(f'Batch on Device {data[0][("rgb", 0)].get_device()} computed in {end - start} seconds.')
+        #print(f'Batch on Device {data[0][("rgb", 0)].get_device()} computed in {end - start} seconds.')
         return all_results
+
+    def single_forward(self, batch, dataset_id, predict_depth=False):
+        latent_features_batch = self.latent_features(batch[("rgb", 0)])
+
+        results = {}
+
+        if self.dataset_predict_depth[dataset_id] or predict_depth:
+            results['depth'] = self.predict_depth(latent_features_batch, dataset_id=dataset_id)
+        else:
+            results['depth'] = None
+
+        if self.dataset_predict_pose[dataset_id]:
+            results['poses'] = self.predict_poses(batch, dataset_id=dataset_id)
+        else:
+            results['poses'] = None
+
+        if self.dataset_predict_semantic[dataset_id]:
+            results['semantic'] = self.predict_semantic(latent_features_batch)
+        else:
+            results['semantic'] = None
+        return results
 
     # --------------------------------------------------------------------------
     # -----------------------------Helper-Methods-------------------------------

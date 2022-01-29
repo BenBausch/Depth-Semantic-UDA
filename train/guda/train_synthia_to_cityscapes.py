@@ -18,6 +18,7 @@ from eval import eval
 import camera_models
 import wandb
 import torch.nn.functional as F
+import logging
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
@@ -194,13 +195,15 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
-            print(f"Training epoch {self.epoch} | batch {batch_idx}")
+            if self.rank == 0:
+                print(f"Training epoch {self.epoch} | batch {batch_idx}")
 
             self.training_step(data, batch_idx)
 
-            if batch_idx == 9 and self.rank == 0:
+            if batch_idx == 9:
                 end_10_steps = time.time()
                 print(f'Total time for 10 batches {end_10_steps - start_10_steps}')
+                break
 
         # Update the scheduler
         self.scheduler.step()
@@ -213,7 +216,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         # Main loop:
         for batch_idx, data in enumerate(self.target_val_loader):
-            print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
+            if self.rank == 0:
+                print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
 
             self.validation_step(data, batch_idx)
 
@@ -289,27 +293,21 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         end = time.time()
 
-        start_logging = time.time()
+        print(f'Time needed for the batch {end - start}')
+
         if self.rank == 0:
-            print(f'Time for loss calculation for source: {end_loss_source - start_loss_source}')
-            print(f'Time for loss calculation for target: {end_loss_target - start_loss_target}')
             print(f'Time for Loss backward: {end_back - start_back}')
-            print(f'Time needed for the batch {end - start}')
             loss_source_dict['epoch'] = self.epoch
             loss_target_dict['epoch'] = self.epoch
             wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
             wandb.log(loss_source_dict, step=batch_idx)
             wandb.log(loss_target_dict, step=batch_idx)
 
-            end_logging = time.time()
-            print(f'Time needed for logging {end_logging - start_logging}')
-
-
     def validation_step(self, data, batch_idx):
         for key, val in data.items():
             data[key] = val.to(self.device)
-        if batch_idx == 1:
-            prediction = self.model.forward(data, dataset_id=2, predict_depth=True)
+        if batch_idx == 1 and self.rank == 0:
+            prediction = self.model.forward(data, dataset_id=2, predict_depth=True, train=False)[0]
             depth = prediction['depth'][0]
             max = float(depth.max().cpu().data)
             min = float(depth.min().cpu().data)
@@ -319,7 +317,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                               caption=f'Depth Map image with id {batch_idx}')
             wandb.log({'epoch': self.epoch, 'depth example': img})
         else:
-            prediction = self.model.forward(data, dataset_id=2, predict_depth=False)
+            prediction = self.model.forward(data, dataset_id=2, predict_depth=True, train=False)[0]
 
         soft_pred = F.softmax(prediction['semantic'], dim=1)
         self.miou.update(mask_pred=soft_pred, mask_gt=data['semantic'])
@@ -361,6 +359,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
     def set_eval(self):
         for m in self.model.networks.values():
+            logging.warning(f'device {self.device}')
             m.eval()
 
     def set_from_checkpoint(self):

@@ -143,12 +143,6 @@ class TrainBase(metaclass=abc.ABCMeta):
                 rank=self.rank,
                 shuffle=shuffle
             )
-        sampler = torch.utils.data.distributed.DistributedSampler(
-            dataset,
-            num_replicas=self.world_size,
-            rank=self.rank,
-            shuffle=shuffle
-        )
 
         loader = DataLoader(dataset, batch_size=bs, num_workers=num_workers,
                           pin_memory=True, drop_last=False,

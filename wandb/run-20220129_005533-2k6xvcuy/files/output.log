@@ -1,0 +1,391 @@
+Length Target Train Loader: 44625
+Length Target Validation Loader: 250
+Length Source Train Loader: 44625
+No checkpoint is used. Training from scratch!
+[{'silog_depth': {'weight': 0.85}, 'bce': {'r': 0.3, 'ignore_index': 250}, 'snr': 'None'}]
+[{'silog_depth': 1, 'bce': 0.001, 'snr': 0.01}]
+Training supervised on source dataset using dense depth!
+Training supervised on source dataset using semantic annotations!
+Source ground truth scale is used for computing depth errors while training.
+Source ground truth scale is used for computing depth errors while validating.
+Training unsupervised on target dataset using self supervised depth!
+Training started...
+Training epoch 0 | batch 0
+tensor([10.3966], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 8.313746213912964
+Time for Loss backward: 4.8150880336761475
+Training epoch 0 | batch 1
+tensor([11.1754], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6656453609466553
+Time for Loss backward: 1.575822353363037
+Training epoch 0 | batch 2
+tensor([8.3659], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.643122911453247
+Time for Loss backward: 1.5783755779266357
+Training epoch 0 | batch 3
+tensor([9.0052], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.642669439315796
+Time for Loss backward: 1.5773954391479492
+Training epoch 0 | batch 4
+tensor([8.0499], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6430270671844482
+Time for Loss backward: 1.5802006721496582
+Training epoch 0 | batch 5
+tensor([7.5481], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.642697334289551
+Time for Loss backward: 1.5800788402557373
+Training epoch 0 | batch 6
+tensor([10.9939], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6413826942443848
+Time for Loss backward: 1.5776402950286865
+Training epoch 0 | batch 7
+tensor([7.9209], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6402721405029297
+Time for Loss backward: 1.5781424045562744
+Training epoch 0 | batch 8
+tensor([10.3671], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6425647735595703
+Time for Loss backward: 1.5792162418365479
+Training epoch 0 | batch 9
+tensor([9.0632], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6430203914642334
+Time for Loss backward: 1.5785574913024902
+Total time for 10 batches 60.10493516921997
+Validation
+/home/bauschb/miniconda3/envs/Masterthesis/lib/python3.8/site-packages/torch/nn/functional.py:3631: UserWarning: Default upsampling behavior when mode=bilinear is changed to align_corners=False since 0.4.0. Please specify align_corners=True if the old behavior is desired. See the documentation of nn.Upsample for details.
+  warnings.warn(
+/home/bauschb/miniconda3/envs/Masterthesis/lib/python3.8/site-packages/torch/nn/functional.py:4003: UserWarning: Default grid_sample and affine_grid behavior has changed to align_corners=False since 1.3.0. Please specify align_corners=True if the old behavior is desired. See the documentation of grid_sample for details.
+  warnings.warn(
+WARNING:root:device cuda:0
+WARNING:root:device cuda:0
+WARNING:root:device cuda:0
+WARNING:root:device cuda:0
+WARNING:root:device cuda:0
+Evaluation epoch 0 | batch 0
+Evaluation epoch 0 | batch 1
+Evaluation epoch 0 | batch 2
+Evaluation epoch 0 | batch 3
+Evaluation epoch 0 | batch 4
+Evaluation epoch 0 | batch 5
+Evaluation epoch 0 | batch 6
+Evaluation epoch 0 | batch 7
+Evaluation epoch 0 | batch 8
+Evaluation epoch 0 | batch 9
+Evaluation epoch 0 | batch 10
+Evaluation epoch 0 | batch 11
+Evaluation epoch 0 | batch 12
+Evaluation epoch 0 | batch 13
+Evaluation epoch 0 | batch 14
+Evaluation epoch 0 | batch 15
+Evaluation epoch 0 | batch 16
+Evaluation epoch 0 | batch 17
+Evaluation epoch 0 | batch 18
+Evaluation epoch 0 | batch 19
+Evaluation epoch 0 | batch 20
+Evaluation epoch 0 | batch 21
+Evaluation epoch 0 | batch 22
+Evaluation epoch 0 | batch 23
+Evaluation epoch 0 | batch 24
+Evaluation epoch 0 | batch 25
+Evaluation epoch 0 | batch 26
+Evaluation epoch 0 | batch 27
+Evaluation epoch 0 | batch 28
+Evaluation epoch 0 | batch 29
+Evaluation epoch 0 | batch 30
+Evaluation epoch 0 | batch 31
+Evaluation epoch 0 | batch 32
+Evaluation epoch 0 | batch 33
+Evaluation epoch 0 | batch 34
+Evaluation epoch 0 | batch 35
+Evaluation epoch 0 | batch 36
+Evaluation epoch 0 | batch 37
+Evaluation epoch 0 | batch 38
+Evaluation epoch 0 | batch 39
+Evaluation epoch 0 | batch 40
+Evaluation epoch 0 | batch 41
+Evaluation epoch 0 | batch 42
+Evaluation epoch 0 | batch 43
+Evaluation epoch 0 | batch 44
+Evaluation epoch 0 | batch 45
+Evaluation epoch 0 | batch 46
+Evaluation epoch 0 | batch 47
+Evaluation epoch 0 | batch 48
+Evaluation epoch 0 | batch 49
+Evaluation epoch 0 | batch 50
+Evaluation epoch 0 | batch 51
+Evaluation epoch 0 | batch 52
+Evaluation epoch 0 | batch 53
+Evaluation epoch 0 | batch 54
+Evaluation epoch 0 | batch 55
+Evaluation epoch 0 | batch 56
+Evaluation epoch 0 | batch 57
+Evaluation epoch 0 | batch 58
+Evaluation epoch 0 | batch 59
+Evaluation epoch 0 | batch 60
+Evaluation epoch 0 | batch 61
+Evaluation epoch 0 | batch 62
+Evaluation epoch 0 | batch 63
+Evaluation epoch 0 | batch 64
+Evaluation epoch 0 | batch 65
+Evaluation epoch 0 | batch 66
+Evaluation epoch 0 | batch 67
+Evaluation epoch 0 | batch 68
+Evaluation epoch 0 | batch 69
+Evaluation epoch 0 | batch 70
+Evaluation epoch 0 | batch 71
+Evaluation epoch 0 | batch 72
+Evaluation epoch 0 | batch 73
+Evaluation epoch 0 | batch 74
+Evaluation epoch 0 | batch 75
+Evaluation epoch 0 | batch 76
+Evaluation epoch 0 | batch 77
+Evaluation epoch 0 | batch 78
+Evaluation epoch 0 | batch 79
+Evaluation epoch 0 | batch 80
+Evaluation epoch 0 | batch 81
+Evaluation epoch 0 | batch 82
+Evaluation epoch 0 | batch 83
+Evaluation epoch 0 | batch 84
+Evaluation epoch 0 | batch 85
+Evaluation epoch 0 | batch 86
+Evaluation epoch 0 | batch 87
+Evaluation epoch 0 | batch 88
+Evaluation epoch 0 | batch 89
+Evaluation epoch 0 | batch 90
+Evaluation epoch 0 | batch 91
+Evaluation epoch 0 | batch 92
+Evaluation epoch 0 | batch 93
+Evaluation epoch 0 | batch 94
+Evaluation epoch 0 | batch 95
+Evaluation epoch 0 | batch 96
+Evaluation epoch 0 | batch 97
+Evaluation epoch 0 | batch 98
+Evaluation epoch 0 | batch 99
+Evaluation epoch 0 | batch 100
+Evaluation epoch 0 | batch 101
+Evaluation epoch 0 | batch 102
+Evaluation epoch 0 | batch 103
+Evaluation epoch 0 | batch 104
+Evaluation epoch 0 | batch 105
+Evaluation epoch 0 | batch 106
+Evaluation epoch 0 | batch 107
+Evaluation epoch 0 | batch 108
+Evaluation epoch 0 | batch 109
+Evaluation epoch 0 | batch 110
+Evaluation epoch 0 | batch 111
+Evaluation epoch 0 | batch 112
+Evaluation epoch 0 | batch 113
+Evaluation epoch 0 | batch 114
+Evaluation epoch 0 | batch 115
+Evaluation epoch 0 | batch 116
+Evaluation epoch 0 | batch 117
+Evaluation epoch 0 | batch 118
+Evaluation epoch 0 | batch 119
+Evaluation epoch 0 | batch 120
+Evaluation epoch 0 | batch 121
+Evaluation epoch 0 | batch 122
+Evaluation epoch 0 | batch 123
+Evaluation epoch 0 | batch 124
+Evaluation epoch 0 | batch 125
+Evaluation epoch 0 | batch 126
+Evaluation epoch 0 | batch 127
+Evaluation epoch 0 | batch 128
+Evaluation epoch 0 | batch 129
+Evaluation epoch 0 | batch 130
+Evaluation epoch 0 | batch 131
+Evaluation epoch 0 | batch 132
+Evaluation epoch 0 | batch 133
+Evaluation epoch 0 | batch 134
+Evaluation epoch 0 | batch 135
+Evaluation epoch 0 | batch 136
+Evaluation epoch 0 | batch 137
+Evaluation epoch 0 | batch 138
+Evaluation epoch 0 | batch 139
+Evaluation epoch 0 | batch 140
+Evaluation epoch 0 | batch 141
+Evaluation epoch 0 | batch 142
+Evaluation epoch 0 | batch 143
+Evaluation epoch 0 | batch 144
+Evaluation epoch 0 | batch 145
+Evaluation epoch 0 | batch 146
+Evaluation epoch 0 | batch 147
+Evaluation epoch 0 | batch 148
+Evaluation epoch 0 | batch 149
+Evaluation epoch 0 | batch 150
+Evaluation epoch 0 | batch 151
+Evaluation epoch 0 | batch 152
+Evaluation epoch 0 | batch 153
+Evaluation epoch 0 | batch 154
+Evaluation epoch 0 | batch 155
+Evaluation epoch 0 | batch 156
+Evaluation epoch 0 | batch 157
+Evaluation epoch 0 | batch 158
+Evaluation epoch 0 | batch 159
+Evaluation epoch 0 | batch 160
+Evaluation epoch 0 | batch 161
+Evaluation epoch 0 | batch 162
+Evaluation epoch 0 | batch 163
+Evaluation epoch 0 | batch 164
+Evaluation epoch 0 | batch 165
+Evaluation epoch 0 | batch 166
+Evaluation epoch 0 | batch 167
+Evaluation epoch 0 | batch 168
+Evaluation epoch 0 | batch 169
+Evaluation epoch 0 | batch 170
+Evaluation epoch 0 | batch 171
+Evaluation epoch 0 | batch 172
+Evaluation epoch 0 | batch 173
+Evaluation epoch 0 | batch 174
+Evaluation epoch 0 | batch 175
+Evaluation epoch 0 | batch 176
+Evaluation epoch 0 | batch 177
+Evaluation epoch 0 | batch 178
+Evaluation epoch 0 | batch 179
+Evaluation epoch 0 | batch 180
+Evaluation epoch 0 | batch 181
+Evaluation epoch 0 | batch 182
+Evaluation epoch 0 | batch 183
+Evaluation epoch 0 | batch 184
+Evaluation epoch 0 | batch 185
+Evaluation epoch 0 | batch 186
+Evaluation epoch 0 | batch 187
+Evaluation epoch 0 | batch 188
+Evaluation epoch 0 | batch 189
+Evaluation epoch 0 | batch 190
+Evaluation epoch 0 | batch 191
+Evaluation epoch 0 | batch 192
+Evaluation epoch 0 | batch 193
+Evaluation epoch 0 | batch 194
+Evaluation epoch 0 | batch 195
+Evaluation epoch 0 | batch 196
+Evaluation epoch 0 | batch 197
+Evaluation epoch 0 | batch 198
+Evaluation epoch 0 | batch 199
+Evaluation epoch 0 | batch 200
+Evaluation epoch 0 | batch 201
+Evaluation epoch 0 | batch 202
+Evaluation epoch 0 | batch 203
+Evaluation epoch 0 | batch 204
+Evaluation epoch 0 | batch 205
+Evaluation epoch 0 | batch 206
+Evaluation epoch 0 | batch 207
+Evaluation epoch 0 | batch 208
+Evaluation epoch 0 | batch 209
+Evaluation epoch 0 | batch 210
+Evaluation epoch 0 | batch 211
+Evaluation epoch 0 | batch 212
+Evaluation epoch 0 | batch 213
+Evaluation epoch 0 | batch 214
+Evaluation epoch 0 | batch 215
+Evaluation epoch 0 | batch 216
+Evaluation epoch 0 | batch 217
+Evaluation epoch 0 | batch 218
+Evaluation epoch 0 | batch 219
+Evaluation epoch 0 | batch 220
+Evaluation epoch 0 | batch 221
+Evaluation epoch 0 | batch 222
+Evaluation epoch 0 | batch 223
+Evaluation epoch 0 | batch 224
+Evaluation epoch 0 | batch 225
+Evaluation epoch 0 | batch 226
+Evaluation epoch 0 | batch 227
+Evaluation epoch 0 | batch 228
+Evaluation epoch 0 | batch 229
+Evaluation epoch 0 | batch 230
+Evaluation epoch 0 | batch 231
+Evaluation epoch 0 | batch 232
+Evaluation epoch 0 | batch 233
+Evaluation epoch 0 | batch 234
+Evaluation epoch 0 | batch 235
+Evaluation epoch 0 | batch 236
+Evaluation epoch 0 | batch 237
+Evaluation epoch 0 | batch 238
+Evaluation epoch 0 | batch 239
+Evaluation epoch 0 | batch 240
+Evaluation epoch 0 | batch 241
+Evaluation epoch 0 | batch 242
+Evaluation epoch 0 | batch 243
+Evaluation epoch 0 | batch 244
+Evaluation epoch 0 | batch 245
+Evaluation epoch 0 | batch 246
+Evaluation epoch 0 | batch 247
+Evaluation epoch 0 | batch 248
+Evaluation epoch 0 | batch 249
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 0 < 11; dropping {'Virtual images': [<wandb.sdk.data_types.Image object at 0x7f7611256040>, <wandb.sdk.data_types.Image object at 0x7f75bc494c10>, <wandb.sdk.data_types.Image object at 0x7f7611256070>]}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 0 < 11; dropping {'Real images': [<wandb.sdk.data_types.Image object at 0x7f7611256c40>, <wandb.sdk.data_types.Image object at 0x7f7611256040>]}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 0 < 11; dropping {'total loss': tensor([5.3463], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 0 < 11; dropping {'silog_loss': tensor(5.0797, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0036], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 0 < 11; dropping {'reconstruction': tensor(0.2601, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 1 < 11; dropping {'total loss': tensor([8.2017], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 1 < 11; dropping {'silog_loss': tensor(7.9197, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0042], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 1 < 11; dropping {'reconstruction': tensor(0.2749, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 2 < 11; dropping {'total loss': tensor([8.6072], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 2 < 11; dropping {'silog_loss': tensor(8.2885, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0040], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 2 < 11; dropping {'reconstruction': tensor(0.3117, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 3 < 11; dropping {'total loss': tensor([9.5425], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 3 < 11; dropping {'silog_loss': tensor(9.2669, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0035], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 3 < 11; dropping {'reconstruction': tensor(0.2692, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 4 < 11; dropping {'total loss': tensor([7.4651], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 4 < 11; dropping {'silog_loss': tensor(7.3027, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0039], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 4 < 11; dropping {'reconstruction': tensor(0.1556, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 5 < 11; dropping {'total loss': tensor([8.4417], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 5 < 11; dropping {'silog_loss': tensor(8.3200, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0033], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 5 < 11; dropping {'reconstruction': tensor(0.1156, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 6 < 11; dropping {'total loss': tensor([6.2005], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 6 < 11; dropping {'silog_loss': tensor(5.8517, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0038], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 6 < 11; dropping {'reconstruction': tensor(0.3421, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 7 < 11; dropping {'total loss': tensor([7.6553], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 7 < 11; dropping {'silog_loss': tensor(7.2932, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0034], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 7 < 11; dropping {'reconstruction': tensor(0.3558, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 8 < 11; dropping {'total loss': tensor([4.0691], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 8 < 11; dropping {'silog_loss': tensor(3.8189, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0033], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 8 < 11; dropping {'reconstruction': tensor(0.2441, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+Training epoch 1 | batch 0
+tensor([5.3463], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.9072439670562744
+Time for Loss backward: 1.5789318084716797
+Training epoch 1 | batch 1
+tensor([8.2017], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.642012596130371
+Time for Loss backward: 1.5797924995422363
+Training epoch 1 | batch 2
+tensor([8.6072], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.642862558364868
+Time for Loss backward: 1.5814306735992432
+Training epoch 1 | batch 3
+tensor([9.5425], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6436080932617188
+Time for Loss backward: 1.5810887813568115
+Training epoch 1 | batch 4
+tensor([7.4651], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6417629718780518
+Time for Loss backward: 1.5788345336914062
+Training epoch 1 | batch 5
+tensor([8.4417], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6440987586975098
+Time for Loss backward: 1.5811383724212646
+Training epoch 1 | batch 6
+tensor([6.2005], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6462490558624268
+Time for Loss backward: 1.5824964046478271
+Training epoch 1 | batch 7
+tensor([7.6553], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.64750075340271
+Time for Loss backward: 1.5808594226837158
+Training epoch 1 | batch 8
+tensor([4.0691], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.647285223007202
+Time for Loss backward: 1.5803821086883545
+Training epoch 1 | batch 9
+tensor([4.7665], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>)
+Time needed for the batch 2.6466097831726074
+Time for Loss backward: 1.5819635391235352
+Total time for 10 batches 54.34806752204895
+Validation
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 9 < 11; dropping {'total loss': tensor([4.7665], device='cuda:0', dtype=torch.float64, grad_fn=<AddBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 9 < 11; dropping {'silog_loss': tensor(4.4245, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'bce': tensor(0.0029, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'snr': tensor([0.0033], device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+[34m[1mwandb[39m[22m: [33mWARNING[39m Step must only increase in log calls.  Step 9 < 11; dropping {'reconstruction': tensor(0.3358, device='cuda:0', dtype=torch.float64, grad_fn=<MulBackward0>), 'epoch': 1}.
+WARNING:root:device cuda:0
+WARNING:root:device cuda:0
+WARNING:root:device cuda:0
+WARNING:root:device cuda:0
