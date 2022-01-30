@@ -205,15 +205,12 @@ class Guda(SemanticDepthFromMotionModelBase):
         validation for visualization purposes) Note: Don't use to manage depth prediction per dataset -->
         set use_..._depth to True in the config of that specific dataset!
         """
-        start = time.time()
         all_results = []
         if train:
             for dataset_id, batch in enumerate(data):
                 all_results.append(self.single_forward(batch, dataset_id, predict_depth))
         else:
             all_results.append(self.single_forward(data, dataset_id, predict_depth))
-        end = time.time()
-        #print(f'Batch on Device {data[0][("rgb", 0)].get_device()} computed in {end - start} seconds.')
         return all_results
 
     def single_forward(self, batch, dataset_id, predict_depth=False):

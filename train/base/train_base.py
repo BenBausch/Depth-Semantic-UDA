@@ -105,7 +105,14 @@ class TrainBase(metaclass=abc.ABCMeta):
         pass
 
     def save_checkpoint(self):
-        pass
+        checkpoint = io_utils.IOHandler.gen_checkpoint(
+            self.model.get_networks(),
+            **{"optimizer": self.optimizer.state_dict(),
+               "cfg": self.cfg})
+
+        self.io_handler.save_checkpoint(
+            {"epoch": self.epoch, "time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
+            checkpoint)
 
     def get_dataloader(self, mode, name, split, bs, num_workers, cfg, sample_completely_random=False, num_samples=None):
         """
@@ -135,18 +142,20 @@ class TrainBase(metaclass=abc.ABCMeta):
             sampler = CompletelyRandomSampler(
                 data_source=dataset,
                 num_samples=num_samples)
-
         else:
             sampler = torch.utils.data.distributed.DistributedSampler(
                 dataset,
                 num_replicas=self.world_size,
                 rank=self.rank,
-                shuffle=shuffle
-            )
+                shuffle=shuffle)
 
-        loader = DataLoader(dataset, batch_size=bs, num_workers=num_workers,
+        if mode == 'train':
+             loader = DataLoader(dataset, batch_size=bs, num_workers=num_workers,
                           pin_memory=True, drop_last=False,
                           sampler=sampler)
+        else:
+             loader = DataLoader(dataset, batch_size=bs, shuffle=False,
+                                  num_workers=num_workers, pin_memory=True, drop_last=False)
 
         return loader, len(loader)
 

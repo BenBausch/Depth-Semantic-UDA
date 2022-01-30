@@ -191,25 +191,19 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
     def train(self):
         self.set_train()
 
-        start_10_steps = time.time()
-
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
             if self.rank == 0:
                 print(f"Training epoch {self.epoch} | batch {batch_idx}")
-
             self.training_step(data, batch_idx)
 
-            if batch_idx == 9:
-                end_10_steps = time.time()
-                print(f'Total time for 10 batches {end_10_steps - start_10_steps}')
-                break
 
         # Update the scheduler
         self.scheduler.step()
 
         # Create checkpoint after each epoch and save it
-        self.save_checkpoint()
+        if self.rank == 0:
+            self.save_checkpoint()
 
     def validate(self):
         self.set_eval()
@@ -227,7 +221,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
 
     def training_step(self, data, batch_idx):
-        start = time.time()
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------Virtual Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
@@ -244,10 +237,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         semantic_pred = prediction_s['semantic']
 
-        start_loss_source = time.time()
         loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
                                                                    semantic_pred, data[0]['semantic'])
-        end_loss_source = time.time()
 
         # log samples
         if batch_idx % 500 == 0 and self.rank == 0:
@@ -267,9 +258,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         depth_pred, raw_sigmoid = prediction_t['depth'][0], prediction_t['depth'][1]
 
-        start_loss_target = time.time()
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
-        end_loss_target = time.time()
 
         # log samples
         if batch_idx % 500 == 0 and self.rank == 0:
@@ -285,18 +274,11 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         print(loss)
 
-        start_back = time.time()
         self.optimizer.zero_grad()
         loss.backward()  # mean over individual gpu losses
         self.optimizer.step()
-        end_back = time.time()
-
-        end = time.time()
-
-        print(f'Time needed for the batch {end - start}')
 
         if self.rank == 0:
-            print(f'Time for Loss backward: {end_back - start_back}')
             loss_source_dict['epoch'] = self.epoch
             loss_target_dict['epoch'] = self.epoch
             wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
@@ -359,7 +341,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
     def set_eval(self):
         for m in self.model.networks.values():
-            logging.warning(f'device {self.device}')
             m.eval()
 
     def set_from_checkpoint(self):
