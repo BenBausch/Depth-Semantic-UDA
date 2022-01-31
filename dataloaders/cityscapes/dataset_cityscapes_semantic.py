@@ -165,6 +165,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/cityscapes_dataset.py
         Initializes the Cityscapes Semantic dataset by collecting all the paths and random shuffling the data if wanted.
         """
+
         self.paths = _PathsCityscapesSemantic(mode, cfg)
 
         # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
@@ -438,7 +439,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
 if __name__ == "__main__":
     import wandb
     from cfg.config_dataset import get_cfg_dataset_defaults
-    from utils.plotting_utils import CITYSCAPES_ID_TO_NAME
+    from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME
     import sys
 
     path = sys.argv[1]

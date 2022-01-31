@@ -37,12 +37,12 @@ val:
     nof_workers: 4
 
 checkpoint:
-    use_checkpoint: False
+    use_checkpoint: True
+    path_base : 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\guda_model'
+    filename : 'checkpoint_epoch_0.pth'
 
 device:
-    multiple_gpus: True
+    multiple_gpus: False
 
 io:
-    path_save: r'C:\Users\benba\Documents\University\Masterarbeit\models\guda_synthia_to_cityscapes'
-#    path_base: '/home/petek/accepted_models/depth_estimation/2021_03_08_18_57_49_kitti_unsupervised_no_depth_input'
-#    filename: 'checkpoint_epoch_19.pth'
+    path_save: 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\guda_synthia_to_cityscapes'

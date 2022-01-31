@@ -49,7 +49,7 @@ def test(opts):
     feed_img_width = cfg.dataset.feed_img_size[0]
     feed_img_height = cfg.dataset.feed_img_size[1]
 
-    # Set the eval mode as no training shall be executed here
+    # Set the eval_functions mode as no training shall be executed here
     for m in model.get_networks().values():
         m.eval()
 

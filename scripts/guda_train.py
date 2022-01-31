@@ -14,6 +14,14 @@ if __name__ == "__main__":
         cfg = create_configuration(sys.argv[1])
     else:
         raise Exception("You must specify a path to a yaml file to read the configuration from!")
-    setup_multi_processing()
-    mp.spawn(run_trainer, nprocs=torch.cuda.device_count(),
-             args=(cfg, torch.cuda.device_count(), train_synthia_to_cityscapes.GUDATrainer,))
+    if cfg.device.multiple_gpus:
+        # use DDP and 1 process per gpu for training
+        setup_multi_processing()
+        mp.spawn(run_trainer, nprocs=torch.cuda.device_count(),
+                 args=(cfg, torch.cuda.device_count(), train_synthia_to_cityscapes.GUDATrainer,))
+    else:
+        # standart single gpu 'cuda:0' training
+        depth_trainer = train_synthia_to_cityscapes.GUDATrainer(0, cfg)
+        depth_trainer.run()
+
+
