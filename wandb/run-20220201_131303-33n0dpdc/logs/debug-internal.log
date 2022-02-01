@@ -32056,3 +32056,210 @@
 2022-02-01 18:57:00,932 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
 2022-02-01 18:57:00,978 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
 2022-02-01 18:57:01,525 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:02,538 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:57:02,539 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:57:03,453 DEBUG   SenderThread:93189 [sender.py:send():234] send: stats
+2022-02-01 18:57:03,815 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:03,841 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:03,893 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:04,532 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:06,716 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:06,749 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:06,800 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:07,540 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:09,619 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:09,641 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:09,696 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:10,547 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:12,519 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:12,538 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:12,590 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:13,589 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:15,437 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:15,450 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:15,501 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:15,594 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:17,744 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:57:17,745 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:57:18,329 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:18,353 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:18,399 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:18,602 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:21,235 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:21,259 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:21,327 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:21,609 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:24,140 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:24,171 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:24,228 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:24,616 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:27,050 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:27,076 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:27,132 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:27,623 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:29,953 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:29,973 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:30,031 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:30,631 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:32,847 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:32,871 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:32,926 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:32,961 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:57:32,961 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:57:33,638 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:35,753 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:35,779 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:35,832 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:36,151 DEBUG   SenderThread:93189 [sender.py:send():234] send: stats
+2022-02-01 18:57:36,646 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:38,653 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:38,682 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:38,738 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:39,735 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:41,559 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:41,585 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:41,635 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:41,740 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:44,464 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:44,490 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:44,543 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:44,747 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:47,381 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:47,401 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:47,451 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:47,761 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:48,170 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:57:48,171 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:57:50,279 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:50,306 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:50,364 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:50,768 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:53,183 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:53,216 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:53,265 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:53,775 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:56,087 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:56,124 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:56,185 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:56,783 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:57:58,988 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:57:59,024 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:57:59,074 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:57:59,790 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:01,899 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:01,924 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:01,972 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:02,798 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:03,386 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:58:03,386 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:58:04,804 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:04,833 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:04,883 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:05,881 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:07,715 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:07,739 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:07,791 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:07,886 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:08,834 DEBUG   SenderThread:93189 [sender.py:send():234] send: stats
+2022-02-01 18:58:10,686 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:10,706 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:10,765 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:10,894 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:13,592 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:13,627 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:13,680 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:13,899 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:16,495 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:16,522 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:16,576 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:16,905 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:18,599 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:58:18,600 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:58:19,399 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:19,425 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:19,483 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:19,911 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:22,299 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:22,323 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:22,377 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:22,919 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:25,208 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:25,245 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:25,297 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:25,928 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:28,110 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:28,145 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:28,202 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:28,935 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:31,014 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:31,048 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:31,098 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:31,942 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:33,810 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:58:33,811 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:58:34,013 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:34,013 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:34,056 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:34,950 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:36,820 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:36,846 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:36,899 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:36,955 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:39,723 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:39,749 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:39,807 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:39,962 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:41,560 DEBUG   SenderThread:93189 [sender.py:send():234] send: stats
+2022-02-01 18:58:42,628 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:42,657 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:42,726 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:42,970 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:45,531 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:45,556 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:45,606 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:45,977 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:48,435 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:48,471 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:48,526 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:48,994 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:49,014 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:58:49,015 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:58:51,339 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:51,366 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:51,412 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:52,000 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:54,251 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:54,275 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:54,322 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:55,008 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:58:57,148 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:58:57,182 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:58:57,233 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:58:58,015 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:59:00,058 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:59:00,100 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:59:00,148 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:59:01,022 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:59:02,968 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:59:02,993 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:59:03,038 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:59:04,036 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:59:04,222 DEBUG   HandlerThread:93189 [handler.py:handle_request():130] handle_request: stop_status
+2022-02-01 18:59:04,222 DEBUG   SenderThread:93189 [sender.py:send_request():248] send_request: stop_status
+2022-02-01 18:59:05,871 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:59:05,897 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:59:05,941 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:59:06,041 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:59:08,779 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:59:08,803 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:59:08,848 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:59:09,048 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:59:11,683 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:59:11,707 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:59:11,759 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:59:12,055 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
+2022-02-01 18:59:14,241 DEBUG   SenderThread:93189 [sender.py:send():234] send: stats
+2022-02-01 18:59:14,587 DEBUG   SenderThread:93189 [sender.py:send():234] send: history
+2022-02-01 18:59:14,612 DEBUG   SenderThread:93189 [sender.py:send():234] send: summary
+2022-02-01 18:59:14,666 INFO    SenderThread:93189 [sender.py:_save_file():939] saving file wandb-summary.json with policy end
+2022-02-01 18:59:15,062 INFO    Thread-8  :93189 [dir_watcher.py:_on_file_modified():230] file/dir modified: /home/bauschb/Masterthesis/Depth-Semantic-UDA/wandb/run-20220201_131303-33n0dpdc/files/wandb-summary.json
