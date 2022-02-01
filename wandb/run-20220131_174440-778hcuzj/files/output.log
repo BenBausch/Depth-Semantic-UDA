@@ -1,0 +1,18 @@
+Length Target Train Loader: 89250
+Length Target Validation Loader: 500
+Length Source Train Loader: 89250
+Using pretrained weights for the model and optimizer from
+ /work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes/tmp/2022_01_29_02_20_20_synthia_rand_cityscapes/checkpoint_epoch_0.pth
+Loading weights of resnet_encoder
+Loading weights of depth_decoder
+Loading weights of semantic_decoder
+Loading weights of pose_encoder
+Loading weights of pose_decoder
+[{'silog_depth': {'weight': 0.85}, 'bce': {'r': 0.3, 'ignore_index': 250}, 'snr': 'None'}]
+[{'silog_depth': 1, 'bce': 0.001, 'snr': 0.01}]
+Training supervised on source dataset using dense depth!
+Training supervised on source dataset using semantic annotations!
+Source ground truth scale is used for computing depth errors while training.
+Source ground truth scale is used for computing depth errors while validating.
+Training unsupervised on target dataset using self supervised depth!
+Initial epoch 1

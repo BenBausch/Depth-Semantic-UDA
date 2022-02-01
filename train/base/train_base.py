@@ -68,9 +68,6 @@ class TrainBase(metaclass=abc.ABCMeta):
         if self.cfg.device.multiple_gpus:
             self.model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
         self.model.to(self.device)
-        if self.cfg.device.multiple_gpus:
-            self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
-
         # Initialization of the optimizer and lr scheduler
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
                                             self.model.parameters_to_train,
@@ -90,11 +87,14 @@ class TrainBase(metaclass=abc.ABCMeta):
         if cfg.checkpoint.use_checkpoint:
             print("Using pretrained weights for the model and optimizer from \n",
                   os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
-            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
+            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename, self.rank)
             # Load pretrained weights for the model and the optimizer status
             io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
         else:
             print("No checkpoint is used. Training from scratch!")
+
+        if self.cfg.device.multiple_gpus:
+            self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
 
         # Logging only on the first gpu process
         if device_id == 0:
@@ -237,16 +237,6 @@ class TrainSingleDatasetBase(TrainBase, ABC):
         # Get number of total steps to compute remaining training time later
         self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
 
-        # Load the checkpoint if one is provided
-        if cfg.checkpoint.use_checkpoint:
-            print("Using pretrained weights for the model and optimizer from \n",
-                  os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
-            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
-            # Load pretrained weights for the model and the optimizer status
-            io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
-        else:
-            print("No checkpoint is used. Training from scratch!")
-
 
 class TrainSourceTargetDatasetBase(TrainBase, ABC):
     def __init__(self, device_id, cfg, world_size=1):
@@ -284,12 +274,3 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
         # calculate time using target dataset length
         self.num_total_steps = self.target_num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
 
-        # Load the checkpoint if one is provided
-        if cfg.checkpoint.use_checkpoint:
-            print("Using pretrained weights for the model and optimizer from \n",
-                  os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
-            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
-            # Load pretrained weights for the model and the optimizer status
-            io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
-        else:
-            print("No checkpoint is used. Training from scratch!")

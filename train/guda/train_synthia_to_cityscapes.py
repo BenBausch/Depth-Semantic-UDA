@@ -291,11 +291,12 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         soft_pred = F.softmax(prediction['semantic'], dim=1)
         self.miou.update(mask_pred=soft_pred, mask_gt=data['semantic'])
 
-        rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0), caption=f'Rgb {batch_idx}')
-        depth_img = self.get_wandb_depth_image(depth, batch_idx)
-        semnatic_img = self.get_wandb_semantic_image(soft_pred[0], batch_idx)
+        if self.rank == 0:
+            rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0), caption=f'Rgb {batch_idx}')
+            depth_img = self.get_wandb_depth_image(depth, batch_idx)
+            semnatic_img = self.get_wandb_semantic_image(soft_pred[0], batch_idx)
 
-        wandb.log({'Validation Images': [rgb_img, depth_img, semnatic_img]})
+            wandb.log({'Validation Images': [rgb_img, depth_img, semnatic_img]})
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}

@@ -57,9 +57,8 @@ class IOHandler:
     def load_weights(checkpoint, models, optimizer=None):
         # Go through each model and update weights with those stored in the checkpoint
         for model_name, model in models.items():
-            print("Loading weights of {}".format(model_name))
             model.load_state_dict(checkpoint[model_name])
-
+            print("Loading weights of {} on device {}".format(model_name, str(list(model.parameters())[0].device)))
             for key_item_1, key_item_2 in zip(model.state_dict().items(), checkpoint[model_name].items()):
                 assert torch.equal(key_item_1[1], key_item_2[1]), \
                     "Mismatch found concerning model weights after loading!"
@@ -80,8 +79,8 @@ class IOHandler:
         return checkpoint
 
     @staticmethod
-    def load_checkpoint(path_base_checkpoint, filename_checkpoint):
+    def load_checkpoint(path_base_checkpoint, filename_checkpoint, device_id):
         path_checkpoint = os.path.join(path_base_checkpoint, 'checkpoints', filename_checkpoint)
         assert os.path.exists(path_checkpoint), "The path {} does not exist!".format(path_checkpoint)
-        checkpoint = torch.load(path_checkpoint)
+        checkpoint = torch.load(path_checkpoint, map_location=torch.device(device_id))
         return checkpoint

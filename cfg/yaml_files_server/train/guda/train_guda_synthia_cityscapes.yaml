@@ -38,7 +38,9 @@ val:
     nof_workers: 5
 
 checkpoint:
-    use_checkpoint: False
+    use_checkpoint: True
+    path_base : '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes/tmp/2022_01_31_18_20_59_synthia_rand_cityscapes/'
+    filename : 'checkpoint_epoch_1.pth'
 
 device:
     multiple_gpus: True
