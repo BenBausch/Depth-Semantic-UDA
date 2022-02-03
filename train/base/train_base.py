@@ -227,11 +227,11 @@ class TrainSingleDatasetBase(TrainBase, ABC):
                                                                       cfg=self.cfg.datasets.configs[0])
         print(f'Length Train Loader: {len(self.train_loader)}')
         self.val_loader, self.num_val_files = self.get_dataloader(mode="val",
-                                                                  name=self.cfg.datasets.configs[0].dataset.name,
-                                                                  split=self.cfg.datasets.configs[0].dataset.split,
+                                                                  name=self.cfg.datasets.configs[1].dataset.name,
+                                                                  split=self.cfg.datasets.configs[1].dataset.split,
                                                                   bs=self.cfg.val.batch_size,
                                                                   num_workers=self.cfg.val.nof_workers,
-                                                                  cfg=self.cfg.datasets.configs[0])
+                                                                  cfg=self.cfg.datasets.configs[1])
         print(f'Length Validation Loader: {len(self.val_loader)}')
 
         # Get number of total steps to compute remaining training time later

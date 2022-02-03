@@ -177,12 +177,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
             self.train()
             print('Validation')
-            self.validate()
-            if self.epoch - initial_epoch == 2:
-                # todo: Remove this! after Thesis is done or if training become shorter
-                # this is only here to prevent starting an epoch that can not be finished due to slurm limit of
-                # one day computation time.
-                break
+            #self.validate()
 
         print("Training done.")
 

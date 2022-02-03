@@ -1,4 +1,4 @@
-experiment_name: 'synthia_to_cityscapes'
+experiment_name: 'cityscapes_depth'
 
 model:
     type: 'guda'
@@ -15,15 +15,14 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/synthia.yaml', #source
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_sequence.yaml', # target
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_semantic.yaml'] # validation dataset
-    loss_weights : [1, 1, 0]
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth/cityscapes_sequence.yaml', # target
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth/cityscapes_semantic.yaml'] # validation dataset
+    loss_weights : [1, 0]
 
 train:
     nof_epochs: 40
-    batch_size: 8
-    nof_workers: 32
+    batch_size: 1
+    nof_workers: 5
 
     optimizer:
         type: 'Adam'
@@ -34,8 +33,8 @@ train:
         milestones: [30] # half the learning rate for the last 10 epochs
 
 val:
-    batch_size: 8
-    nof_workers: 32
+    batch_size: 1
+    nof_workers: 5
 
 checkpoint:
     use_checkpoint: False
