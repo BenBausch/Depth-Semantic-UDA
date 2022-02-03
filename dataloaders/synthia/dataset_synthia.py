@@ -350,7 +350,6 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
 
             img = pil.open(path_file)
-            print(img.size)
             return img
 
     def get_semantic(self, path_file):
