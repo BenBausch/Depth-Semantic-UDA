@@ -113,11 +113,7 @@ class CityscapesEncodeSegmentation(object):
         self.label_color = label_color
 
     def encode_segmap(self, lbl):
-        """
-            Copied from https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
-            Removed potential overwriting bug.
-        """
-        lbl_copy = np.zeros(shape=(lbl.shape[0], lbl.shape[1])) + 250
+        lbl_copy = np.zeros(shape=(lbl.shape[0], lbl.shape[1])) + self.ignore_index
         for id, _i in enumerate(self.valid_classes):
             mask = np.all(lbl == self.label_color[id], axis=-1)
             lbl_copy[mask] = self.class_map[_i]

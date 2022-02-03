@@ -1,0 +1,44 @@
+dataset:
+    name: 'synthia_rand_cityscapes'
+    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\SYNTHIA_RAND_CITYSCAPES\RAND_CITYSCAPES'
+    feed_img_size: [ 512, 320 ]
+    use_sparse_depth: False
+    use_dense_depth: True
+    use_self_supervised_depth: False
+    use_semantic_gt: True
+    split: None
+    camera: 'pinhole'
+    shuffle: True
+    num_classes: 19
+    min_depth : 0.01
+    max_depth : 655.35
+    rgb_frame_offsets: [0]
+    sequence_dataset: False
+
+losses:
+    loss_names_and_parameters:
+        - silog_depth:
+            'weight': 0.85
+        - bce:
+            'r': 0.3
+            'ignore_index': 250
+        - snr: None
+
+    loss_names_and_weights:
+        - silog_depth: 1
+        - bce: 0.001
+        - snr: 0.01
+
+eval:
+    train:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True
+    val:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True
+    test:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True

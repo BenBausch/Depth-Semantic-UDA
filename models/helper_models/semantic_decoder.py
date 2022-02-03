@@ -15,7 +15,7 @@ from utils.utils import info_gpu_memory
 
 class SemanticDecoder(nn.Module):
     def __init__(self, num_ch_enc, num_classes, use_skips=True,
-                 upsample_mode='nearest'):
+                 upsample_mode='nearest', num_ch_dec=[16, 32, 64, 128, 256]):
         super(SemanticDecoder, self).__init__()
 
         self.upsample_mode = upsample_mode
@@ -23,7 +23,7 @@ class SemanticDecoder(nn.Module):
 
         self.num_output_channels = num_classes
         self.num_ch_enc = num_ch_enc
-        self.num_ch_dec = np.array([16, 32, 64, 128, 256])
+        self.num_ch_dec = np.array(num_ch_dec)
 
         self.scale_factors = [1, 2, 4, 8]
         self.inputs_to_last_layer = [3, 2, 1, 0]

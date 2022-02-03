@@ -6,3 +6,6 @@
 __pycache__/
 */__pychache__/
 
+# Ignore folders
+**/try_out_stuff/
+**/wandb/

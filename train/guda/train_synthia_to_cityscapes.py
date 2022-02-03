@@ -22,14 +22,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # -------------------------Source dataset parameters------------------------------------------
         assert self.cfg.datasets.configs[0].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
 
-        self.source_img_width = self.cfg.datasets.configs[0].dataset.feed_img_size[0]
-        self.source_img_height = self.cfg.datasets.configs[0].dataset.feed_img_size[1]
+        self.img_width = self.cfg.datasets.configs[0].dataset.feed_img_size[0]
+        self.img_height = self.cfg.datasets.configs[0].dataset.feed_img_size[1]
         assert self.source_img_height % 32 == 0, 'The image height must be a multiple of 32'
         assert self.source_img_width % 32 == 0, 'The image width must be a multiple of 32'
 
-        self.source_rgb_frame_offsets = self.cfg.datasets.configs[0].dataset.rgb_frame_offsets
-        self.source_num_input_frames = len(self.cfg.datasets.configs[0].dataset.rgb_frame_offsets)
-        self.source_num_pose_frames = 2 if self.cfg.model.pose_net.input == "pairs" else self.num_input_frames
+        self.rgb_frame_offsets = self.cfg.datasets.configs[0].dataset.rgb_frame_offsets
+        self.num_input_frames = len(self.cfg.datasets.configs[0].dataset.rgb_frame_offsets)
+        self.num_pose_frames = 2 if self.cfg.model.pose_net.input == "pairs" else self.num_input_frames
 
         source_l_n_p = self.cfg.datasets.configs[0].losses.loss_names_and_parameters
         print(source_l_n_p)
@@ -71,53 +71,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         except FileNotFoundError:
             raise Exception("No Camera calibration file found! Create Camera calibration file under: " +
                             os.path.join(cfg.dataset.path, "calib", "calib.txt"))
-
-        # -------------------------Target dataset parameters------------------------------------------
-        assert self.cfg.datasets.configs[1].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
-
-        self.target_img_width = self.cfg.datasets.configs[1].dataset.feed_img_size[0]
-        self.target_img_height = self.cfg.datasets.configs[1].dataset.feed_img_size[1]
-        assert self.target_img_height % 32 == 0, 'The image height must be a multiple of 32'
-        assert self.target_img_width % 32 == 0, 'The image width must be a multiple of 32'
-
-        target_l_n_p = self.cfg.datasets.configs[1].losses.loss_names_and_parameters
-        target_l_n_w = self.cfg.datasets.configs[1].losses.loss_names_and_weights
-
-        # Specify whether to train in fully unsupervised manner or not
-        if self.cfg.datasets.configs[1].dataset.use_sparse_depth:
-            print('Training supervised on target dataset using sparse depth!')
-        if self.cfg.datasets.configs[1].dataset.use_dense_depth:
-            print('Training supervised on target dataset using dense depth!')
-        if self.cfg.datasets.configs[1].dataset.use_semantic_gt:
-            print('Training supervised on target dataset using semantic annotations!')
-        if self.cfg.datasets.configs[1].dataset.use_self_supervised_depth:
-            print('Training unsupervised on target dataset using self supervised depth!')
-
-        self.target_use_gt_scale_train = self.cfg.datasets.configs[1].eval.train.use_gt_scale and \
-                                         self.cfg.datasets.configs[1].eval.train.gt_depth_available
-        self.target_use_gt_scale_val = self.cfg.datasets.configs[1].eval.val.use_gt_scale and \
-                                       self.cfg.datasets.configs[1].eval.val.gt_depth_available
-
-        if self.target_use_gt_scale_train:
-            print("Target ground truth scale is used for computing depth errors while training.")
-        if self.target_use_gt_scale_val:
-            print("Target ground truth scale is used for computing depth errors while validating.")
-
-        self.target_min_depth = self.cfg.datasets.configs[1].dataset.min_depth
-        self.target_max_depth = self.cfg.datasets.configs[1].dataset.max_depth
-
-        self.target_use_garg_crop = self.cfg.datasets.configs[1].eval.use_garg_crop
-
-        # Set up normalized camera model for target domain
-        try:
-            self.target_normalized_camera_model = \
-                camera_models.get_camera_model_from_file(self.cfg.datasets.configs[1].dataset.camera,
-                                                         os.path.join(cfg.datasets.configs[1].dataset.path, "calib",
-                                                                      "calib.txt"))
-
-        except FileNotFoundError:
-            raise Exception("No Camera calibration file found! Create Camera calibration file under: " +
-                            os.path.join(cfg.datasets.configs[1].dataset.path, "calib", "calib.txt"))
 
         # -------------------------Source Losses------------------------------------------------------
         self.source_silog_depth = get_loss('silog_depth',
