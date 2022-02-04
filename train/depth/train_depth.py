@@ -1,251 +1,187 @@
 # Python modules
-# Python modules
 import time
 import os
-
+import re
 import torch
 
 # Own classes
+from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
+from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from train.base.train_base import TrainSingleDatasetBase
 from losses import get_loss
-from io_utils import io_utils
-from eval import eval
 import camera_models
+import wandb
+import torch.nn.functional as F
 
 
-class MonocularDepthFromMotionTrainer(TrainSingleDatasetBase):
-    def __init__(self, cfg):
-        super(MonocularDepthFromMotionTrainer, self).__init__(cfg)
+class DepthTrainer(TrainSingleDatasetBase):
+    def __init__(self, device_id, cfg, world_size=1):
+        super(DepthTrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 
-        self.img_width = self.cfg.dataset.feed_img_size[0]
-        self.img_height = self.cfg.dataset.feed_img_size[1]
+        # -------------------------Source dataset parameters------------------------------------------
+        assert self.cfg.datasets.configs[0].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
+
+        self.img_width = self.cfg.datasets.configs[0].dataset.feed_img_size[0]
+        self.img_height = self.cfg.datasets.configs[0].dataset.feed_img_size[1]
         assert self.img_height % 32 == 0, 'The image height must be a multiple of 32'
         assert self.img_width % 32 == 0, 'The image width must be a multiple of 32'
 
-        assert self.cfg.train.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
-
-        # Initialize some parameters for further usage
-        self.num_scales = self.cfg.losses.reconstruction.nof_scales
-        self.rgb_frame_offsets = self.cfg.train.rgb_frame_offsets
-        self.num_input_frames = len(self.cfg.train.rgb_frame_offsets)
+        self.rgb_frame_offsets = self.cfg.datasets.configs[0].dataset.rgb_frame_offsets
+        self.num_input_frames = len(self.cfg.datasets.configs[0].dataset.rgb_frame_offsets)
         self.num_pose_frames = 2 if self.cfg.model.pose_net.input == "pairs" else self.num_input_frames
 
-        # Specify whether to train in fully unsupervised manner or not
-        self.is_unsupervised = not self.cfg.dataset.use_sparse_depth
-        if self.is_unsupervised:
-            print("Training in fully unsupervised manner. No depth measurements are used!")
+        l_n_p = self.cfg.datasets.configs[0].losses.loss_names_and_parameters
+        print(l_n_p)
+        l_n_w = self.cfg.datasets.configs[0].losses.loss_names_and_weights
+        print(l_n_w)
 
-        self.use_gt_scale_train = self.cfg.eval.train.use_gt_scale and self.cfg.eval.train.gt_depth_available
-        self.use_gt_scale_val = self.cfg.eval.val.use_gt_scale and self.cfg.eval.val.gt_depth_available
+        # Specify whether to train in fully unsupervised manner or not
+        if self.cfg.datasets.configs[0].dataset.use_sparse_depth:
+            print('Training supervised on source dataset using sparse depth!')
+        if self.cfg.datasets.configs[0].dataset.use_dense_depth:
+            print('Training supervised on source dataset using dense depth!')
+        if self.cfg.datasets.configs[0].dataset.use_semantic_gt:
+            print('Training supervised on source dataset using semantic annotations!')
+        if self.cfg.datasets.configs[0].dataset.use_self_supervised_depth:
+            print('Training unsupervised on source dataset using self supervised depth!')
+
+        self.use_gt_scale_train = self.cfg.datasets.configs[0].eval.train.use_gt_scale and \
+                                         self.cfg.datasets.configs[0].eval.train.gt_depth_available
+        self.use_gt_scale_val = self.cfg.datasets.configs[0].eval.val.use_gt_scale and \
+                                       self.cfg.datasets.configs[0].eval.val.gt_depth_available
 
         if self.use_gt_scale_train:
-            print("Ground truth scale is used for computing depth errors while training")
+            print("Source ground truth scale is used for computing depth errors while training.")
         if self.use_gt_scale_val:
-            print("Ground truth scale is used for computing depth errors while validating")
+            print("Source ground truth scale is used for computing depth errors while validating.")
 
-        self.min_depth = self.cfg.dataset.min_depth
-        self.max_depth = self.cfg.dataset.max_depth
+        self.min_depth = self.cfg.datasets.configs[0].dataset.min_depth
+        self.max_depth = self.cfg.datasets.configs[0].dataset.max_depth
 
-        self.use_garg_crop = self.cfg.eval.use_garg_crop
+        self.use_garg_crop = self.cfg.datasets.configs[0].eval.use_garg_crop
 
-        # Set up normalized camera model
+        # Set up camera model
         try:
-            self.normalized_camera_model = \
-                camera_models.get_camera_model_from_file(self.cfg.dataset.camera,
-                                                         os.path.join(cfg.dataset.path, "calib", "calib.txt"))
+            self.camera_model = \
+                camera_models.get_camera_model_from_file(self.cfg.datasets.configs[0].dataset.camera,
+                                                         os.path.join(cfg.datasets.configs[0].dataset.path,
+                                                                      "calib", "calib.txt"))
 
         except FileNotFoundError:
             raise Exception("No Camera calibration file found! Create Camera calibration file under: " +
-                  os.path.join(cfg.dataset.path, "calib", "calib.txt"))
+                            os.path.join(cfg.dataset.path, "calib", "calib.txt"))
 
+        # -------------------------Target Losses------------------------------------------------------
+        self.reconstruction_loss = get_loss('reconstruction',
+                                                   normalized_camera_model=self.camera_model,
+                                                   num_scales=self.cfg.model.depth_net.nof_scales,
+                                                   device=self.device)
+        self.reconstruction_use_ssim = l_n_p[0]['reconstruction']['use_ssim']
+        self.reconstruction_use_automasking = l_n_p[0]['reconstruction']['use_automasking']
+        self.reconstruction_weight = l_n_w[0]['reconstruction']
 
-        # Get all loss objects for later usage (not all of them may be used...)
-        self.crit_l1_depth = get_loss("l1_depth")
-        self.crit_depth_reprojection = get_loss("depth_reprojection", 1, 1, # changed from self.img_width, self.img_height
-                                                self.normalized_camera_model, self.device)
-        self.crit_edge_smooth = get_loss("edge_smooth")
-        self.crit_reconstruction = get_loss("reconstruction",
-                                            self.normalized_camera_model, self.num_scales, self.device)
+        self.epoch = 0  # current epoch
+        self.start_time = None  # time of starting training
+        self.log_step = 0  # step for each loggin call
 
     def run(self):
-        self.epoch = 0
-        self.step_train = 0
-        self.step_val = 0
+        # if lading from checkpoint set the epoch
+        if self.cfg.checkpoint.use_checkpoint:
+            self.set_from_checkpoint()
+        self.print_p_0(f'Initial epoch {self.epoch}')
 
-        self.start_time = time.time()
+        initial_epoch = self.epoch - 1
+
+        if self.rank == 0:
+            for _, net in self.model.get_networks().items():
+                wandb.watch(net)
 
         print("Training started...")
 
-        for self.epoch in range(self.cfg.train.nof_epochs):
+        for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
             self.train()
+            print('Validation')
             self.validate()
 
         print("Training done.")
 
     def train(self):
-
         self.set_train()
 
         # Main loop:
         for batch_idx, data in enumerate(self.train_loader):
-            print("Training epoch {:>3} | batch {:>6}".format(self.epoch, batch_idx))
-
-            #info_gpu_memory()
-
-            # Here also an image dictionary shall be outputted and other stuff to be logged
+            self.log_step += 1
+            if self.rank == 0:
+                print(f"Training epoch {self.epoch} | batch {batch_idx}")
             self.training_step(data, batch_idx)
-
-            self.step_train += 1
 
         # Update the scheduler
         self.scheduler.step()
 
         # Create checkpoint after each epoch and save it
-        self.save_checkpoint()
-
-    def training_step(self, data, batch_idx):
-        before_op_time = time.time()
-
-        # Move batch to device
-        for key, val in data.items():
-            data[key] = val.to(self.device)
-        prediction = self.model.forward(data)
-
-        # Predict the poses
-        poses_pred = prediction['poses']
-
-        # ToDo: Use sparse depth data also in the pose prediction maybe? For this we would have to load the data
-        # ToDo: Adapt the network for sparse depth inputs
-        # Predict the depth map
-        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
-
-
-
-        # depth_target = data["sparse"] if self.cfg.dataset.use_sparse_depth else data["gt"] # ToDo: Take this in later
-        depth_target = data["sparse"] if self.cfg.dataset.use_sparse_depth else None
-
-
-        # Compute the losses
-        losses_dict = self.compute_losses(data, depth_target, depth_pred, raw_sigmoid, poses_pred)
-        #print('After losses: ')
-        #info_gpu_memory()
-
-        # Compute the final loss
-        loss = losses_dict["photometric_loss"] * self.cfg.losses.weights.reconstruction + losses_dict[
-            "smoothness_loss"] * self.cfg.losses.weights.smoothness
-        if not self.is_unsupervised:
-            loss += losses_dict["depth_loss"] * self.cfg.losses.weights.depth
-
-        # Optimize
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        #print('After gradient step: ')
-        #info_gpu_memory()
-
-        # Log some results from the training
-        # The following part is taken from https://github.com/nianticlabs/monodepth2/blob/master/trainer.py
-        early_phase = batch_idx % self.cfg.io.log_frequency == 0 and self.step_train < 2000
-        late_phase = self.step_train % 2000 == 0
-
-        if early_phase or late_phase:
-            # Compute time for processing a batch
-            duration_batch = time.time() - before_op_time
-            samples_per_sec = self.cfg.train.batch_size / duration_batch
-            total_time = time.time() - self.start_time
-
-            # Log and visualize training results for a single batch
-            imgs_visu_train = io_utils.IOHandler.generate_imgs_to_visualize(
-                data, depth_pred, poses_pred, self.rgb_frame_offsets, self.crit_reconstruction.image_warpers[0])
-
-            depth_errors = {}
-            if self.cfg.eval.train.gt_depth_available:
-                _, depth_errors = eval.compute_depth_losses(self.use_gt_scale_train, self.use_garg_crop, data["gt"],
-                                                            depth_pred, gt_size=(
-                        self.cfg.dataset.feed_img_size[1], self.cfg.dataset.feed_img_size[0]),
-                                                            depth_ranges=(self.min_depth, self.max_depth))
-
-            # Log relevant data to terminal and tensorboard
-            io_utils.IOHandler.log_train(self.writer_train, loss, depth_errors, losses_dict, depth_pred,
-                                         imgs_visu_train, 4, batch_idx, samples_per_sec, total_time, self.epoch,
-                                         self.num_total_steps, self.step_train)
-        #print('After early phase: ')
-        #info_gpu_memory()
-
-    def compute_losses(self, data, depth_target, depth_pred, raw_sigmoid, poses_pred):
-        # ToDo: We maybe should compare the inverse depths as their value margin is usually smaller than that of the
-        #  depth so, it may be easier to learn it for outdoor/indoor scenarios where the depths ranges are completely
-        #  different
-        # 1.) Compute the loss by depth supervision
-        if depth_target is not None:
-            if self.cfg.losses.use_depth_reprojection_loss is False:
-                depth_loss = self.crit_l1_depth(depth_pred, depth_target)
-            else:
-                # Attention: We arbitrarily take the pose prediction from the last frame in the sequence of frames
-                # considered (i.e. [0, -1, ->1<-]). You could also use another pose. You could even use an arbitrary
-                # pose but then the pose network output does not affect this loss and hence the gradients are not back-
-                # propagated to the pose network for this specific loss!
-                depth_loss = self.crit_depth_reprojection(depth_pred, depth_target, poses_pred[-1])
-
-        # Attention: We apply the smoothness loss directly on the sigmoid output to avoid that the depth range has an
-        # impact on the smoothness loss (e.g. bigger range also scales the derivatives and hence the smoothness loss)
-        # 2.) Compute the edge aware smoothness loss
-        # Get the normalized inverse depth map
-        mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
-        norm_disp = raw_sigmoid / (mean_disp + 1e-7)
-        smoothness_loss = self.crit_edge_smooth(norm_disp, data["rgb", 0])
-
-        # 3.) Compute the photometric loss
-        # ToDo: Nur dort wo keine depth supervision vorliegt... (maybe..) -> Detach the photometric for those pixels with depth supervision??
-        photometric_loss = self.crit_reconstruction(data, depth_pred, poses_pred, self.cfg.train.rgb_frame_offsets,
-                                                    self.cfg.losses.reconstruction.use_automasking,
-                                                    self.cfg.losses.reconstruction.use_ssim)
-
-        if depth_target is not None:
-            loss_dict = {"depth_loss": depth_loss, "photometric_loss": photometric_loss,
-                         "smoothness_loss": smoothness_loss}
-        else:
-            loss_dict = {"photometric_loss": photometric_loss, "smoothness_loss": smoothness_loss}
-
-        return loss_dict
+        # save only on the first process
+        if self.rank == 0:
+            self.save_checkpoint()
 
     def validate(self):
         self.set_eval()
 
         # Main loop:
         for batch_idx, data in enumerate(self.val_loader):
-            print("Validation epoch {:>3} | batch {:>6}".format(self.epoch, batch_idx))
+            self.log_step += 1
+            if self.rank == 0:
+                print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
 
             self.validation_step(data, batch_idx)
 
-            self.step_val += 1
-
-        self.set_train()
-
-    def validation_step(self, data, batch_idx):
-
+    def training_step(self, data, batch_idx):
+        # -----------------------------------------------------------------------------------------------
+        # ----------------------------------Virtual Sample Processing------------------------------------
+        # -----------------------------------------------------------------------------------------------
         # Move batch to device
         for key, val in data.items():
             data[key] = val.to(self.device)
+        prediction = self.model.forward([data])[0]  # pass data as list, because of guda model forward implementation for DDP training
+        pose_pred = prediction['poses']
+        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
+        loss, loss_dict = self.compute_losses(data, depth_pred, pose_pred)
 
-        with torch.no_grad():
-            # Predict the depth map
-            imgs = data["rgb", 0]
-            depth_pred, _ = self.model.predict_depth(imgs)
+        # log samples
+        if batch_idx % 500 == 0 and self.rank == 0:
+            rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Real RGB")
+            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx)
+            wandb.log({'Real images': [rgb, depth_img]}, step=self.log_step)
 
-            # Compute the depth losses by comparing with gt
-            depth_errors = {}
-            if "gt" in data:
-                _, depth_errors = eval.compute_depth_losses(self.use_gt_scale_val, self.use_garg_crop, data["gt"],
-                                                            depth_pred,
-                                                            gt_size=(self.cfg.dataset.feed_img_size[1],
-                                                                     self.cfg.dataset.feed_img_size[0]),
-                                                            depth_ranges=(self.min_depth, self.max_depth))
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
-            # ToDo: You should also consider logging the total loss per epoch as this indicates the actual performance of the network
-            #  Based on that the best model so far should be saved as such...
-            io_utils.IOHandler.log_val(self.writer_val, depth_errors, data["rgb", 0], depth_pred, 4, self.step_val)
+        if self.rank == 0:
+            wandb.log({"loss": loss, 'epoch': self.epoch}, step=self.log_step)
+
+    def validation_step(self, data, batch_idx):
+        for key, val in data.items():
+            data[key] = val.to(self.device)
+        prediction = self.model.forward(data, dataset_id=1, predict_depth=True, train=False)[0]
+        depth = prediction['depth'][0]
+
+        if self.rank == 0:
+            rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0), caption=f'Rgb {batch_idx}')
+            depth_img = self.get_wandb_depth_image(depth, batch_idx)
+            wandb.log({'Validation Images': [rgb_img, depth_img]}, step=self.log_step)
+
+    def compute_losses(self, data, depth_pred, poses):
+        loss_dict = {}
+
+        reconsruction_loss = self.reconstruction_weight * \
+                             self.reconstruction_loss(batch_data=data,
+                                                             pred_depth=depth_pred,
+                                                             poses=poses,
+                                                             rgb_frame_offsets=self.rgb_frame_offsets,
+                                                             use_automasking=self.reconstruction_use_automasking,
+                                                             use_ssim=self.reconstruction_use_ssim)
+        loss_dict['reconstruction'] = reconsruction_loss
+        return reconsruction_loss, loss_dict
 
     def set_train(self):
         for m in self.model.networks.values():
@@ -256,4 +192,21 @@ class MonocularDepthFromMotionTrainer(TrainSingleDatasetBase):
             m.eval()
 
     def set_from_checkpoint(self):
-        pass
+        """
+        Set the parameters to the parameters of the safed checkpoints.
+        """
+        # get epoch from file name
+        self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
+
+    @staticmethod
+    def get_wandb_depth_image(depth, batch_idx):
+        colormapped_depth = vdp(1 / depth)
+        img = wandb.Image(colormapped_depth, caption=f'Depth Map image with id {batch_idx}')
+        return img
+
+    @staticmethod
+    def get_wandb_semantic_image(semantic, batch_idx):
+        semantic = torch.argmax(F.softmax(semantic, dim=0), dim=0).unsqueeze(0)
+        img = wandb.Image(s_to_rgb(semantic.detach().cpu()),
+                          caption=f'Semantic Map image with id {batch_idx}')
+        return img

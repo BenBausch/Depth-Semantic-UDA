@@ -5,7 +5,7 @@ model:
 
     encoder:
         params:
-            nof_layers: 101
+            nof_layers: 50
             weights_init: 'pretrained'
 
     pose_net:
@@ -15,15 +15,14 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/synthia.yaml', #source
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_sequence.yaml', # target
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_semantic.yaml'] # validation dataset
+    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\synthia.yaml', #source
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_sequence.yaml', # target
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_semantic.yaml'] # validation dataset
     loss_weights : [1, 1, 0]
 
 train:
     nof_epochs: 40
     batch_size: 1
-    nof_workers: 5
 
     optimizer:
         type: 'Adam'
@@ -35,14 +34,13 @@ train:
 
 val:
     batch_size: 1
-    nof_workers: 5
+    nof_workers: 4
 
 checkpoint:
     use_checkpoint: False
 
-
 device:
-    multiple_gpus: True
+    multiple_gpus: False
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes'
+    path_save: 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\guda_synthia_to_cityscapes'

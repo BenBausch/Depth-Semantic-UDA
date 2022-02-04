@@ -1,4 +1,4 @@
-experiment_name: 'synthia_to_cityscapes'
+experiment_name: 'cityscapes_depth'
 
 model:
     type: 'guda'
@@ -15,10 +15,9 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/synthia.yaml', #source
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_sequence.yaml', # target
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_semantic.yaml'] # validation dataset
-    loss_weights : [1, 1, 0]
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth/cityscapes_sequence.yaml', # target
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth/cityscapes_semantic.yaml'] # validation dataset
+    loss_weights : [1, 0]
 
 train:
     nof_epochs: 40

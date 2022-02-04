@@ -68,7 +68,7 @@ def test(opts):
     # Load pretrained weights and other variables stored in the checkpoint
     io_utils.IOHandler.load_weights(checkpoint, model.get_networks())
 
-    # Set the eval mode as no training shall be executed here
+    # Set the eval_functions mode as no training shall be executed here
     for m in model.get_networks().values():
         m.eval()
 

@@ -504,9 +504,9 @@ if __name__ == "__main__":
     batch_size = 1
     ds = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
     import wandb
-    from utils.plotting_utils import CITYSCAPES_ID_TO_NAME, CITYSCAPES_CLASS_IDS, CITYSCAPES_CLASS_NAMES, \
+    from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME, CITYSCAPES_CLASS_IDS, CITYSCAPES_CLASS_NAMES, \
     CITYSCAPES_ID_TO_COLOR
-    from utils.plotting_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb, visu_depth_prediction
+    from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb, visu_depth_prediction
     import matplotlib.patches as mpatches
     import matplotlib.colors as colors
 

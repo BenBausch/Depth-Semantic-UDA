@@ -116,7 +116,8 @@ class Guda(SemanticDepthFromMotionModelBase):
 
     def create_SemanticNet(self):
         self.networks["semantic_decoder"] = SemanticDecoder(
-            self.networks["resnet_encoder"].num_ch_enc, self.num_classes, upsample_mode='bilinear').double()
+            self.networks["resnet_encoder"].num_ch_enc, self.num_classes, upsample_mode='bilinear',
+            num_ch_dec=[4, 8, 16, 32, 64]).double()
 
         self.parameters_to_train += list(self.networks["semantic_decoder"].parameters())
 

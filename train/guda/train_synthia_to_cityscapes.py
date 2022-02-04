@@ -1,27 +1,22 @@
 # Python modules
 import time
 import os
-import traceback
-
-import numpy as np
+import re
 import torch
 
 # Own classes
-from matplotlib import pyplot as plt
-from utils.plotting_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
-
+from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
+from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from losses.metrics import MIoU
 from train.base.train_base import TrainSourceTargetDatasetBase
 from losses import get_loss
-from io_utils import io_utils
-from eval import eval
 import camera_models
 import wandb
 import torch.nn.functional as F
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
-    def __init__(self, device_id, cfg, world_size):
+    def __init__(self, device_id, cfg, world_size=1):
         super(GUDATrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 
         # -------------------------Source dataset parameters------------------------------------------
@@ -162,17 +157,16 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         # -------------------------Initializations----------------------------------------------------
 
-        self.epoch = None  # current epoch
-        self.step_train = None  # current step within training part of epoch
-        self.step_val = None  # current step within training part of epoch
+        self.epoch = 0  # current epoch
         self.start_time = None  # time of starting training
 
     def run(self):
-        self.epoch = 0
-        self.step_train = 0
-        self.step_val = 0
+        # if lading from checkpoint set the epoch
+        if self.cfg.checkpoint.use_checkpoint:
+            self.set_from_checkpoint()
+        self.print_p_0(f'Initial epoch {self.epoch}')
 
-        self.start_time = time.time()
+        initial_epoch = self.epoch - 1
 
         if self.rank == 0:
             for _, net in self.model.get_networks().items():
@@ -180,40 +174,36 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         print("Training started...")
 
-        for self.epoch in range(self.cfg.train.nof_epochs):
+        for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
             self.train()
             print('Validation')
-            self.validate()
+            #self.validate()
 
         print("Training done.")
 
     def train(self):
         self.set_train()
 
-        start_10_steps = time.time()
-
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
-            print(f"Training epoch {self.epoch} | batch {batch_idx}")
-
+            if self.rank == 0:
+                print(f"Training epoch {self.epoch} | batch {batch_idx}")
             self.training_step(data, batch_idx)
-
-            if batch_idx == 9 and self.rank == 0:
-                end_10_steps = time.time()
-                print(f'Total time for 10 batches {end_10_steps - start_10_steps}')
 
         # Update the scheduler
         self.scheduler.step()
 
         # Create checkpoint after each epoch and save it
-        self.save_checkpoint()
+        if self.rank == 0:
+            self.save_checkpoint()
 
     def validate(self):
         self.set_eval()
 
         # Main loop:
         for batch_idx, data in enumerate(self.target_val_loader):
-            print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
+            if self.rank == 0:
+                print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
 
             self.validation_step(data, batch_idx)
 
@@ -223,29 +213,30 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
 
     def training_step(self, data, batch_idx):
-        start = time.time()
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------Virtual Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
         # Move batch to device
         for key, val in data[0].items():
             data[0][key] = val.to(self.device)
-        prediction = self.model.forward(data[0], dataset_id=0)
+        for key, val in data[1].items():
+            data[1][key] = val.to(self.device)
+        prediction = self.model.forward(data)
 
-        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
+        prediction_s = prediction[0]
 
-        semantic_pred = prediction['semantic']
+        depth_pred, raw_sigmoid = prediction_s['depth'][0], prediction_s['depth'][1]
 
-        start_loss_source = time.time()
+        semantic_pred = prediction_s['semantic']
+
         loss_source, loss_source_dict = self.compute_losses_source(data[0]['depth_dense'], depth_pred, raw_sigmoid,
                                                                    semantic_pred, data[0]['semantic'])
-        end_loss_source = time.time()
 
         # log samples
         if batch_idx % 500 == 0 and self.rank == 0:
             rgb = wandb.Image(data[0][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
-            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Virtual')
-            sem_img = self.get_wandb_semantic_image(semantic_pred[0], batch_idx, 'Virtual')
+            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx)
+            sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0], batch_idx)
             wandb.log({'Virtual images': [rgb, depth_img, sem_img]}, step=batch_idx)
 
         # -----------------------------------------------------------------------------------------------
@@ -253,26 +244,18 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # -----------------------------------------------------------------------------------------------
 
         # Move batch to device
-        for key, val in data[1].items():
-            data[1][key] = val.to(self.device)
-        try:
-            prediction = self.model.forward(data[1], dataset_id=1)
-        except Exception as e:
-            traceback.print_exc()
+        prediction_t = prediction[1]
 
+        pose_pred = prediction_t['poses']
 
-        pose_pred = prediction['poses']
+        depth_pred, raw_sigmoid = prediction_t['depth'][0], prediction_t['depth'][1]
 
-        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
-
-        start_loss_target = time.time()
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
-        end_loss_target = time.time()
 
         # log samples
         if batch_idx % 500 == 0 and self.rank == 0:
             rgb = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Real RGB")
-            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, 'Real')
+            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx)
             wandb.log({'Real images': [rgb, depth_img]}, step=batch_idx)
 
         # -----------------------------------------------------------------------------------------------
@@ -283,48 +266,32 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         print(loss)
 
-        start_back = time.time()
         self.optimizer.zero_grad()
         loss.backward()  # mean over individual gpu losses
         self.optimizer.step()
-        end_back = time.time()
 
-        end = time.time()
-
-        start_logging = time.time()
         if self.rank == 0:
-            print(f'Time for loss calculation for source: {end_loss_source - start_loss_source}')
-            print(f'Time for loss calculation for target: {end_loss_target - start_loss_target}')
-            print(f'Time for Loss backward: {end_back - start_back}')
-            print(f'Time needed for the batch {end - start}')
             loss_source_dict['epoch'] = self.epoch
             loss_target_dict['epoch'] = self.epoch
             wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
             wandb.log(loss_source_dict, step=batch_idx)
             wandb.log(loss_target_dict, step=batch_idx)
 
-            end_logging = time.time()
-            print(f'Time needed for logging {end_logging - start_logging}')
-
-
     def validation_step(self, data, batch_idx):
         for key, val in data.items():
             data[key] = val.to(self.device)
-        if batch_idx == 1:
-            prediction = self.model.forward(data, dataset_id=2, predict_depth=True)
-            depth = prediction['depth'][0]
-            max = float(depth.max().cpu().data)
-            min = float(depth.min().cpu().data)
-            diff = max - min if max != min else 1e5
-            norm_depth_map = (depth - min) / diff
-            img = wandb.Image(norm_depth_map[0].cpu().detach().numpy().transpose(1, 2, 0),
-                              caption=f'Depth Map image with id {batch_idx}')
-            wandb.log({'epoch': self.epoch, 'depth example': img})
-        else:
-            prediction = self.model.forward(data, dataset_id=2, predict_depth=False)
+        prediction = self.model.forward(data, dataset_id=2, predict_depth=True, train=False)[0]
+        depth = prediction['depth'][0]
 
         soft_pred = F.softmax(prediction['semantic'], dim=1)
         self.miou.update(mask_pred=soft_pred, mask_gt=data['semantic'])
+
+        if self.rank == 0:
+            rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0), caption=f'Rgb {batch_idx}')
+            depth_img = self.get_wandb_depth_image(depth, batch_idx)
+            semnatic_img = self.get_wandb_semantic_image(soft_pred[0], batch_idx)
+
+            wandb.log({'Validation Images': [rgb_img, depth_img, semnatic_img]})
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
@@ -366,19 +333,21 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             m.eval()
 
     def set_from_checkpoint(self):
-        pass
+        """
+        Set the parameters to the parameters of the safed checkpoints.
+        """
+        # get epoch from file name
+        self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
 
-    def get_wandb_depth_image(self, depth, batch_idx, vir_real):
-        max = float(depth.max().cpu().data)
-        min = float(depth.min().cpu().data)
-        diff = max - min if max != min else 1e5
-        norm_depth_map = (depth - min) / diff
-        img = wandb.Image(norm_depth_map.cpu().detach().numpy().transpose(1, 2, 0),
-                          caption=f'{vir_real} Depth Map image with id {batch_idx}')
+    @staticmethod
+    def get_wandb_depth_image(depth, batch_idx):
+        colormapped_depth = vdp(1 / depth)
+        img = wandb.Image(colormapped_depth, caption=f'Depth Map image with id {batch_idx}')
         return img
 
-    def get_wandb_semantic_image(self, semantic,  batch_idx, vir_real):
+    @staticmethod
+    def get_wandb_semantic_image(semantic, batch_idx):
         semantic = torch.argmax(F.softmax(semantic, dim=0), dim=0).unsqueeze(0)
         img = wandb.Image(s_to_rgb(semantic.detach().cpu()),
-                          caption=f'{vir_real} Semantic Map image with id {batch_idx}')
+                          caption=f'Semantic Map image with id {batch_idx}')
         return img

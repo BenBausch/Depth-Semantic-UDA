@@ -165,6 +165,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         Based on https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/cityscapes_dataset.py
         Initializes the Cityscapes Semantic dataset by collecting all the paths and random shuffling the data if wanted.
         """
+
         self.paths = _PathsCityscapesSemantic(mode, cfg)
 
         # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
@@ -176,7 +177,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         self.cfg = cfg
 
         self.colors = [[128, 64, 128], [244, 35, 232], [70, 70, 70], [102, 102, 156], [190, 153, 153], [153, 153, 153],
-                       [250, 170, 30], [220, 220, 0], [107, 142, 35], [152, 251, 152], [0, 130, 180], [220, 20, 60],
+                       [250, 170, 30], [220, 220, 0], [107, 142, 35], [152, 251, 152], [70, 130, 180], [220, 20, 60],
                        [255, 0, 0], [0, 0, 142], [0, 0, 70], [0, 60, 100], [0, 80, 100], [0, 0, 230], [119, 11, 32]]
         self.class_names = ["road","sidewalk","building","wall","fence","pole","traffic_light",
                             "traffic_sign","vegetation","terrain","sky","person","rider","car","truck",
@@ -259,6 +260,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
                                          do_normalization=self.do_normalization,
                                          mean=self.mean,
                                          var=self.var)
+
         tf_semantic_train = self.tf_semantic_train(self.feed_img_size,
                                                    do_flip,
                                                    self.valid_classes,
@@ -438,7 +440,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
 if __name__ == "__main__":
     import wandb
     from cfg.config_dataset import get_cfg_dataset_defaults
-    from utils.plotting_utils import CITYSCAPES_ID_TO_NAME
+    from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME
     import sys
 
     path = sys.argv[1]

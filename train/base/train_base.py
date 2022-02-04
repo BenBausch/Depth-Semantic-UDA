@@ -3,19 +3,18 @@ Create an abstract class to force all subclasses to define the methods provided 
 """
 import os
 import abc
-
-# Own classes
 from abc import ABC
-
+# Own classes
 from cfg.config_training import to_dictionary
 
 import models
 import dataloaders
 from dataloaders.datasamplers.CompletlyRandomSampler import CompletelyRandomSampler
 from io_utils import io_utils
-
 from datetime import datetime
 from utils.utils import info_gpu_memory
+from dataloaders.datasamplers import get_sampler
+
 # PyTorch
 import torch
 from torch.optim import lr_scheduler
@@ -37,25 +36,18 @@ def run_trainer(device_id, cfg, world_size, TrainerClass):
 
 
 class TrainBase(metaclass=abc.ABCMeta):
-    def __init__(self, device_id, cfg, world_size):
+    def __init__(self, device_id, cfg, world_size=1):
         self.cfg = cfg
 
-        #  setup Multi_device
-        self.world_size = world_size
-        self.rank = device_id  # fixme this supports only single node training
-        torch.cuda.set_device(device_id)
-        torch.manual_seed(0)  # fixme add seed to cfg
-        try:
+        self.rank = device_id  # shall be defined also for 1 gpu training for less logical branching while training
+        if self.cfg.device.multiple_gpus:
+            #  setup Multi_device
+            self.world_size = world_size
+            torch.cuda.set_device(device_id)
+            torch.manual_seed(0)  # fixme add seed to cfg
+
             dist.init_process_group(
                 backend='nccl',
-                init_method='env://',
-                world_size=world_size,
-                rank=self.rank
-            )
-        except:
-            # if run on windows we need to use gloo
-            dist.init_process_group(
-                backend='gloo',
                 init_method='env://',
                 world_size=world_size,
                 rank=self.rank
@@ -73,11 +65,9 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         # Initialize models and send to Cuda if possible
         self.model = models.get_model(self.cfg.model.type, self.cfg)
-
+        if self.cfg.device.multiple_gpus:
+            self.model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
         self.model.to(self.device)
-
-        self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id])
-
         # Initialization of the optimizer and lr scheduler
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
                                             self.model.parameters_to_train,
@@ -97,11 +87,14 @@ class TrainBase(metaclass=abc.ABCMeta):
         if cfg.checkpoint.use_checkpoint:
             print("Using pretrained weights for the model and optimizer from \n",
                   os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
-            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
+            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename, self.rank)
             # Load pretrained weights for the model and the optimizer status
             io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
         else:
             print("No checkpoint is used. Training from scratch!")
+
+        if self.cfg.device.multiple_gpus:
+            self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
 
         # Logging only on the first gpu process
         if device_id == 0:
@@ -137,41 +130,55 @@ class TrainBase(metaclass=abc.ABCMeta):
         :return: dataloader, dataloader length
         """
         dataset = dataloaders.get_dataset(name, mode, split, cfg)
-
-        if mode == "train":
+        if mode == 'train':
             shuffle = True
+
+            if sample_completely_random:
+                # samples are completely random at each epoch not like pytorch's random sampler.
+                # no need for distributed version of completely random sampler, since sampling with replacement does not
+                # require considering sampled ids of other gpus.
+                if num_samples is None:
+                    num_samples = len(dataset)
+                sampler = get_sampler("CompletelyRandomSampler",
+                                      data_source=dataset,
+                                      num_samples=num_samples)
+            else:
+                # samples should be sampled sequentially, either standard fashion or in distributed data parallel scheme
+                if self.cfg.device.multiple_gpus:
+                    # distributed data parallel scheme
+                    sampler = get_sampler("DistributedSampler",
+                                          dataset,
+                                          num_replicas=self.world_size,
+                                          rank=self.rank,
+                                          shuffle=shuffle)
+                else:
+                    # standard fashion
+                    sampler = get_sampler("RandomSampler", dataset)
+
         else:
-            shuffle = False
+            # always validate on single gpu (easiest ways to calculate validation metrics,
+            # like miou calculated over whole validation set, even if training done in
+            # multi-gpu setting, no gathering of values across gpus required)
+            sampler = get_sampler("SequentialSampler", dataset)
 
-        # set the data sampler
-        if sample_completely_random:
-            if num_samples is None:
-                num_samples = len(dataset)
-
-            sampler = CompletelyRandomSampler(
-                data_source=dataset,
-                num_samples=num_samples)
-
-        else:
-            sampler = torch.utils.data.distributed.DistributedSampler(
-                dataset,
-                num_replicas=self.world_size,
-                rank=self.rank,
-                shuffle=shuffle
-            )
-        sampler = torch.utils.data.distributed.DistributedSampler(
-            dataset,
-            num_replicas=self.world_size,
-            rank=self.rank,
-            shuffle=shuffle
-        )
-
-        loader = DataLoader(dataset, batch_size=bs, num_workers=num_workers,
-                          pin_memory=True, drop_last=False,
-                          sampler=sampler)
+        loader = DataLoader(dataset,
+                            batch_size=bs,
+                            num_workers=num_workers,
+                            pin_memory=True,
+                            drop_last=False,
+                            sampler=sampler)
 
         return loader, len(loader)
 
+    def print_p_0(self, obj):
+        """
+        Prints string of object only if the process has id 0.
+        Example use case: print loss during training
+        :param object:
+        :return:
+        """
+        if self.rank == 0:
+            print(str(obj))
 
     # Define those methods that can be used for any kind of depth estimation algorithms
     @staticmethod
@@ -208,7 +215,7 @@ class TrainBase(metaclass=abc.ABCMeta):
 # TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
 #  are normalized...
 class TrainSingleDatasetBase(TrainBase, ABC):
-    def __init__(self, device_id, cfg, world_size):
+    def __init__(self, device_id, cfg, world_size=1):
         super(TrainSingleDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
 
         # Get training and validation datasets
@@ -220,34 +227,19 @@ class TrainSingleDatasetBase(TrainBase, ABC):
                                                                       cfg=self.cfg.datasets.configs[0])
         print(f'Length Train Loader: {len(self.train_loader)}')
         self.val_loader, self.num_val_files = self.get_dataloader(mode="val",
-                                                                  name=self.cfg.datasets.configs[0].dataset.name,
-                                                                  split=self.cfg.datasets.configs[0].dataset.split,
+                                                                  name=self.cfg.datasets.configs[1].dataset.name,
+                                                                  split=self.cfg.datasets.configs[1].dataset.split,
                                                                   bs=self.cfg.val.batch_size,
                                                                   num_workers=self.cfg.val.nof_workers,
-                                                                  cfg=self.cfg.datasets.configs[0])
+                                                                  cfg=self.cfg.datasets.configs[1])
         print(f'Length Validation Loader: {len(self.val_loader)}')
 
         # Get number of total steps to compute remaining training time later
         self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
 
-        # Save the current configuration of arguments
-        self.io_handler.save_cfg(
-            {"time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name},
-            self.cfg)
-
-        # Load the checkpoint if one is provided
-        if cfg.checkpoint.use_checkpoint:
-            print("Using pretrained weights for the model and optimizer from \n",
-                  os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
-            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
-            # Load pretrained weights for the model and the optimizer status
-            io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
-        else:
-            print("No checkpoint is used. Training from scratch!")
-
 
 class TrainSourceTargetDatasetBase(TrainBase, ABC):
-    def __init__(self, device_id, cfg, world_size):
+    def __init__(self, device_id, cfg, world_size=1):
         super(TrainSourceTargetDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
         # Get training and validation datasets for source and target
         self.target_train_loader, self.target_num_train_files = \
@@ -282,17 +274,3 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
         # calculate time using target dataset length
         self.num_total_steps = self.target_num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
 
-        # Save the current configuration of arguments
-        self.io_handler.save_cfg({"time": self.training_start_time, "dataset": self.cfg.datasets.configs[0].dataset.name
-                                                                               + "_" + self.cfg.datasets.configs[
-                                                                                   1].dataset.name}, self.cfg)
-
-        # Load the checkpoint if one is provided
-        if cfg.checkpoint.use_checkpoint:
-            print("Using pretrained weights for the model and optimizer from \n",
-                  os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
-            checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename)
-            # Load pretrained weights for the model and the optimizer status
-            io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
-        else:
-            print("No checkpoint is used. Training from scratch!")
