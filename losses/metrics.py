@@ -10,10 +10,15 @@ class MIoU:
     Code based on https://www.kaggle.com/ligtfeather/semantic-segmentation-is-easy-with-pytorch and adapted to calculate
     MIoU over whole dataset.
     """
-    def __init__(self, num_classes):
-        self.num_classes = num_classes
-        self.intersection = torch.tensor([0.0 for i in range(self.num_classes)])
-        self.union = torch.tensor([0.0 for i in range(self.num_classes)])
+    def __init__(self, num_classes, ignore_classes=None):
+        self.classes = torch.tensor([i for i in range(num_classes)])
+        self.intersection = torch.tensor([0.0 for i in range(num_classes)])
+        self.union = torch.tensor([0.0 for i in range(num_classes)])
+
+        if ignore_classes is not None:
+            assert len(ignore_classes) == len(self.classes)
+            self.classes = self.classes[ignore_classes]
+
 
     def update(self, mask_pred, mask_gt):
         """
@@ -27,7 +32,7 @@ class MIoU:
             pred_mask = pred_mask.view(-1)
             mask = mask_gt.view(-1)
 
-            for cls in range(0, self.num_classes):
+            for cls in self.classes:
                 true_class = pred_mask == cls
                 true_label = mask == cls
 
@@ -43,4 +48,4 @@ class MIoU:
         Additionally the mean iou per class, which averages over all images per class, is returned.
         """
         iou_per_class = self.intersection / self.union
-        return torch.nanmean(iou_per_class), iou_per_class
+        return torch.nansum(iou_per_class) / len(self.classes), iou_per_class

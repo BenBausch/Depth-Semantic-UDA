@@ -1,7 +1,7 @@
 dataset:
-    name: 'gta5'
-    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\gta5'
-    feed_img_size: [ 512, 320 ]
+    name: 'cityscapes_sequence'
+    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit_sequence\'
+    feed_img_size: [ 512, 256 ]
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: True
@@ -18,11 +18,11 @@ dataset:
 losses:
     loss_names_and_parameters:
         - reconstruction:
-              'use_ssim': True
-              'use_automasking': True
+            'use_ssim' : True
+            'use_automasking' : True
 
     loss_names_and_weights:
-        - reconstruction: 1
+        - reconstruction : 1
 
 eval:
     train:
@@ -32,8 +32,8 @@ eval:
     val:
         use_gt_scale: False
         gt_depth_available: False
-        gt_semantic_available: True
+        gt_semantic_available: False
     test:
         use_gt_scale: False
         gt_depth_available: False
-        gt_semantic_available: True
+        gt_semantic_available: False

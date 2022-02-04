@@ -1,5 +1,4 @@
 from models.monodepth.model_md2 import Monodepth2
-from models.packnet.model_packnet import FromMotionModelPacknet
 from models.GUDA.model_guda import Guda
 
 
