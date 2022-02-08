@@ -1,7 +1,7 @@
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
 from helper_modules.image_warper import CoordinateWarper
 
@@ -114,13 +114,13 @@ class L1LossDepth(nn.Module):
 
 
 class SilogLossDepth(nn.Module):
-    def __init__(self, weight=0.85):
+    def __init__(self, weight=0.85, ignore_value=-100):
         super(SilogLossDepth, self).__init__()
-
         self.weight = weight
+        self.ignore_value = ignore_value
 
     def forward(self, pred, target):
-        mask = (target > 0).detach()
+        mask = (torch.logical_and(target > 0, target != self.ignore_value)).detach()
         log_diff = (torch.log(pred) - torch.log(target))[mask]
 
         silog_var = torch.mean(log_diff ** 2)

@@ -30,10 +30,10 @@ def evaluate_model(cfg):
             model.networks[key].eval()
     model.eval()
 
-    dataset = dataloaders.get_dataset(cfg.datasets.configs[2].dataset.name,
-                                      'val',
-                                      cfg.datasets.configs[2].dataset.split,
-                                      cfg.datasets.configs[2])
+    dataset = dataloaders.get_dataset(cfg.datasets.configs[1].dataset.name,
+                                      'train',
+                                      cfg.datasets.configs[1].dataset.split,
+                                      cfg.datasets.configs[1])
     loader = DataLoader(dataset,
                         batch_size=cfg.val.batch_size,
                         shuffle=False,
@@ -51,14 +51,14 @@ def evaluate_model(cfg):
                        False, True, True]
     not_eval_16_classes = [not cl for cl in eval_16_classes]
 
-    miou_13 = MIoU(num_classes=cfg.datasets.configs[2].dataset.num_classes, ignore_classes=eval_13_classes)
-    miou_16 = MIoU(num_classes=cfg.datasets.configs[2].dataset.num_classes, ignore_classes=eval_16_classes)
+    miou_13 = MIoU(num_classes=cfg.datasets.configs[1].dataset.num_classes, ignore_classes=eval_13_classes)
+    miou_16 = MIoU(num_classes=cfg.datasets.configs[1].dataset.num_classes, ignore_classes=eval_16_classes)
 
     for batch_idx, data in enumerate(loader):
         print(batch_idx)
         for key, val in data.items():
             data[key] = val.to('cuda:0')
-        prediction = model.forward(data, dataset_id=2, predict_depth=True, train=False)[0]
+        prediction = model.forward(data, dataset_id=1, predict_depth=True, train=False)[0]
         depth = prediction['depth'][0]
 
         sem_pred_13 = prediction['semantic']
@@ -75,12 +75,16 @@ def evaluate_model(cfg):
 
         rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0), caption=f'Rgb {batch_idx}')
         depth_img = get_wandb_depth_image(depth, batch_idx)
+        depth_gt = get_wandb_depth_image(data["depth_dense"][0], batch_idx)
+
+        print(torch.max(data["depth_dense"][0]))
+        print(torch.min(data["depth_dense"][0]))
         semantic_img_13 = get_wandb_semantic_image(soft_pred_13[0], True, 1, f'Semantic Map image with 13 classes')
 
         semantic_img_16 = get_wandb_semantic_image(soft_pred_16[0], True, 1, f'Semantic Map image with 16 classes')
         semantic_gt = get_wandb_semantic_image(data['semantic'][0], False, 1, f'Semantic GT with id {batch_idx}')
 
-        wandb.log({'images': [rgb_img, depth_img, semantic_img_13, semantic_img_16, semantic_gt]})
+        wandb.log({'images': [rgb_img, depth_img, depth_gt, semantic_img_13, semantic_img_16, semantic_gt]})
 
     mean_iou_13, iou_13 = miou_13.get_miou()
     mean_iou_16, iou_16 = miou_16.get_miou()

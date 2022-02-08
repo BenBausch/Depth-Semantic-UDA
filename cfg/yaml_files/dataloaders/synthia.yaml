@@ -1,7 +1,7 @@
 dataset:
     name: 'synthia_rand_cityscapes'
     path: 'C:\Users\benba\Documents\University\Masterarbeit\data\SYNTHIA_RAND_CITYSCAPES\RAND_CITYSCAPES'
-    feed_img_size: [ 320, 192 ]
+    feed_img_size: [ 1280, 760 ]
     use_sparse_depth: False
     use_dense_depth: True
     use_self_supervised_depth: False
@@ -11,7 +11,7 @@ dataset:
     shuffle: True
     num_classes: 19
     min_depth : 0.01
-    max_depth : 100.00
+    max_depth : 655.35
     rgb_frame_offsets: [0]
     sequence_dataset: False
 

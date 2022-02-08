@@ -150,6 +150,25 @@ class TransformToDepthSynthia(object):
         return np.array(sample).astype(np.float32) / 100 # fix me find out number by which to divide
 
 
+class MaskPixelOutsideDepthRange(object):
+    """
+    set the depth value of pixels, that have depth value outside the specified range, to ignore_value.
+    """
+    def __init__(self, min_depth, max_depth, ignore_value):
+        self.min_depth = min_depth
+        self.max_depth = max_depth
+        self.ignore_value = ignore_value
+
+    def __call__(self, sample):
+        mask_min = sample < self.min_depth
+        mask_max = sample > self.max_depth
+        mask_min_max = torch.logical_or(mask_min, mask_max)
+        sample[mask_min_max] = self.ignore_value
+        return sample
+
+
+
+
 # ------------------------------------------GTA5------------------------------------------
 class ToInt64Array(object):
     def __init__(self):

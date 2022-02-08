@@ -3,6 +3,7 @@ import time
 import os
 import re
 import torch
+import matplotlib.pyplot as plt
 
 # Own classes
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
@@ -13,6 +14,7 @@ from losses import get_loss
 import camera_models
 import wandb
 import torch.nn.functional as F
+from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 
 
 class SemanticDepthTrainer(TrainSingleDatasetBase):
@@ -72,13 +74,14 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
 
         # -------------------------Source Losses------------------------------------------------------
         self.silog_depth = get_loss('silog_depth',
-                                    weight=l_n_p[0]['silog_depth']['weight'])
+                                    weight=l_n_p[0]['silog_depth']['weight'],
+                                    ignore_value=IGNORE_VALUE_DEPTH)
 
         self.bce = get_loss('bootstrapped_cross_entropy',
                             img_height=self.img_height,
                             img_width=self.img_width,
                             r=l_n_p[0]['bce']['r'],
-                            ignore_index=l_n_p[0]['bce']['ignore_index'])
+                            ignore_index=IGNORE_INDEX_SEMANTIC)
 
         self.snr = get_loss('surface_normal_regularization',
                             normalized_camera_model=self.camera_model,
@@ -88,7 +91,6 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         self.silog_depth_weigth = l_n_w[0]['silog_depth']
         self.bce_weigth = l_n_w[0]['bce']
         self.snr_weigth = l_n_w[0]['snr']
-
 
         # -------------------------Metrics-for-Validation---------------------------------------------
 
@@ -151,11 +153,11 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
             wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou})
             wandb.log({'epoch': self.epoch, 'mean_iou': iou})
 
-
     def training_step(self, data, batch_idx):
         # Move batch to device
         for key, val in data.items():
             data[key] = val.to(self.device)
+
         prediction = self.model.forward([data])[0]
 
         depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
@@ -163,7 +165,7 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         semantic_pred = prediction['semantic']
 
         loss, loss_dict = self.compute_losses_source(data['depth_dense'], depth_pred, raw_sigmoid,
-                                                                   semantic_pred, data['semantic'])
+                                                     semantic_pred, data['semantic'])
 
         # log samples
         if batch_idx % 500 == 0 and self.rank == 0:
@@ -206,7 +208,7 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         # non-inverse depth map --> pixels far from the camera have a high value, close pixels have a small value
 
         silog_loss = self.silog_depth_weigth * self.silog_depth(pred=depth_pred,
-                                                                              target=depth_target)
+                                                                target=depth_target)
         loss_dict['silog_loss'] = silog_loss
 
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)

@@ -1,6 +1,7 @@
 # Own files
 from misc import transforms as tf_prep
 from dataloaders import dataset_base
+from utils.constans import IGNORE_INDEX_SEMANTIC
 
 # External libraries
 # I/O
@@ -184,7 +185,7 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
         self.n_classes = cfg.dataset.num_classes
         self.label_colours = dict(zip(range(19), self.colors))
         self.class_map = dict(zip(self.valid_classes, range(19)))
-        self.ignore_index = 250
+        self.ignore_index = IGNORE_INDEX_SEMANTIC
 
         # todo find true mean and variance
         self.mean = torch.tensor([[[0., 0.0, 0.0]]]).transpose(0, 2)

@@ -130,13 +130,6 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         self.img_size = cfg.dataset.feed_img_size
         self.img_norm = cfg.dataset.img_norm
 
-        self.mean_rgb = {
-            "pascal": [103.939, 116.779, 123.68],
-            "cityscapes": [0.0, 0.0, 0.0],
-        }  # pascal mean for PSPNet and ICNet pre-trained model
-
-        self.mean = np.array(self.mean_rgb['cityscapes'])
-
         self.ids = np.asarray([i for i in range(len(self.paths.paths_rgb))])
 
         self.mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)

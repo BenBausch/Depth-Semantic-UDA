@@ -1,9 +1,9 @@
 # Own files
 import torch
 from torch.utils.data import DataLoader
-
 from misc import transforms as tf_prep
 from dataloaders import dataset_base
+from utils.constans import IGNORE_INDEX_SEMANTIC
 
 # External libraries
 # I/O
@@ -181,13 +181,13 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
                        [255, 0, 0], [0, 0, 142], [0, 0, 70], [0, 60, 100], [0, 80, 100], [0, 0, 230], [119, 11, 32]]
         self.class_names = ["road","sidewalk","building","wall","fence","pole","traffic_light",
                             "traffic_sign","vegetation","terrain","sky","person","rider","car","truck",
-                            "bus","train","motorcycle","bicycle"]
+                            "bus","train","motorcycle","bicycle"]  # only the valid class names
         self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, -1]
         self.valid_classes = [7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33]
         self.n_classes = 19
         self.label_colours = dict(zip(range(19), self.colors))
         self.class_map = dict(zip(self.valid_classes, range(19)))
-        self.ignore_index = 250
+        self.ignore_index = IGNORE_INDEX_SEMANTIC
 
         self.img_size = cfg.dataset.feed_img_size
         self.img_norm = cfg.dataset.img_norm
@@ -436,6 +436,14 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         rgb[:, :, 2] = b / 255.0
         return rgb
 
+    def get_valid_ids_and_names(self):
+        ids = []
+        names = []
+        for idx in self.valid_classes:
+            city_id = self.class_map[idx]
+            ids.append(city_id)
+            names.append(self.class_names[city_id])
+        return ids, names
 
 if __name__ == "__main__":
     import wandb

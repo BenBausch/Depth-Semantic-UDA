@@ -1,0 +1,21 @@
+Percent of pixels belonging to each individual class across validation dataset of cityscapes semantic
+road:          0.32926983070373533
+sidewalk:      0.0472723503112793
+building:      0.19169371414184572
+wall:          0.006407084465026855
+fence:         0.007173291206359863
+pole:          0.013011773109436036
+traffic_light: 0.0017246179580688477
+traffic_sign:  0.005815861701965332
+vegetation:    0.15150833892822266
+terrain:       0.007271791458129883
+sky:           0.029340121269226076
+person:        0.011361526489257813
+rider:         0.0018840751647949219
+car:           0.056964127540588376
+truck:         0.0026323423385620115
+bus:           0.0033980560302734374
+train:         0.000983856201171875
+motorcycle:    0.0006956243515014648
+bicycle:       0.006203150749206543
+ignore_index:  0.12538846588134767

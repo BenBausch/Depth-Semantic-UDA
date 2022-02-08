@@ -1,0 +1,21 @@
+Percent of pixels belonging to each individual class across whole dataset
+Road:          0.18449321239851604
+Sidewalk:      0.19310850112419536
+Building:      0.2929401742283749
+Wall:          0.0026926335692539203
+Fence:         0.0026790478679661295
+Pole:          0.010384203636793135
+Traffic_light: 0.0003893244112192055
+Traffic_sign:  0.0010127266981033011
+Vegetation:    0.103087336510533
+Terrain:       0.0
+sky:           0.06850084894229426
+Pedestrian:    0.042455393074608216  # called Person in Cityscapes
+Rider:         0.0046920743149845776
+Car:           0.04058912855193169
+Truck:         0.0
+Bus:           0.015276061423922167
+Train:         0.0
+Motorcycle:    0.0020701608211436107
+Bicycle:       0.0021936399863521855
+ignore_index:  0.033435532439809575

@@ -13,6 +13,7 @@ from losses import get_loss
 import camera_models
 import wandb
 import torch.nn.functional as F
+from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
@@ -121,13 +122,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         # -------------------------Source Losses------------------------------------------------------
         self.source_silog_depth = get_loss('silog_depth',
-                                           weight=source_l_n_p[0]['silog_depth']['weight'])
+                                           weight=source_l_n_p[0]['silog_depth']['weight'],
+                                           ignore_value=IGNORE_VALUE_DEPTH)
 
         self.source_bce = get_loss('bootstrapped_cross_entropy',
                                    img_height=self.source_img_height,
                                    img_width=self.source_img_width,
                                    r=source_l_n_p[0]['bce']['r'],
-                                   ignore_index=source_l_n_p[0]['bce']['ignore_index'])
+                                   ignore_index=IGNORE_INDEX_SEMANTIC)
 
         self.source_snr = get_loss('surface_normal_regularization',
                                    normalized_camera_model=self.source_normalized_camera_model,

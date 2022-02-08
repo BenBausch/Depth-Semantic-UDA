@@ -17,8 +17,9 @@ import glob
 import os
 import PIL.Image as pil
 import cv2
-
 from torchvision import transforms
+
+from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 
 
 # fixme: if split is None, the whole dataset will be used no matter the mode 'train' or 'val', is this an appropriate
@@ -165,7 +166,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
         # classes considered void have no equivalent valid label in cityscapes
         # See: https://www.cityscapes-dataset.com/dataset-overview/ for void and valid classes
-        self.valid_classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 18, 19, 20, 21]
+        self.valid_classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21]
         self.void_classes = [0, 13, 14, 22]
 
         # cityscapes maps the ids of all the valid classes back to ids ranging from 0 to 18
@@ -176,9 +177,15 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                                             10: 11, 11: 18, 12: 17, 15: 6, 16: 9,
                                             17: 12, 18: 14, 19: 15, 20: 16, 21: 3}
 
-        self.ignore_index = 250  # will be assigned to void classes in the transformation
+        self.ignore_index = IGNORE_INDEX_SEMANTIC
+        # will be assigned to void classes in the transformation
+        self.ignore_value = IGNORE_VALUE_DEPTH
+        # will be assigned to pixels outside the depth range of [self.min_depth, self.max_depth]
 
-        # Stuff realted to augmentations --------------------------------------------------------------
+        self.min_depth = cfg.dataset.min_depth
+        self.max_depth = cfg.dataset.max_depth
+
+        # Stuff related to augmentations --------------------------------------------------------------
 
         self.aug_params = {"brightness_jitter": cfg.dataset.augmentation.brightness_jitter,
                            "contrast_jitter": cfg.dataset.augmentation.contrast_jitter,
@@ -292,7 +299,10 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                                                    void_classes=self.void_classes,
                                                    ignore_index=self.ignore_index)
         tf_depth_dense_train = self.tf_depth_train(tgt_size=self.feed_img_size,
-                                                   do_flip=do_flip)
+                                                   do_flip=do_flip,
+                                                   min_depth=self.min_depth,
+                                                   max_depth=self.max_depth,
+                                                   ignore_value=self.ignore_value)
 
         # Apply transformations
         rgb_dict_tf = {}
@@ -381,6 +391,15 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             label = cv2.imread(path_file, cv2.IMREAD_UNCHANGED)[:, :, 0]
             return label
 
+    def get_valid_ids_and_names(self):
+        names_ids = {}
+        for idx, name in enumerate(self.class_names):
+            if idx in self.valid_classes:
+                names_ids[self.synthia_id_to_cityscapes_id[idx]] = self.synthia_id_to_synthia_name[idx]
+        ids = sorted([idx for idx in names_ids.keys()])
+        names = [names_ids[key_id] for key_id in ids]
+        return ids, names
+
     @staticmethod
     def tf_rgb_train(tgt_size, do_flip, do_aug, do_normalization, aug_params, mean, var):
         """
@@ -428,13 +447,14 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         )
 
     @staticmethod
-    def tf_depth_train(tgt_size, do_flip):
+    def tf_depth_train(tgt_size, do_flip, min_depth, max_depth, ignore_value):
         return transforms.Compose(
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
                 tf_prep.CV2HorizontalFlip(do_flip=do_flip),
                 tf_prep.TransformToDepthSynthia(),
                 tf_prep.tf.ToTensor(),
+                tf_prep.MaskPixelOutsideDepthRange(min_depth=min_depth, max_depth=max_depth, ignore_value=ignore_value),
             ]
         )
 

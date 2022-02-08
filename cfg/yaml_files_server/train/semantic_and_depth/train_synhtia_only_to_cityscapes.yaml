@@ -1,4 +1,4 @@
-experiment_name: 'cityscapes_depth'
+experiment_name: 'synthia_only_to_cityscapes'
 
 model:
     type: 'guda'
