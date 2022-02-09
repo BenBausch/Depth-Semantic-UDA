@@ -1,5 +1,3 @@
-from dataloaders.kitti_depricated import dataset_kitti
-from dataloaders.kalimu_depricated import dataset_kalimu
 from dataloaders.gta5 import dataset_gta5
 from dataloaders.synthia import dataset_synthia
 from dataloaders.cityscapes import dataset_cityscapes_sequence, dataset_cityscapes_semantic

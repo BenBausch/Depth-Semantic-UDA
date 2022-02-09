@@ -32,6 +32,7 @@ def evaluate_model(cfg):
 
     class_pixel_count = [0.0 for i in range(len(valid_classes))]
     for batch_idx, data in enumerate(loader):
+        print(batch_idx)
         names_count = ''
         data = data['semantic'].view(-1)
         for idx, cls_id in enumerate(valid_classes):

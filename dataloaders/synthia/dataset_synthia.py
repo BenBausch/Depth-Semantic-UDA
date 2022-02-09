@@ -152,6 +152,8 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         assert len(cfg.dataset.rgb_frame_offsets) == 1
         assert cfg.dataset.rgb_frame_offsets[0] == 0
 
+        assert mode == 'train', 'Synthia_Rand_Cityscapes does not support any other mode than train!'
+
         self.paths = _PathsSynthiaRandCityscapes(mode, split, cfg)
 
         super(SynthiaRandCityscapesDataset, self).__init__(pathsObj=self.paths, cfg=cfg)

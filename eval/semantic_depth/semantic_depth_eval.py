@@ -9,6 +9,7 @@ from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy
     CITYSCAPES_ID_TO_NAME
 from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from losses.metrics import MIoU
+from utils.constans import IGNORE_INDEX_SEMANTIC
 
 # dependencies
 import torch
@@ -23,7 +24,7 @@ def evaluate_model(cfg):
     model = models.get_model(cfg.model.type, cfg)
     model = model.to('cuda:0')
     weights = torch.load(
-        r'C:\Users\benba\Documents\University\Masterarbeit\models\synthia_only_model\checkpoints\checkpoint_epoch_13.pth')
+        r'C:\Users\benba\Documents\University\Masterarbeit\models\synthia_only_model\checkpoints\epoch_13_model_synthia_only_training_19_classes_0out_nonconsidered_classes_cityscapes_res_512_256.pth')
     for key in weights:
         if key in ['resnet_encoder', 'depth_decoder', 'semantic_decoder', 'pose_encoder', 'pose_decoder']:
             model.networks[key].load_state_dict(weights[key])
@@ -51,8 +52,12 @@ def evaluate_model(cfg):
                        False, True, True]
     not_eval_16_classes = [not cl for cl in eval_16_classes]
 
-    miou_13 = MIoU(num_classes=cfg.datasets.configs[1].dataset.num_classes, ignore_classes=eval_13_classes)
-    miou_16 = MIoU(num_classes=cfg.datasets.configs[1].dataset.num_classes, ignore_classes=eval_16_classes)
+    miou_13 = MIoU(num_classes=cfg.datasets.configs[1].dataset.num_classes,
+                   ignore_classes=eval_13_classes,
+                   ignore_index=IGNORE_INDEX_SEMANTIC)
+    miou_16 = MIoU(num_classes=cfg.datasets.configs[1].dataset.num_classes,
+                   ignore_classes=eval_16_classes,
+                   ignore_index=IGNORE_INDEX_SEMANTIC)
 
     for batch_idx, data in enumerate(loader):
         print(batch_idx)
@@ -75,16 +80,16 @@ def evaluate_model(cfg):
 
         rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0), caption=f'Rgb {batch_idx}')
         depth_img = get_wandb_depth_image(depth, batch_idx)
-        depth_gt = get_wandb_depth_image(data["depth_dense"][0], batch_idx)
+        #depth_gt = get_wandb_depth_image(data["depth_dense"][0], batch_idx)
 
-        print(torch.max(data["depth_dense"][0]))
-        print(torch.min(data["depth_dense"][0]))
+        #print(torch.max(data["depth_dense"][0]))
+        #print(torch.min(data["depth_dense"][0]))
         semantic_img_13 = get_wandb_semantic_image(soft_pred_13[0], True, 1, f'Semantic Map image with 13 classes')
 
         semantic_img_16 = get_wandb_semantic_image(soft_pred_16[0], True, 1, f'Semantic Map image with 16 classes')
         semantic_gt = get_wandb_semantic_image(data['semantic'][0], False, 1, f'Semantic GT with id {batch_idx}')
 
-        wandb.log({'images': [rgb_img, depth_img, depth_gt, semantic_img_13, semantic_img_16, semantic_gt]})
+        wandb.log({'images': [rgb_img, depth_img, semantic_img_13, semantic_img_16, semantic_gt]})
 
     mean_iou_13, iou_13 = miou_13.get_miou()
     mean_iou_16, iou_16 = miou_16.get_miou()
