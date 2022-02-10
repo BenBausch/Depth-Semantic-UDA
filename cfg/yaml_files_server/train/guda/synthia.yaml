@@ -1,7 +1,7 @@
 dataset:
     name: 'synthia_rand_cityscapes'
     path: '/work/dlclarge1/bauschb-data/data/Synthia/RAND_CITYSCAPES'
-    feed_img_size: [ 512, 320 ]
+    feed_img_size: [ 320, 192 ]
     use_sparse_depth: False
     use_dense_depth: True
     use_self_supervised_depth: False
