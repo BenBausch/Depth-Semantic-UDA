@@ -11,6 +11,7 @@ class MIoU:
     Code based on https://www.kaggle.com/ligtfeather/semantic-segmentation-is-easy-with-pytorch and adapted to calculate
     MIoU over whole dataset.
     """
+
     def __init__(self, num_classes, ignore_classes=None, ignore_index=250):
         self.classes = torch.tensor([i for i in range(num_classes)])
         self.intersection = torch.tensor([0.0 for i in range(num_classes)])
@@ -21,7 +22,6 @@ class MIoU:
             assert len(ignore_classes) == len(self.classes)
             self.classes = self.classes[ignore_classes]
             print(self.classes)
-
 
     def update(self, mask_pred, mask_gt):
         """
@@ -57,3 +57,68 @@ class MIoU:
         """
         iou_per_class = self.intersection / self.union
         return torch.nansum(iou_per_class) / len(self.classes), iou_per_class
+
+
+class DepthEvaluator:
+    def __init__(self, use_garg_crop=False):
+        self.use_garg_crop = use_garg_crop
+
+    def depth_losses_as_string(self, depth_gt, depth_pred):
+        depth_losses = self.compute_depth_losses(depth_gt=depth_gt, depth_pred=depth_pred)
+        loss_string = 'Losses: \n'
+        for metric, value in depth_losses.items():
+            loss_string += f'{metric}: {value} \n'
+        return loss_string
+
+    def compute_depth_losses(self, depth_gt, depth_pred):
+        """Compute depth metrics, to allow monitoring during training
+        Adapted from: https://github.com/nianticlabs/monodepth2/blob/master/trainer.py
+        This isn't particularly accurate as it averages over the entire batch,
+        so is only used to give an indication of validation performance
+        """
+        depth_pred = depth_pred.detach()
+
+        mask = depth_gt > 0
+
+        # garg/eigen crop
+        if self.use_garg_crop:
+            _, _, gt_height, gt_width = depth_gt.shape
+            crop_mask = torch.zeros_like(mask)
+            crop_mask[:, :, int(0.4080 * gt_height):int(0.9891 * gt_height),
+            int(0.0354 * gt_width):int(0.9638 * gt_width)] = 1
+            mask *= crop_mask
+
+        depth_gt = depth_gt[mask]
+        depth_pred = depth_pred[mask]
+
+        depth_errors = self.compute_depth_errors(depth_gt, depth_pred)
+
+        # Move to cpu
+        losses = {}
+        for metric, value in depth_errors.items():
+            losses[metric] = value.cpu()
+
+        return losses
+
+    @staticmethod
+    def compute_depth_errors(gt, pred):
+        """Computation of error metrics between predicted and ground truth depths
+        Source: https://github.com/nianticlabs/monodepth2/blob/master/layers.py
+        """
+        thresh = torch.max((gt / pred), (pred / gt))
+        a1 = (thresh < 1.25).float().mean()
+        a2 = (thresh < 1.25 ** 2).float().mean()
+        a3 = (thresh < 1.25 ** 3).float().mean()
+
+        rmse = (gt - pred) ** 2
+        rmse = torch.sqrt(rmse.mean())
+
+        rmse_log = (torch.log(gt) - torch.log(pred)) ** 2
+        rmse_log = torch.sqrt(rmse_log.mean())
+
+        abs_rel = torch.mean(torch.abs(gt - pred) / gt)
+
+        sq_rel = torch.mean((gt - pred) ** 2 / gt)
+
+        return {"de/abs_rel": abs_rel, "de/sq_rel": sq_rel, "de/rms": rmse, \
+                "de/log_rms": rmse_log, "da/a1": a1, "da/a2": a2, "da/a3": a3}

@@ -6,8 +6,9 @@ import torch
 
 # Own classes
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
+from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME
 from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
-from losses.metrics import MIoU
+from losses.metrics import MIoU, DepthEvaluator
 from train.base.train_base import TrainSourceTargetDatasetBase
 from losses import get_loss
 import camera_models
@@ -61,6 +62,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.source_max_depth = self.cfg.datasets.configs[0].dataset.max_depth
 
         self.source_use_garg_crop = self.cfg.datasets.configs[0].eval.use_garg_crop
+        if self.source_use_garg_crop:
+            print(f'Use Garg Crop for depth evaluation on source dataset!')
 
         # Set up normalized camera model for source domain
         try:
@@ -154,8 +157,20 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.target_loss_weight = self.cfg.datasets.loss_weights[1]
 
         # -------------------------Metrics-for-Validation---------------------------------------------
+        self.eval_13_classes = [True, True, True, False, False, False, True, True, True, False, True, True, True, True,
+                                False, True, False, True, True]
+        self.not_eval_13_classes = [not cl for cl in self.eval_13_classes]
+        self.eval_16_classes = [True, True, True, True, True, True, True, True, True, False, True, True, True, True,
+                                False, True, False, True, True]
+        self.not_eval_16_classes = [not cl for cl in self.eval_16_classes]
+        self.miou_13 = MIoU(num_classes=cfg.datasets.configs[2].dataset.num_classes,
+                            ignore_classes=self.eval_13_classes,
+                            ignore_index=IGNORE_INDEX_SEMANTIC)
+        self.miou_16 = MIoU(num_classes=self.cfg.datasets.configs[2].dataset.num_classes,
+                            ignore_classes=self.eval_16_classes,
+                            ignore_index=IGNORE_INDEX_SEMANTIC)
 
-        self.miou = MIoU(num_classes=self.cfg.datasets.configs[2].dataset.num_classes)
+        self.depth_evaluator = DepthEvaluator(use_garg_crop=self.source_use_garg_crop)
 
         # -------------------------Initializations----------------------------------------------------
 
@@ -209,10 +224,22 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
             self.validation_step(data, batch_idx)
 
-        mean_iou, iou = self.miou.get_miou()
+        mean_iou_13, iou_13 = self.miou_13.get_miou()
+        mean_iou_16, iou_16 = self.miou_16.get_miou()
 
         if self.rank == 0:
-            wandb.log({'epoch': self.epoch, 'mean_iou_over_classes': mean_iou, 'mean_iou': iou})
+            names = [CITYSCAPES_ID_TO_NAME[i] for i in CITYSCAPES_ID_TO_NAME.keys()]
+            bar_data = [[label, val] for (label, val) in zip(names, iou_13)]
+            table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
+            wandb.log({f'IOU per 13 Class epoch {self.epoch}': wandb.plot.bar(table, "Classes", "IOU",
+                                                                              title="IOU per 13 Class"),
+                       f'Mean IOU per 13 Classes {self.epoch}': mean_iou_13})
+            names = [CITYSCAPES_ID_TO_NAME[i] for i in CITYSCAPES_ID_TO_NAME.keys()]
+            bar_data = [[label, val] for (label, val) in zip(names, iou_16)]
+            table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
+            wandb.log(
+                {f'IOU per 16 Class {self.epoch}': wandb.plot.bar(table, "Classes", "IOU", title="IOU per 16 Class"),
+                 f'Mean IOU per 16 Classes {self.epoch}': mean_iou_16})
 
     def training_step(self, data, batch_idx):
         # -----------------------------------------------------------------------------------------------
@@ -235,11 +262,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                                    semantic_pred, data[0]['semantic'])
 
         # log samples
-        if batch_idx % 500 == 0 and self.rank == 0:
+        if batch_idx % int(50 / torch.cuda.device_count()) == 0 and self.rank == 0:
+            depth_errors = '\n Errors avg over this images batch \n' + \
+                           self.depth_evaluator.depth_losses_as_string(data[0]['depth_dense'], depth_pred)
             rgb = wandb.Image(data[0][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
-            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx)
-            sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0], batch_idx)
-            wandb.log({'Virtual images': [rgb, depth_img, sem_img]}, step=batch_idx)
+            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, caption_addon=depth_errors)
+            depth_gt_img = self.get_wandb_depth_image(data[0]['depth_dense'][0], batch_idx, caption_addon=depth_errors)
+            sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0], True, 1, f'Semantic Map')
+            wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, sem_img]})
 
         # -----------------------------------------------------------------------------------------------
         # -----------------------------------Real Sample Processing--------------------------------------
@@ -255,10 +285,10 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred, pose_pred)
 
         # log samples
-        if batch_idx % 500 == 0 and self.rank == 0:
+        if batch_idx % int(50 / torch.cuda.device_count()) == 0 and self.rank == 0:
             rgb = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Real RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx)
-            wandb.log({'Real images': [rgb, depth_img]}, step=batch_idx)
+            wandb.log({f'Real images {self.epoch}': [rgb, depth_img]})
 
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------------Optimization-------------------------------------------
@@ -273,11 +303,10 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.optimizer.step()
 
         if self.rank == 0:
-            loss_source_dict['epoch'] = self.epoch
-            loss_target_dict['epoch'] = self.epoch
-            wandb.log({"total loss": loss, 'epoch': self.epoch}, step=batch_idx)
-            wandb.log(loss_source_dict, step=batch_idx)
-            wandb.log(loss_target_dict, step=batch_idx)
+            wandb.log({f'epoch {self.epoch} steps': batch_idx})
+            wandb.log({f"total loss epoch {self.epoch}": loss})
+            wandb.log(loss_source_dict)
+            wandb.log(loss_target_dict)
 
     def validation_step(self, data, batch_idx):
         for key, val in data.items():
@@ -285,15 +314,36 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         prediction = self.model.forward(data, dataset_id=2, predict_depth=True, train=False)[0]
         depth = prediction['depth'][0]
 
-        soft_pred = F.softmax(prediction['semantic'], dim=1)
-        self.miou.update(mask_pred=soft_pred, mask_gt=data['semantic'])
+        # zero out the probabilities of the classes that are not considered
+        # zeroing out instead of training on subset of classes permits to train single model for the 13 and 16 class
+        # evaluation instead of two models
+        sem_pred_13 = prediction['semantic']
+        sem_pred_13[:, self.not_eval_13_classes, :, :] = 0.0
+
+        soft_pred_13 = F.softmax(sem_pred_13, dim=1)
+        self.miou_13.update(mask_pred=soft_pred_13, mask_gt=data['semantic'])
+
+        sem_pred_16 = prediction['semantic']
+        sem_pred_16[:, self.not_eval_16_classes, :, :] = 0.0
+
+        soft_pred_16 = F.softmax(sem_pred_16, dim=1)
+        self.miou_16.update(mask_pred=soft_pred_16, mask_gt=data['semantic'])
 
         if self.rank == 0:
-            rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0), caption=f'Rgb {batch_idx}')
+            rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
+                                  caption=f'Rgb {batch_idx}')
             depth_img = self.get_wandb_depth_image(depth, batch_idx)
-            semnatic_img = self.get_wandb_semantic_image(soft_pred[0], batch_idx)
 
-            wandb.log({'Validation Images': [rgb_img, depth_img, semnatic_img]})
+            semantic_img_13 = self.get_wandb_semantic_image(soft_pred_13[0], True, 1,
+                                                            f'Semantic Map image with 13 classes')
+
+            semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
+                                                            f'Semantic Map image with 16 classes')
+            semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
+                                                        f'Semantic GT with id {batch_idx}')
+
+            wandb.log(
+                {f'images of epoch {self.epoch}': [rgb_img, depth_img, semantic_img_13, semantic_img_16, semantic_gt]})
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
@@ -302,14 +352,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         silog_loss = self.source_silog_depth_weigth * self.source_silog_depth(pred=depth_pred,
                                                                               target=depth_target)
-        loss_dict['silog_loss'] = silog_loss
+        loss_dict[f'silog_loss epoch {self.epoch}'] = silog_loss
 
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)
         bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt)
-        loss_dict['bce'] = bce_loss
+        loss_dict[f'bce epoch {self.epoch}'] = bce_loss
 
         snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target)
-        loss_dict['snr'] = snr_loss
+        loss_dict[f'snr epoch {self.epoch}'] = snr_loss
 
         return silog_loss + bce_loss + snr_loss, loss_dict
 
@@ -323,7 +373,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                                  1].dataset.rgb_frame_offsets,
                                                              use_automasking=self.target_reconstruction_use_automasking,
                                                              use_ssim=self.target_reconstruction_use_ssim)
-        loss_dict['reconstruction'] = reconsruction_loss
+        loss_dict[f'reconstruction epoch {self.epoch}'] = reconsruction_loss
         return reconsruction_loss, loss_dict
 
     def set_train(self):
@@ -342,14 +392,17 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
 
     @staticmethod
-    def get_wandb_depth_image(depth, batch_idx):
+    def get_wandb_depth_image(depth, batch_idx, caption_addon=''):
         colormapped_depth = vdp(1 / depth)
-        img = wandb.Image(colormapped_depth, caption=f'Depth Map image with id {batch_idx}')
+        img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}'+caption_addon)
         return img
 
     @staticmethod
-    def get_wandb_semantic_image(semantic, batch_idx):
-        semantic = torch.argmax(F.softmax(semantic, dim=0), dim=0).unsqueeze(0)
+    def get_wandb_semantic_image(semantic, is_prediction=True, k=1, caption=''):
+        if is_prediction:
+            semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
+        else:
+            semantic = semantic.unsqueeze(0)
         img = wandb.Image(s_to_rgb(semantic.detach().cpu()),
-                          caption=f'Semantic Map image with id {batch_idx}')
+                          caption=caption)
         return img

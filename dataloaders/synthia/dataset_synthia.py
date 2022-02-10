@@ -455,8 +455,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
                 tf_prep.CV2HorizontalFlip(do_flip=do_flip),
                 tf_prep.TransformToDepthSynthia(),
-                tf_prep.tf.ToTensor(),
-                tf_prep.MaskPixelOutsideDepthRange(min_depth=min_depth, max_depth=max_depth, ignore_value=ignore_value),
+                tf_prep.tf.ToTensor()
             ]
         )
 
