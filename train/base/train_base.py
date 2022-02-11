@@ -24,6 +24,12 @@ from models.helper_models.custom_data_parallel import CustomDistributedDataParal
 import torch.distributed as dist
 import wandb
 
+# imports only available on Linux
+try:
+    from torch.distributed.optim import DistributedOptimizer
+except ImportError:
+    pass
+
 
 def setup_multi_processing():
     os.environ['MASTER_ADDR'] = 'localhost'
@@ -68,10 +74,16 @@ class TrainBase(metaclass=abc.ABCMeta):
         if self.cfg.device.multiple_gpus:
             self.model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(self.model)
         self.model.to(self.device)
-        # Initialization of the optimizer and lr scheduler
+
+        if self.cfg.device.multiple_gpus:
+            self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
+
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
                                             self.model.parameters_to_train,
-                                            self.cfg.train.optimizer.learning_rate)
+                                            self.cfg.train.optimizer.learning_rate,
+                                            distributed=self.cfg.device.multiple_gpus)
+
+        # Initialization of the optimizer and lr scheduler
         self.scheduler = self.get_lr_scheduler(self.optimizer, self.cfg)
 
         # Set up IO handler
@@ -92,9 +104,6 @@ class TrainBase(metaclass=abc.ABCMeta):
             io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
         else:
             print("No checkpoint is used. Training from scratch!")
-
-        if self.cfg.device.multiple_gpus:
-            self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
 
         # Logging only on the first gpu process
         if device_id == 0:
@@ -200,11 +209,15 @@ class TrainBase(metaclass=abc.ABCMeta):
             raise NotImplementedError("The lr scheduler ({}) is not yet implemented.".format(cfg.train.scheduler.type))
 
     @staticmethod
-    def get_optimizer(type_optimizer, params_to_train, learning_rate):
+    def get_optimizer(type_optimizer, params_to_train, learning_rate, distributed):
         assert isinstance(type_optimizer, str)
         # You can implement other rules here...
         if type_optimizer == "Adam":
-            return torch.optim.Adam(params_to_train, lr=learning_rate)
+            if distributed:
+                optimizer = DistributedOptimizer(torch.optim.Adam, params_to_train, learning_rate)
+            else:
+                optimizer = torch.optim.Adam(params_to_train, lr=learning_rate)
+            return optimizer
         elif type_optimizer == "None":
             return None
         else:
