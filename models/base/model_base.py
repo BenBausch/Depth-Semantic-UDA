@@ -103,7 +103,7 @@ class SemanticEncoderDecoderModelBase(EncoderDecoderModelBase, abc.ABC):
         pass
 
     @abc.abstractmethod
-    def predict_semantic(self, features):
+    def predict_semantic(self, features, *args):
         """
         Predicts the semantic segmentation of the input image ([batch_size, number_classes, height, width]) from the
         latent feature embedding.

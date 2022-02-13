@@ -1,6 +1,6 @@
 from models.base.model_base import DepthFromMotionEncoderDecoderModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
-from models.helper_models.depth_decoder import DepthDecoder
+from models.helper_models.depth_decoder import DepthDecoderMONODEPTH2
 from models.helper_models.pose_decoder import PoseDecoder
 
 from models.helper_models.layers import *
@@ -55,7 +55,7 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         self.parameters_to_train += list(self.networks["resnet_encoder"].parameters())
 
     def create_DepthNet(self):
-        self.networks["depth_decoder"] = DepthDecoder(
+        self.networks["depth_decoder"] = DepthDecoderMONODEPTH2(
             self.networks["resnet_encoder"].num_ch_enc, range(self.num_scales), upsample_mode='nearest').double()
 
         if not self.no_cuda and self.multiple_gpus:

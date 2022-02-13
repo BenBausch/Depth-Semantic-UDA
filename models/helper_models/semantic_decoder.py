@@ -13,10 +13,10 @@ from models.helper_models.layers import *
 from utils.utils import info_gpu_memory
 
 
-class SemanticDecoder(nn.Module):
+class SemanticDecoderGUDA(nn.Module):
     def __init__(self, num_ch_enc, num_classes, use_skips=True,
                  upsample_mode='nearest', num_ch_dec=[16, 32, 64, 128, 256]):
-        super(SemanticDecoder, self).__init__()
+        super(SemanticDecoderGUDA, self).__init__()
 
         self.upsample_mode = upsample_mode
         self.use_skips = use_skips
@@ -102,3 +102,29 @@ class SemanticDecoder(nn.Module):
                 description = description[:-2]
             description += '\n'
         return description
+
+
+class SemanticDecoderADVENT(nn.Module):
+    def __init__(self, inplanes, dilation_series, padding_series, num_classes):
+        super(SemanticDecoderADVENT, self).__init__()
+        self.dec4 = nn.Conv2d(128, inplanes, kernel_size=1, stride=1, padding=0, bias=True)
+        self.dec4.weight.data.normal_(0, 0.01)
+        self.relu = nn.ReLU(inplace=True)
+
+        self.conv2d_list = nn.ModuleList()
+        for dilation, padding in zip(dilation_series, padding_series):
+            self.conv2d_list.append(
+                nn.Conv2d(inplanes, num_classes, kernel_size=3, stride=1, padding=padding,
+                          dilation=dilation, bias=True))
+
+        for m in self.conv2d_list:
+            m.weight.data.normal_(0, 0.01)
+
+    def forward(self, encoder_features, depth_features):
+        x = self.dec4(depth_features)
+        x = self.relu(x)
+        x = encoder_features * x
+        out = self.conv2d_list[0](x)
+        for i in range(len(self.conv2d_list) - 1):
+            out += self.conv2d_list[i + 1](x)
+        return out

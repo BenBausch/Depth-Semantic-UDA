@@ -12,9 +12,9 @@ from collections import OrderedDict
 from models.helper_models.layers import *
 
 
-class DepthDecoder(nn.Module):
+class DepthDecoderMONODEPTH2(nn.Module):
     def __init__(self, num_ch_enc, scales=range(4), num_output_channels=1, use_skips=True, upsample_mode='nearest'):
-        super(DepthDecoder, self).__init__()
+        super(DepthDecoderMONODEPTH2, self).__init__()
 
         self.upsample_mode = upsample_mode
         self.num_output_channels = num_output_channels
@@ -86,3 +86,30 @@ class DepthDecoder(nn.Module):
                 description += f' --> {self.upsample_mode} upsampling'
             description += '\n'
         return description
+
+
+class DepthDecoderDADA(nn.Module):
+    """
+    Modified Code based on
+    https://github.com/valeoai/DADA/blob/d657af66ee3e18a052f3fba6c34707e46ed6ea96/dada/model/deeplabv2_depth.py
+    """
+
+    def __init__(self, in_channels):
+        super(DepthDecoderDADA, self).__init__()
+        self.enc4_1 = nn.Conv2d(in_channels, 512, kernel_size=1, stride=1, padding=0, bias=True)
+        self.enc4_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=True)
+        self.enc4_3 = nn.Conv2d(512, 128, kernel_size=1, stride=1, padding=0, bias=True)
+        self.enc4_1.weight.data.normal_(0, 0.01)
+        self.enc4_2.weight.data.normal_(0, 0.01)
+        self.enc4_3.weight.data.normal_(0, 0.01)
+        self.relu = nn.ReLU(inplace=True)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, input_features):
+        x4_enc = self.enc4_1(input_features)
+        x4_enc = self.relu(x4_enc)
+        x4_enc = self.enc4_2(x4_enc)
+        x4_enc = self.relu(x4_enc)
+        x4_enc = self.enc4_3(x4_enc)
+        raw_sigmoid = nn.sigmoid(torch.mean(x4_enc, dim=1, keepdim=True))
+        return x4_enc, raw_sigmoid

@@ -5,8 +5,8 @@ import time
 
 from models.base.model_base import SemanticDepthFromMotionModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
-from models.helper_models.depth_decoder import DepthDecoder
-from models.helper_models.semantic_decoder import SemanticDecoder
+from models.helper_models.depth_decoder import DepthDecoderMONODEPTH2
+from models.helper_models.semantic_decoder import SemanticDecoderGUDA
 from models.helper_models.pose_decoder import PoseDecoder
 from models.helper_models.layers import *
 
@@ -109,13 +109,13 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.parameters_to_train += list(self.networks["resnet_encoder"].parameters())
 
     def create_DepthNet(self):
-        self.networks["depth_decoder"] = DepthDecoder(
+        self.networks["depth_decoder"] = DepthDecoderMONODEPTH2(
             self.networks["resnet_encoder"].num_ch_enc, range(self.num_scales), upsample_mode='bilinear').double()
 
         self.parameters_to_train += list(self.networks["depth_decoder"].parameters())
 
     def create_SemanticNet(self):
-        self.networks["semantic_decoder"] = SemanticDecoder(
+        self.networks["semantic_decoder"] = SemanticDecoderGUDA(
             self.networks["resnet_encoder"].num_ch_enc, self.num_classes, upsample_mode='bilinear').double()
 
         self.parameters_to_train += list(self.networks["semantic_decoder"].parameters())
