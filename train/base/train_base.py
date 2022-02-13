@@ -208,7 +208,7 @@ class TrainBase(metaclass=abc.ABCMeta):
             raise NotImplementedError("The lr scheduler ({}) is not yet implemented.".format(cfg.train.scheduler.type))
 
     @staticmethod
-    def get_optimizer(type_optimizer, params_to_train, learning_rate, distributed):
+    def get_optimizer(type_optimizer, params_to_train, learning_rate):
         assert isinstance(type_optimizer, str)
         # You can implement other rules here...
         if type_optimizer == "Adam":
