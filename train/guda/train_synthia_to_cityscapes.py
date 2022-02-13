@@ -266,9 +266,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             depth_errors = '\n Errors avg over this images batch \n' + \
                            self.depth_evaluator.depth_losses_as_string(data[0]['depth_dense'], depth_pred)
             rgb = wandb.Image(data[0][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
-            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, caption_addon=depth_errors)
-            depth_gt_img = self.get_wandb_depth_image(data[0]['depth_dense'][0], batch_idx, caption_addon=depth_errors)
-            sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0], True, 1, f'Semantic Map')
+            depth_img = self.get_wandb_depth_image(depth_pred[0].detach().cpu(), batch_idx, caption_addon=depth_errors)
+            depth_gt_img = self.get_wandb_depth_image(data[0]['depth_dense'][0].cpu(), batch_idx, caption_addon=depth_errors)
+            sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0].detach().cpu(), True, 1, f'Semantic Map')
             wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, sem_img]})
 
         # -----------------------------------------------------------------------------------------------
@@ -287,7 +287,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # log samples
         if batch_idx % int(50 / torch.cuda.device_count()) == 0 and self.rank == 0:
             rgb = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Real RGB")
-            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx)
+            depth_img = self.get_wandb_depth_image(depth_pred[0].detach().cpu(), batch_idx)
             wandb.log({f'Real images {self.epoch}': [rgb, depth_img]})
 
         # -----------------------------------------------------------------------------------------------
@@ -312,22 +312,22 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         for key, val in data.items():
             data[key] = val.to(self.device)
         prediction = self.model.forward(data, dataset_id=2, predict_depth=True, train=False)[0]
-        depth = prediction['depth'][0]
+        depth = prediction['depth'][0].cpu().detach()
 
         # zero out the probabilities of the classes that are not considered
         # zeroing out instead of training on subset of classes permits to train single model for the 13 and 16 class
         # evaluation instead of two models
-        sem_pred_13 = prediction['semantic']
+        sem_pred_13 = prediction['semantic'].cpu().detach()
         sem_pred_13[:, self.not_eval_13_classes, :, :] = 0.0
 
         soft_pred_13 = F.softmax(sem_pred_13, dim=1)
-        self.miou_13.update(mask_pred=soft_pred_13, mask_gt=data['semantic'])
+        self.miou_13.update(mask_pred=soft_pred_13, mask_gt=data['semantic'].cpu())
 
-        sem_pred_16 = prediction['semantic']
+        sem_pred_16 = prediction['semantic'].cpu().detach()
         sem_pred_16[:, self.not_eval_16_classes, :, :] = 0.0
 
         soft_pred_16 = F.softmax(sem_pred_16, dim=1)
-        self.miou_16.update(mask_pred=soft_pred_16, mask_gt=data['semantic'])
+        self.miou_16.update(mask_pred=soft_pred_16, mask_gt=data['semantic'].cpu())
 
         if self.rank == 0:
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
@@ -339,7 +339,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
             semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
                                                             f'Semantic Map image with 16 classes')
-            semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
+            semantic_gt = self.get_wandb_semantic_image(data['semantic'][0].cpu().detach(), False, 1,
                                                         f'Semantic GT with id {batch_idx}')
 
             wandb.log(
@@ -403,6 +403,5 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
         else:
             semantic = semantic.unsqueeze(0)
-        img = wandb.Image(s_to_rgb(semantic.detach().cpu()),
-                          caption=caption)
+        img = wandb.Image(s_to_rgb(semantic), caption=caption)
         return img

@@ -97,7 +97,7 @@ def semantic_id_tensor_to_rgb_numpy_array(tensor: torch.tensor):
     return rgb_array
 
 def visu_depth_prediction(inv_depth_pred):
-    disp_np = inv_depth_pred[:, :, :].squeeze().cpu().detach().numpy()
+    disp_np = inv_depth_pred[:, :, :].squeeze().numpy()
     vmax = np.percentile(disp_np, 95)
     normalizer = mpl.colors.Normalize(vmin=disp_np.min(), vmax=vmax)
     mapper = plt.cm.ScalarMappable(norm=normalizer, cmap='magma')

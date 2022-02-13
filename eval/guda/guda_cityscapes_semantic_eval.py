@@ -23,7 +23,7 @@ def evaluate_model(cfg):
     model = models.get_model(cfg.model.type, cfg)
     model = model.to('cuda:0')
     weights = torch.load(
-        r'C:\Users\benba\Documents\University\Masterarbeit\models\synthia_only_model\checkpoints\checkpoint_epoch_13.pth')
+        r'D:\Depth-Semantic-UDA\experiments\guda_synthia_to_cityscapes_full_depth_range\checkpoints\checkpoint_epoch_0.pth')
     for key in weights:
         if key in ['resnet_encoder', 'depth_decoder', 'semantic_decoder', 'pose_encoder', 'pose_decoder']:
             model.networks[key].load_state_dict(weights[key])
