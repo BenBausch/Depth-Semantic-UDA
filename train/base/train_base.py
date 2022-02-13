@@ -80,8 +80,7 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
                                             self.model.parameters_to_train,
-                                            self.cfg.train.optimizer.learning_rate,
-                                            distributed=self.cfg.device.multiple_gpus)
+                                            self.cfg.train.optimizer.learning_rate)
 
         # Initialization of the optimizer and lr scheduler
         self.scheduler = self.get_lr_scheduler(self.optimizer, self.cfg)
@@ -213,10 +212,7 @@ class TrainBase(metaclass=abc.ABCMeta):
         assert isinstance(type_optimizer, str)
         # You can implement other rules here...
         if type_optimizer == "Adam":
-            if distributed:
-                optimizer = DistributedOptimizer(torch.optim.Adam, params_to_train, learning_rate)
-            else:
-                optimizer = torch.optim.Adam(params_to_train, lr=learning_rate)
+            optimizer = torch.optim.Adam(params_to_train, lr=learning_rate)
             return optimizer
         elif type_optimizer == "None":
             return None
@@ -261,7 +257,9 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 split=self.cfg.datasets.configs[1].dataset.split,
                                 bs=self.cfg.train.batch_size,
                                 num_workers=self.cfg.train.nof_workers,
-                                cfg=self.cfg.datasets.configs[1])
+                                cfg=self.cfg.datasets.configs[1],
+                                sample_completely_random=True,
+                                num_samples=2975)
         print(f'Length Target Train Loader: {len(self.target_train_loader)}')
 
         self.target_val_loader, self.target_num_val_files = \
@@ -281,7 +279,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[0],
                                 sample_completely_random=True,
-                                num_samples=self.target_num_train_files)
+                                num_samples=2975)
         print(f'Length Source Train Loader: {len(self.source_train_loader)}')
         # Get number of total steps to compute remaining training time later
         # calculate time using target dataset length
