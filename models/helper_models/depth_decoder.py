@@ -51,6 +51,7 @@ class DepthDecoderMONODEPTH2(nn.Module):
                 self.convs[f"dispconv_{i}"] = Conv3x3(self.num_ch_dec[i], self.num_output_channels)
                 self.ordered_layers.append(f"dispconv_{i}")
 
+        self.decoder = nn.ModuleList(list(self.convs.values()))
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_features):

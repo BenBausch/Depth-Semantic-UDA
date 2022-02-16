@@ -55,7 +55,7 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         self.device = device
         self.camera_model = normalized_camera_model.get_scaled_model(ref_img_width, ref_img_height)
         self.similiarity_loss = F.cosine_similarity
-        self.img_to_pointcloud = _ImageToPointcloud(camera_model=normalized_camera_model, device=device)
+        self.img_to_pointcloud = _ImageToPointcloud(camera_model=self.camera_model, device=device)
         self.image_width, self.image_height = self.camera_model.image_size()
         self.cos_sim = nn.CosineSimilarity(dim=1)
         self.padder_h = torch.nn.ReflectionPad2d((0, 0, 0, 1))
@@ -67,13 +67,14 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         :param points3d: tensor of shape [batch_size, 3, image_height, image_width]
         :return:
         """
-        diff_h = (self.padder_h(points3d[:, :, 1:, :]) - points3d[:, :, 0:, :])
-        diff_w = (self.padder_w(points3d[:, :, :, 1:]) - points3d[:, :, :, 0:])
+        diff_h = (points3d[:, :, 0:, :] - self.padder_h(points3d[:, :, 1:, :]))
+        diff_w = (points3d[:, :, :, 0:] - self.padder_w(points3d[:, :, :, 1:]))
 
-        normals = torch.cross(diff_h, diff_w)
+        normals = torch.cross(diff_w, diff_h)
         vector_norms = torch.linalg.vector_norm(normals, dim=1).unsqueeze(1)
+        vector_norms[vector_norms == 0] = 1e-9
 
-        return torch.divide(normals, (vector_norms + 1e-09))
+        return torch.divide(normals, vector_norms)
 
     def cosine_similarity_guda(self, normals_pred, normals_gt):
         """
@@ -122,6 +123,22 @@ class SilogLossDepth(nn.Module):
     def forward(self, pred, target):
         mask = (torch.logical_and(target > 0, target != self.ignore_value)).detach()
         log_diff = (torch.log(pred) - torch.log(target))[mask]
+
+        silog_var = torch.mean(log_diff ** 2)
+        silog_wsme = self.weight * (log_diff.mean() ** 2)
+
+        return silog_var - silog_wsme
+
+
+class SilogLossDepthGUDA(nn.Module):
+    def __init__(self, weight=0.85, ignore_value=-100):
+        super(SilogLossDepthGUDA, self).__init__()
+        self.weight = weight
+        self.ignore_value = ignore_value
+
+    def forward(self, pred, target):
+        mask = (torch.logical_and(target > 0, target != self.ignore_value)).detach()
+        log_diff = (torch.log(target) - torch.log(pred))[mask]
 
         silog_var = torch.mean(log_diff ** 2)
         silog_wsme = self.weight * (log_diff.mean() ** 2)
