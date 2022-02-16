@@ -1,4 +1,4 @@
-experiment_name: 'synthia_only_to_cityscapes'
+experiment_name: 'depth_semantic_test'
 
 model:
     type: 'guda'
@@ -16,8 +16,7 @@ model:
 
 datasets:
     paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\semantic_and_depth\synthia.yaml',
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\semantic_and_depth\synthia.yaml']#,
-                        #'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\semantic_and_depth\cityscapes_semantic.yaml']
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\semantic_and_depth\cityscapes_semantic.yaml']
     loss_weights : [1, 0]
 
 train:

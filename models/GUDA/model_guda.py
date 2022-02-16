@@ -59,7 +59,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.create_PoseNet()
         print('After creating networks')
 
-    def get_dataset_parameters(self):  # todo move this into the base class
+    def get_dataset_parameters(self):
         """
         Collects the parameters per dataset.
         :param dataset:
@@ -153,12 +153,15 @@ class Guda(SemanticDepthFromMotionModelBase):
         """
         # The network actually outputs the inverse depth!
         raw_sigmoid = self.networks["depth_decoder"](features)
-        raw_sigmoid_scale_0 = raw_sigmoid[("disp", 0)]
-        _, depth_pred = disp_to_depth(disp=raw_sigmoid_scale_0,
-                                      min_depth=self.dataset_min_max_depth[dataset_id][0],
-                                      max_depth=self.dataset_min_max_depth[dataset_id][1])
+        depths = {}
+        for i in [3, 2, 1, 0]:
+            raw_sigmoid_scale_i = raw_sigmoid[("disp", i)]
+            _, depth_pred = disp_to_depth(disp=raw_sigmoid_scale_i,
+                                          min_depth=self.dataset_min_max_depth[dataset_id][0],
+                                          max_depth=self.dataset_min_max_depth[dataset_id][1])
+            depths[("depth", i)] = depth_pred
 
-        return depth_pred, raw_sigmoid_scale_0
+        return depths, raw_sigmoid
 
     def predict_poses(self, inputs, dataset_id):
         """
@@ -194,7 +197,6 @@ class Guda(SemanticDepthFromMotionModelBase):
 
     def predict_semantic(self, features):
         a = self.networks["semantic_decoder"](features)
-
         return a
 
     def forward(self, data, predict_depth=False, dataset_id=3, train=True):
@@ -238,7 +240,7 @@ class Guda(SemanticDepthFromMotionModelBase):
     # -----------------------------Helper-Methods-------------------------------
     # --------------------------------------------------------------------------
 
-    def params_to_train(self):
+    def params_to_train(self, *args):
         """
         Get all the trainable parameters.
         """

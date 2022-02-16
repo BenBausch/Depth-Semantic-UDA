@@ -239,7 +239,7 @@ class Guda(SemanticDepthFromMotionModelBase):
     # -----------------------------Helper-Methods-------------------------------
     # --------------------------------------------------------------------------
 
-    def params_to_train(self):
+    def params_to_train(self, *args):
         """
         Get all the trainable parameters.
         """

@@ -51,7 +51,6 @@ class DepthDecoderMONODEPTH2(nn.Module):
                 self.convs[f"dispconv_{i}"] = Conv3x3(self.num_ch_dec[i], self.num_output_channels)
                 self.ordered_layers.append(f"dispconv_{i}")
 
-        self.decoder = nn.ModuleList(list(self.convs.values()))
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_features):
@@ -111,5 +110,5 @@ class DepthDecoderDADA(nn.Module):
         x4_enc = self.enc4_2(x4_enc)
         x4_enc = self.relu(x4_enc)
         x4_enc = self.enc4_3(x4_enc)
-        raw_sigmoid = nn.sigmoid(torch.mean(x4_enc, dim=1, keepdim=True))
+        raw_sigmoid = self.sigmoid(torch.mean(x4_enc, dim=1, keepdim=True))
         return x4_enc, raw_sigmoid

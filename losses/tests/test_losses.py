@@ -55,7 +55,6 @@ class TestSurfaceNormalRegularizationLoss(unittest.TestCase):
         self.assertTrue(torch.equal(rounded_gt, rounded_normals))
 
 
-
 class TestBootstrappedCrossEntropy(unittest.TestCase):
 
     def test_normal_case(self):

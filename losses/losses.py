@@ -50,10 +50,10 @@ class SurfaceNormalRegularizationLoss(nn.Module):
     Surface normal regularization loss as defined in the paper
     "Geometric Unsupervised Domain Adaptation for Semantic Segmentation": https://arxiv.org/pdf/2103.16694.pdf
     """
-    def __init__(self, normalized_camera_model, device):
+    def __init__(self, ref_img_width, ref_img_height, normalized_camera_model, device):
         super(SurfaceNormalRegularizationLoss, self).__init__()
         self.device = device
-        self.camera_model = normalized_camera_model
+        self.camera_model = normalized_camera_model.get_scaled_model(ref_img_width, ref_img_height)
         self.similiarity_loss = F.cosine_similarity
         self.img_to_pointcloud = _ImageToPointcloud(camera_model=normalized_camera_model, device=device)
         self.image_width, self.image_height = self.camera_model.image_size()
@@ -209,7 +209,7 @@ class ReconstructionLoss(nn.Module):
     # Attention, we use a camera model here, that is normalized by the image size, in order to be able to compute
     # reprojections for each possible size of the image
     # ref_img_width and ref_img_height denote the original image sizes without scalings
-    def __init__(self, normalized_camera_model, num_scales, device, ssim_kernel_size=3):
+    def __init__(self, ref_img_width, ref_img_height, normalized_camera_model, num_scales, device, ssim_kernel_size=3):
         super(ReconstructionLoss, self).__init__()
         self.num_scales = num_scales
         self.l1_loss_pixelwise = L1LossPixelwise()
@@ -219,18 +219,17 @@ class ReconstructionLoss(nn.Module):
 
         # Get camera models that are adapted to the actual (scaled) image sizes
         for i in range(self.num_scales):
-            s = 2 ** -i
-            k_s = 2 ** i
-            camera_model_ = normalized_camera_model.get_scaled_model(s, s)
+            s = 2 ** i
+            scale_u = ref_img_width // s
+            scale_v = ref_img_height // s
+            camera_model_ = normalized_camera_model.get_scaled_model(scale_u, scale_v)
             self.image_warpers[i] = ImageWarper(camera_model_, device)
-            self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=k_s, stride=k_s)
+            self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=s, stride=s)
 
     # ToDo: Exclude "black" pixels as in selfsup and maybe use a mask for excluding pixels with depth supervision
     #  The problem with black pixels might get solved by an appropriate interpolation method!! (Comp. MD2 with selfsup)
-    def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
-                mask=None):
-        assert rgb_frame_offsets[
-                   0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
+    def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85, mask=None):
+        assert rgb_frame_offsets[0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
 
         total_loss = 0.0
 
@@ -239,7 +238,7 @@ class ReconstructionLoss(nn.Module):
             reconstruction_losses_s = []
             identity_losses_s = []
 
-            scaled_depth = self.scaling_modules[s](pred_depth)
+            scaled_depth = pred_depth[('depth', s)]
             scaled_tgt_img = self.scaling_modules[s](batch_data[("rgb", 0)])
 
             for frame_id in rgb_frame_offsets[1:]:
@@ -250,15 +249,14 @@ class ReconstructionLoss(nn.Module):
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
 
                 # Compute pixelwise reconstruction loss by combining photom. loss and ssim loss
-                reconstruction_losses_s.append(
-                    (1 - alpha) * rec_l1_loss + alpha * rec_ssim_loss if use_ssim else rec_l1_loss)
+                reconstruction_losses_s.append((1-alpha)*rec_l1_loss + alpha*rec_ssim_loss if use_ssim else rec_l1_loss)
 
                 # ToDo: Actually, we shouldn't only take the minimum but exclude those pixels where the identity loss is smaller!!
                 #  CHANGE THIS! Md2 claims that this is right but I don't think so... Implement both and compare!
                 if use_automasking:
                     id_l1_loss = self.l1_loss_pixelwise(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                     id_ssim_loss = self.ssim(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
-                    identity_loss = (1 - alpha) * id_l1_loss + alpha * id_ssim_loss if use_ssim else id_l1_loss
+                    identity_loss = (1-alpha)*id_l1_loss + alpha*id_ssim_loss if use_ssim else id_l1_loss
                     identity_loss += torch.randn(identity_loss.shape, device=identity_loss.device) * 0.00001
                     identity_losses_s.append(identity_loss)
 

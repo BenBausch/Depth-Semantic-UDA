@@ -167,8 +167,6 @@ class MaskPixelOutsideDepthRange(object):
         return sample
 
 
-
-
 # ------------------------------------------GTA5------------------------------------------
 class ToInt64Array(object):
     def __init__(self):
@@ -177,7 +175,6 @@ class ToInt64Array(object):
     def __call__(self, sample):
         sample = np.asarray(sample, dtype=np.int64)
         return sample
-
 
 
 class EncodeSegmentation(object):

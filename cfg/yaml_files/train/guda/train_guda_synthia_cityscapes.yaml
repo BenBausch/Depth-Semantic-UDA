@@ -1,4 +1,4 @@
-experiment_name: 'synthia_to_cityscapes'
+experiment_name: 'testing_guda_update'
 
 model:
     type: 'guda'
@@ -37,7 +37,7 @@ val:
     nof_workers: 4
 
 checkpoint:
-    use_checkpoint: True
+    use_checkpoint: False
     path_base : 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\guda_model'
     filename : 'checkpoint_epoch_0.pth'
 

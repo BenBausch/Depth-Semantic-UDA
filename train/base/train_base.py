@@ -79,7 +79,7 @@ class TrainBase(metaclass=abc.ABCMeta):
             self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
 
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
-                                            self.model.parameters_to_train,
+                                            self.model.params_to_train(self.cfg.train.optimizer.learning_rate),
                                             self.cfg.train.optimizer.learning_rate)
 
         # Initialization of the optimizer and lr scheduler
@@ -259,7 +259,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[1],
                                 sample_completely_random=True,
-                                num_samples=2975)
+                                num_samples=int(2975/torch.cuda.device_count()))
         print(f'Length Target Train Loader: {len(self.target_train_loader)}')
 
         self.target_val_loader, self.target_num_val_files = \
@@ -279,7 +279,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[0],
                                 sample_completely_random=True,
-                                num_samples=2975)
+                                num_samples=int(2975/torch.cuda.device_count()))
         print(f'Length Source Train Loader: {len(self.source_train_loader)}')
         # Get number of total steps to compute remaining training time later
         # calculate time using target dataset length

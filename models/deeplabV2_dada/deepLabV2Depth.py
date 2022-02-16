@@ -76,7 +76,7 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
         self.create_PoseNet()
         print('After creating networks')
 
-    def get_dataset_parameters(self):  # todo move this into the base class
+    def get_dataset_parameters(self):
         """
         Collects the parameters per dataset.
         :param dataset:
@@ -90,12 +90,19 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
         self.dataset_predict_semantic = []
         self.dataset_predict_pose = []
         self.dataset_min_max_depth = []
+        self.dataset_interpolators = nn.ModuleList()
 
         # all datasets should have the same number of classes because they use the same semantic head
         self.num_classes = self.cfg.datasets.configs[0].dataset.num_classes
 
         # collect the parameters from all the datasets
         for i, dcfg in enumerate(self.cfg.datasets.configs):
+
+            self.dataset_interpolators.append(nn.Upsample(
+                size=(dcfg.dataset.feed_img_size[1], dcfg.dataset.feed_img_size[0]),
+                mode="bilinear",
+                align_corners=True,))
+
             self.rgb_frame_offsets.append(dcfg.dataset.rgb_frame_offsets)
 
             # get the depth ranges for each dataset
@@ -182,12 +189,12 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
         """
         # The network actually outputs the inverse depth!
         depth_features, raw_sigmoid = self.networks["depth_decoder"](features)
-        raw_sigmoid_scale_0 = raw_sigmoid[("disp", 0)]
-        _, depth_pred = disp_to_depth(disp=raw_sigmoid_scale_0,
+        raw_sigmoid = self.dataset_interpolators[dataset_id](raw_sigmoid)  # upsample prediction to original size
+        _, depth_pred = disp_to_depth(disp=raw_sigmoid,
                                       min_depth=self.dataset_min_max_depth[dataset_id][0],
                                       max_depth=self.dataset_min_max_depth[dataset_id][1])
 
-        return [depth_features, (depth_pred, raw_sigmoid_scale_0)]
+        return [depth_features, (depth_pred, raw_sigmoid)]
 
     def predict_poses(self, inputs, dataset_id):
         """
@@ -221,10 +228,10 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
 
         return poses
 
-    def predict_semantic(self, features, *args):
-        a = self.networks["semantic_decoder"](features, *args)
-
-        return a
+    def predict_semantic(self, features, depth_features, dataset_id):
+        seg = self.networks["semantic_decoder"](features, depth_features)
+        seg = self.dataset_interpolators[dataset_id](seg)
+        return seg
 
     def forward(self, data, predict_depth=False, dataset_id=3, train=True):
         """
@@ -258,7 +265,7 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
             results['poses'] = None
 
         if self.dataset_predict_semantic[dataset_id]:
-            results['semantic'] = self.predict_semantic(latent_features_batch[-1], depth_features)
+            results['semantic'] = self.predict_semantic(latent_features_batch[-1], depth_features, dataset_id)
         else:
             results['semantic'] = None
         return results
@@ -273,7 +280,8 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
         """
         Get all the trainable parameters. Some parameters have a scaled learning rate.
         """
-        return self.parameters_to_train
+        return [{'params': self.parameters_to_train_1x_lr, 'lr': lr},
+                {'params': self.parameters_to_train_10x_lr, 'lr': 10 * lr}]
 
     def depth_net(self):
         """

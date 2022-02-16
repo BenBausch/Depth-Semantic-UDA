@@ -1,4 +1,6 @@
 # Own files
+import warnings
+
 import torch
 from torch.utils.data import DataLoader
 from misc import transforms as tf_prep
@@ -64,7 +66,8 @@ class _PathsCityscapesSemantic(dataset_base.PathsHandlerSemantic):
         """
         super(_PathsCityscapesSemantic, self).__init__(mode, None, cfg)
 
-    def get_rgb_image_paths(self, mode, cities='*', frame_ids='*', seq_ids='*', data_type='*', file_format=".png", **kwargs):
+    def get_rgb_image_paths(self, mode, cities='*', frame_ids='*', seq_ids='*', data_type='*', file_format=".png",
+                            **kwargs):
         """
         Fetch all paths to the images of split <mode>.
         :param data_type: type of the dataset used e.g. 'leftImg8bit' or 'leftImg8bit_sequence' or the default '*'
@@ -81,7 +84,8 @@ class _PathsCityscapesSemantic(dataset_base.PathsHandlerSemantic):
             )
         )
 
-    def get_semantic_label_paths(self, mode, cities='*', frame_ids='*', seq_ids='*', data_type='*', file_format=".png", **kwargs):
+    def get_semantic_label_paths(self, mode, cities='*', frame_ids='*', seq_ids='*', data_type='*', file_format=".png",
+                                 **kwargs):
         """
         Fetch all paths to the labels of split <mode>.
         :param data_type: type of the dataset used e.g. 'leftImg8bit' or 'leftImg8bit_sequence' or the default '*'
@@ -176,17 +180,68 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
 
         self.cfg = cfg
 
-        self.colors = [[128, 64, 128], [244, 35, 232], [70, 70, 70], [102, 102, 156], [190, 153, 153], [153, 153, 153],
-                       [250, 170, 30], [220, 220, 0], [107, 142, 35], [152, 251, 152], [70, 130, 180], [220, 20, 60],
-                       [255, 0, 0], [0, 0, 142], [0, 0, 70], [0, 60, 100], [0, 80, 100], [0, 0, 230], [119, 11, 32]]
-        self.class_names = ["road","sidewalk","building","wall","fence","pole","traffic_light",
-                            "traffic_sign","vegetation","terrain","sky","person","rider","car","truck",
-                            "bus","train","motorcycle","bicycle"]  # only the valid class names
-        self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, -1]
-        self.valid_classes = [7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33]
-        self.n_classes = 19
-        self.label_colours = dict(zip(range(19), self.colors))
-        self.class_map = dict(zip(self.valid_classes, range(19)))
+        self.n_classes = self.cfg.dataset.num_classes
+
+        if self.n_classes == 19:
+            self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, -1]  # in cityscapes ids
+            self.valid_classes = [7, 8, 11, 12, 13, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32,
+                                  33]  # in cityscapes ids
+            self.colors = [[128, 64, 128],  # road
+                           [244, 35, 232],  # sidewalk
+                           [70, 70, 70],  # building
+                           [102, 102, 156],  # wall
+                           [190, 153, 153],  # fence
+                           [153, 153, 153],  # pole
+                           [250, 170, 30],  # traffic_light
+                           [220, 220, 0],  # traffic_sign
+                           [107, 142, 35],  # vegetation
+                           [152, 251, 152],  # terrain
+                           [70, 130, 180],  # sky
+                           [220, 20, 60],  # person
+                           [255, 0, 0],  # rider
+                           [0, 0, 142],  # car
+                           [0, 0, 70],  # truck
+                           [0, 60, 100],  # bus
+                           [0, 80, 100],  # train
+                           [0, 0, 230],  # motorcycle
+                           [119, 11, 32]]  # bicycle
+            self.class_names = ["road", "sidewalk", "building", "wall", "fence", "pole", "traffic_light",
+                                "traffic_sign", "vegetation", "terrain", "sky", "person", "rider", "car", "truck",
+                                "bus", "train", "motorcycle", "bicycle"]  # only the valid class names
+        elif self.n_classes == 16:
+            self.colors = [[128, 64, 128],  # road
+                           [244, 35, 232],  # sidewalk
+                           [70, 70, 70],  # building
+                           [102, 102, 156],  # wall
+                           [190, 153, 153],  # fence
+                           [153, 153, 153],  # pole
+                           [250, 170, 30],  # traffic_light
+                           [220, 220, 0],  # traffic_sign
+                           [107, 142, 35],  # vegetation
+                           [70, 130, 180],  # sky
+                           [220, 20, 60],  # person
+                           [255, 0, 0],  # rider
+                           [0, 0, 142],  # car
+                           [0, 60, 100],  # bus
+                           [0, 0, 230],  # motorcycle
+                           [119, 11, 32]]  # bicycle
+            self.class_names = ["road", "sidewalk", "building", "wall", "fence", "pole", "traffic_light",
+                                "traffic_sign", "vegetation", "sky", "person", "rider", "car",
+                                "bus", "motorcycle", "bicycle"]  # only the valid class names
+            self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 22, 27, 29, 30, 31,
+                                 -1]  # in cityscapes ids
+            self.valid_classes = [7, 8, 11, 12, 13, 17, 19, 20, 21, 23, 24, 25, 26, 28, 32, 33]  # in cityscapes ids
+        else:
+            raise ValueError('Cityscapes is not implemented for {self.n_classes} classes!')
+
+        self.label_colours = dict(zip(range(self.n_classes), self.colors))
+        self.class_map = dict(zip(self.valid_classes, range(self.n_classes)))
+
+        if cfg.dataset.debug:
+            print('Training on the following classes:\n name | cityscapes_id | training_id ')
+            for i in self.valid_classes:
+                print(f'{self.class_names[self.class_map[i]]:<15} | {str(i):<2} | {self.class_map[i]:<2}')
+
         self.ignore_index = IGNORE_INDEX_SEMANTIC
 
         self.img_size = cfg.dataset.feed_img_size
@@ -217,7 +272,8 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         index = self.ids[index]
 
         # Get all required training elements
-        gt_semantic = self.get_semantic(self.paths.paths_semantic[index]) if self.paths.paths_semantic is not None else None
+        gt_semantic = self.get_semantic(
+            self.paths.paths_semantic[index]) if self.paths.paths_semantic is not None else None
 
         rgb_imgs = {}
         for offset in self.rgb_frame_offsets:
@@ -229,7 +285,7 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
 
         if self.mode == 'train':
             rgb_imgs, gt_semantic = self.transform_train(rgb_imgs, gt_semantic)
-        elif self.mode == 'val' or self.mode =='test':
+        elif self.mode == 'val' or self.mode == 'test':
             rgb_imgs, gt_semantic = self.transform_val(rgb_imgs, gt_semantic)
         else:
             assert False, "The mode {} is not defined!".format(self.mode)
@@ -337,12 +393,12 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
 
         if tgt_path_file is None:
             return None
-
-        img = pil.open(tgt_path_file)
+        img = pil.open(tgt_path_file).convert('RGB')
         return img
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var): # fixme add augmentations to train and val rgb transforms
+    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean,
+                     var):  # fixme add augmentations to train and val rgb transforms
         """
         Transformations of the rgb image during training.
         :param tgt_size: target size of the images after resize operation
@@ -444,35 +500,3 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
             ids.append(city_id)
             names.append(self.class_names[city_id])
         return ids, names
-
-if __name__ == "__main__":
-    import wandb
-    from cfg.config_dataset import get_cfg_dataset_defaults
-    from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME
-    import sys
-
-    path = sys.argv[1]
-    cfg = get_cfg_dataset_defaults()
-    cfg.merge_from_file(path)
-    cfg.freeze()
-
-    CITY_dataset = CityscapesSemanticDataset("train", None, cfg)
-
-    img_h = cfg.dataset.feed_img_size[1]
-    img_w = cfg.dataset.feed_img_size[0]
-    batch_size = 1
-    ds = DataLoader(CITY_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
-
-    wandb.init(project='dataset-cityscapes-semantic')
-
-    for i, data in enumerate(ds):
-        img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB 0")
-        img_semantic = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0),
-                                   masks={'ground_truth': {
-                                       'mask_data': data['semantic'].squeeze(0).numpy(),
-                                       'class_labels': CITYSCAPES_ID_TO_NAME
-                                   }}, caption="Semantic")
-        wandb.log({'images': [img0, img_semantic]})
-        if i == 10:
-            break
-
