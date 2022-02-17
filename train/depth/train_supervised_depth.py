@@ -165,24 +165,22 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
 
         loss, loss_dict = self.compute_losses_source(data['depth_dense'], depth_pred, raw_sigmoid)
 
-        # log samples
-        if batch_idx % int(50 / torch.cuda.device_count()) == 0 and self.rank == 0:
-            depth_errors = '\n Errors avg over this images batch \n' + \
-                           self.depth_evaluator.depth_losses_as_string(data['depth_dense'], depth_pred)
-            rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
-            depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, caption_addon=depth_errors)
-            depth_gt_img = self.get_wandb_depth_image(data['depth_dense'][0], batch_idx, caption_addon=depth_errors)
-            normal_img = self.get_wandb_normal_image(depth_pred, 'Predicted')
-            normal_gt_img = self.get_wandb_normal_image(data['depth_dense'], 'GT')
-            wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, depth_gt_img, normal_img, normal_gt_img]})
-
         self.print_p_0(loss)
 
         self.optimizer.zero_grad()
         loss.backward()  # mean over individual gpu losses
         self.optimizer.step()
 
-        if self.rank == 0:
+        # log samples
+        if batch_idx % int(50 / torch.cuda.device_count()) == 0 and self.rank == 0:
+            depth_errors = '\n Errors avg over this images batch \n' + \
+                           self.depth_evaluator.depth_losses_as_string(data['depth_dense'], depth_pred)
+            rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
+            depth_img = self.get_wandb_depth_image(depth_pred[0].detach(), batch_idx, caption_addon=depth_errors)
+            depth_gt_img = self.get_wandb_depth_image(data['depth_dense'][0], batch_idx, caption_addon=depth_errors)
+            normal_img = self.get_wandb_normal_image(depth_pred.detach(), 'Predicted')
+            normal_gt_img = self.get_wandb_normal_image(data['depth_dense'], 'GT')
+            wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, depth_gt_img, normal_img, normal_gt_img]})
             wandb.log({f'epoch {self.epoch} steps': batch_idx})
             wandb.log({f"total loss epoch {self.epoch}": loss})
             wandb.log(loss_dict)
@@ -210,10 +208,14 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
                                                                 target=depth_target)
         loss_dict['silog_loss'] = silog_loss
 
-        # snr_loss = self.snr_weigth * self.snr(depth_prediction=depth_pred, depth_gt=depth_target)
-        # loss_dict['snr'] = snr_loss
-
-        return silog_loss, loss_dict  # silog_loss + snr_loss, loss_dict
+        # used for training with snr and without snr
+        if self.snr_weigth != 0:
+            print('snr')
+            snr_loss = self.snr_weigth * self.snr(depth_prediction=depth_pred, depth_gt=depth_target)
+            loss_dict['snr'] = snr_loss
+            return silog_loss + snr_loss, loss_dict
+        else:
+            return silog_loss, loss_dict
 
     def set_train(self):
         for m in self.model.networks.values():

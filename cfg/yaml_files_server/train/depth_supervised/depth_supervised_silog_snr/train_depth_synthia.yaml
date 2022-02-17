@@ -5,7 +5,7 @@ model:
 
     encoder:
         params:
-            nof_layers: 101
+            nof_layers: 50
             weights_init: 'pretrained'
 
     pose_net:
@@ -15,13 +15,14 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\depth_supervised\synthia.yaml',
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\depth_supervised\cityscapes_semantic.yaml']
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth_supervised/depth_supervised_silog_snr/synthia.yaml',
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth_supervised/depth_supervised_silog_snr/cityscapes_semantic.yaml']
     loss_weights : [1, 0]
 
 train:
     nof_epochs: 40
     batch_size: 1
+    nof_workers: 5
 
     optimizer:
         type: 'Adam'
@@ -33,13 +34,15 @@ train:
 
 val:
     batch_size: 1
-    nof_workers: 4
+    nof_workers: 5
 
 checkpoint:
     use_checkpoint: False
 
+
 device:
-    multiple_gpus: False
+    multiple_gpus: True
 
 io:
-    path_save: 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\cityscapes_depth'
+    path_save: '/work/dlclarge1/bauschb-data/models/depth_supervised_synthia'
+

@@ -1,6 +1,6 @@
 dataset:
     name: 'synthia_rand_cityscapes'
-    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\SYNTHIA_RAND_CITYSCAPES\RAND_CITYSCAPES'
+    path: '/work/dlclarge1/bauschb-data/data/Synthia/RAND_CITYSCAPES'
     feed_img_size: [ 640, 384 ]
     use_sparse_depth: False
     use_dense_depth: True
@@ -23,7 +23,7 @@ losses:
 
     loss_names_and_weights:
         - silog_depth: 1
-        - snr: 0.01
+        - snr: 0
 
 eval:
     train:

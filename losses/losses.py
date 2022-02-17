@@ -70,7 +70,7 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         diff_h = (points3d[:, :, 0:, :] - self.padder_h(points3d[:, :, 1:, :]))
         diff_w = (points3d[:, :, :, 0:] - self.padder_w(points3d[:, :, :, 1:]))
 
-        normals = torch.cross(diff_w, diff_h)
+        normals = torch.cross(diff_w, diff_h, dim=1)
         vector_norms = torch.linalg.vector_norm(normals, dim=1).unsqueeze(1)
         vector_norms[vector_norms == 0] = 1e-9
 

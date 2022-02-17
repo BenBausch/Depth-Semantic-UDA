@@ -55,8 +55,6 @@ class SemanticDecoderGUDA(nn.Module):
         self.convs["final_conv"] = Conv3x3(channels_of_last_4_scales_added, self.num_output_channels)
         self.ordered_layers.append("final_conv")
 
-        self.decoder = nn.ModuleList(list(self.convs.values()))
-
     def forward(self, input_features):
 
         outputs = []
