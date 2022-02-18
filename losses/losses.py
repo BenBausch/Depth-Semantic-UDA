@@ -71,8 +71,7 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         diff_w = (points3d[:, :, :, 0:] - self.padder_w(points3d[:, :, :, 1:]))
 
         normals = torch.cross(diff_w, diff_h, dim=1)
-        vector_norms = torch.linalg.vector_norm(normals, dim=1).unsqueeze(1)
-        vector_norms[vector_norms == 0] = 1e-9
+        vector_norms = torch.unsqueeze(torch.linalg.vector_norm(normals, dim=1), dim=1) + 1e-09
 
         return torch.divide(normals, vector_norms)
 
@@ -82,8 +81,8 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         :param normals_pred: normals calculated from predicted depth
         :param normals_gt: normals calculated from ground truth depth
         """
-        return torch.divide(torch.sum(1 - self.cos_sim(normals_pred, normals_gt), dim=(1, 2))
-                            , 2 * self.image_height * self.image_width)
+        return torch.mean(torch.divide(torch.sum(1 - self.cos_sim(normals_pred, normals_gt), dim=(1, 2))
+                            , 2 * self.image_height * self.image_width))
 
     def forward(self, depth_prediction, depth_gt):
         """

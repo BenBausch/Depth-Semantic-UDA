@@ -1,4 +1,4 @@
-experiment_name: 'synthia_depth'
+experiment_name: 'test_supervised_depth'
 
 model:
     type: 'monodepth2'

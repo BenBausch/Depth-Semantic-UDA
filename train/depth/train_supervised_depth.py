@@ -75,14 +75,14 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
 
         # Set up normalized camera model for source domain
         try:
-            self.camera_model = \
+            self.train_camera_model = \
                 camera_models.get_camera_model_from_file(self.cfg.datasets.configs[0].dataset.camera,
-                                                         os.path.join(cfg.datasets.configs[0].dataset.path,
+                                                         os.path.join(self.cfg.datasets.configs[0].dataset.path,
                                                                       "calib", "calib.txt"))
 
         except FileNotFoundError:
             raise Exception("No Camera calibration file found! Create Camera calibration file under: " +
-                            os.path.join(cfg.dataset.path, "calib", "calib.txt"))
+                            os.path.join(self.cfg.datasets.configs[0].dataset.path, "calib", "calib.txt"))
 
         # -------------------------Source Losses------------------------------------------------------
         self.silog_depth = get_loss('silog_depth',
@@ -92,7 +92,7 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         self.snr = get_loss('surface_normal_regularization',
                             ref_img_width=self.img_width,
                             ref_img_height=self.img_height,
-                            normalized_camera_model=self.camera_model,
+                            normalized_camera_model=self.train_camera_model,
                             device=self.device)
 
         # get weights for the total loss
@@ -100,6 +100,20 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         self.snr_weigth = l_n_w[0]['snr']
 
         # -------------------------Metrics-for-Validation---------------------------------------------
+        try:
+            self.validation_camera_model = \
+                camera_models.get_camera_model_from_file(self.cfg.datasets.configs[1].dataset.camera,
+                                                         os.path.join(self.cfg.datasets.configs[1].dataset.path,
+                                                                      "calib", "calib.txt"))
+        except FileNotFoundError:
+            raise Exception("No Camera calibration file found! Create Camera calibration file under: " +
+                            os.path.join(self.cfg.datasets.configs[1].dataset.path, "calib", "calib.txt"))
+
+        self.snr_validation = get_loss('surface_normal_regularization',
+                                       ref_img_width=self.cfg.datasets.configs[1].dataset.feed_img_size[0],
+                                       ref_img_height=self.cfg.datasets.configs[1].dataset.feed_img_size[1],
+                                       normalized_camera_model=self.validation_camera_model,
+                                       device=self.device)
 
         self.depth_evaluator = DepthEvaluator(use_garg_crop=self.use_garg_crop)
 
@@ -107,6 +121,7 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
 
         self.epoch = 0  # current epoch
         self.start_time = None  # time of starting training
+        torch.autograd.set_detect_anomaly(True)
 
     def run(self):
         # if lading from checkpoint set the epoch
@@ -148,7 +163,7 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         self.set_eval()
 
         # Main loop:
-        for batch_idx, data in enumerate(self.target_val_loader):
+        for batch_idx, data in enumerate(self.val_loader):
             if self.rank == 0:
                 print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
 
@@ -172,14 +187,14 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         self.optimizer.step()
 
         # log samples
-        if batch_idx % int(50 / torch.cuda.device_count()) == 0 and self.rank == 0:
+        if batch_idx % int(300 / torch.cuda.device_count()) == 0 and self.rank == 0:
             depth_errors = '\n Errors avg over this images batch \n' + \
                            self.depth_evaluator.depth_losses_as_string(data['depth_dense'], depth_pred)
             rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[0].detach(), batch_idx, caption_addon=depth_errors)
             depth_gt_img = self.get_wandb_depth_image(data['depth_dense'][0], batch_idx, caption_addon=depth_errors)
-            normal_img = self.get_wandb_normal_image(depth_pred.detach(), 'Predicted')
-            normal_gt_img = self.get_wandb_normal_image(data['depth_dense'], 'GT')
+            normal_img = self.get_wandb_normal_image(depth_pred.detach(), 0, 'Predicted')
+            normal_gt_img = self.get_wandb_normal_image(data['depth_dense'], 0, 'GT')
             wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, depth_gt_img, normal_img, normal_gt_img]})
             wandb.log({f'epoch {self.epoch} steps': batch_idx})
             wandb.log({f"total loss epoch {self.epoch}": loss})
@@ -189,13 +204,13 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         for key, val in data.items():
             data[key] = val.to(self.device)
         prediction = self.model.forward(data, dataset_id=1, predict_depth=True, train=False)[0]
-        depth = prediction['depth'][0][('depth', 0)].cpu().detach()
+        depth = prediction['depth'][0][('depth', 0)]
 
         if self.rank == 0:
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
                                   caption=f'Rgb {batch_idx}')
-            depth_img = self.get_wandb_depth_image(depth, batch_idx)
-            normal_img = self.get_wandb_normal_image(depth, 'Predicted')
+            depth_img = self.get_wandb_depth_image(depth.detach(), batch_idx)
+            normal_img = self.get_wandb_normal_image(depth.detach(), 1, 'Validation')
             wandb.log(
                 {f'images of epoch {self.epoch}': [rgb_img, depth_img, normal_img]})
 
@@ -210,7 +225,6 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
 
         # used for training with snr and without snr
         if self.snr_weigth != 0:
-            print('snr')
             snr_loss = self.snr_weigth * self.snr(depth_prediction=depth_pred, depth_gt=depth_target)
             loss_dict['snr'] = snr_loss
             return silog_loss + snr_loss, loss_dict
@@ -237,9 +251,13 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}' + caption_addon)
         return img
 
-    def get_wandb_normal_image(self, depth, caption_addon=''):
-        points3d = self.snr.img_to_pointcloud(depth)
-        normals = self.snr.get_normal_vectors(points3d)
+    def get_wandb_normal_image(self, depth, dataset_id, caption_addon=''):
+        if dataset_id == 0:
+            points3d = self.snr.img_to_pointcloud(depth)
+            normals = self.snr.get_normal_vectors(points3d)
+        elif dataset_id == 1:
+            points3d = self.snr_validation.img_to_pointcloud(depth)
+            normals = self.snr_validation.get_normal_vectors(points3d)
 
         normals_plot = normals * 255
 

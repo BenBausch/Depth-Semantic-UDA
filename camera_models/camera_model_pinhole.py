@@ -91,8 +91,8 @@ class PinholeCameraModel(camera_model.CameraModel):
         :param x3d, y3d, z3d: x,y,z coordinates of the incoming 3d world point(s)
         :return: u,v coordinates of the computed 2d image point(s)
         """
-        u2d = (x3d/z3d) * self.intrinsics["fx"] + self.intrinsics["cx"]
-        v2d = (y3d/z3d) * self.intrinsics["fy"] + self.intrinsics["cy"]
+        u2d = (x3d / z3d) * self.intrinsics["fx"] + self.intrinsics["cx"]
+        v2d = (y3d / z3d) * self.intrinsics["fy"] + self.intrinsics["cy"]
         return u2d, v2d
 
     def get_viewing_ray(self, u2d, v2d):

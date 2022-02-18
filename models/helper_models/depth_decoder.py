@@ -102,7 +102,6 @@ class DepthDecoderDADA(nn.Module):
         self.enc4_2.weight.data.normal_(0, 0.01)
         self.enc4_3.weight.data.normal_(0, 0.01)
         self.relu = nn.ReLU(inplace=True)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_features):
         x4_enc = self.enc4_1(input_features)
@@ -110,5 +109,5 @@ class DepthDecoderDADA(nn.Module):
         x4_enc = self.enc4_2(x4_enc)
         x4_enc = self.relu(x4_enc)
         x4_enc = self.enc4_3(x4_enc)
-        raw_sigmoid = self.sigmoid(torch.mean(x4_enc, dim=1, keepdim=True))
-        return x4_enc, raw_sigmoid
+        depth = torch.mean(x4_enc, dim=1, keepdim=True)
+        return x4_enc, depth

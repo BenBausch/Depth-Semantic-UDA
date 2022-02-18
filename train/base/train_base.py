@@ -3,8 +3,11 @@ Create an abstract class to force all subclasses to define the methods provided 
 """
 import os
 import abc
+import random
 from abc import ABC
 # Own classes
+import numpy.random
+
 from cfg.config_training import to_dictionary
 
 import models
@@ -50,7 +53,6 @@ class TrainBase(metaclass=abc.ABCMeta):
             #  setup Multi_device
             self.world_size = world_size
             torch.cuda.set_device(device_id)
-            torch.manual_seed(0)  # fixme add seed to cfg
 
             dist.init_process_group(
                 backend='nccl',
@@ -77,6 +79,18 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         if self.cfg.device.multiple_gpus:
             self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
+            torch.manual_seed(self.rank)
+            numpy.random.seed(self.rank)
+            random.seed(self.rank)
+
+
+        # printing some random parameters to make sure same parameters on all gpus
+        for name, param in self.model.networks['pose_decoder'].named_parameters():
+            if param.requires_grad:
+                print(name, param.data[0, 0, 0])
+                print(name, param.data[7, 0, 0])
+                print(name, param.data[2, 0, 0])
+            break
 
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
                                             self.model.params_to_train(self.cfg.train.optimizer.learning_rate),

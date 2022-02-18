@@ -144,6 +144,7 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
         """
         This is called encoder in DADA. Here I refer to it as depth decoder.
         """
+        self.upsamples = [nn.Upsample(scale_factor=s, mode='bilinear', align_corners=True) for s in [32, 16, 8, 4]]
         self.networks["depth_decoder"] = DepthDecoderDADA(self.networks["resnet_encoder"].num_ch_enc[-1]).double()
         self.parameters_to_train_10x_lr += list(self.networks["depth_decoder"].parameters())
 
@@ -188,13 +189,13 @@ class DeepLabV2DADA(SemanticDepthFromMotionModelBase):
         :return:
         """
         # The network actually outputs the inverse depth!
-        depth_features, raw_sigmoid = self.networks["depth_decoder"](features)
-        raw_sigmoid = self.dataset_interpolators[dataset_id](raw_sigmoid)  # upsample prediction to original size
-        _, depth_pred = disp_to_depth(disp=raw_sigmoid,
-                                      min_depth=self.dataset_min_max_depth[dataset_id][0],
-                                      max_depth=self.dataset_min_max_depth[dataset_id][1])
-
-        return [depth_features, (depth_pred, raw_sigmoid)]
+        depth_features, depth = self.networks["depth_decoder"](features)
+        depths = {}
+        sigmoids = {}
+        for i in [0, 1, 2, 3]:
+            depths[('depth', i)] = self.upsamples[i](depth)
+            sigmoids[('disp', i)] = None
+        return [depth_features, (depths, sigmoids)]
 
     def predict_poses(self, inputs, dataset_id):
         """

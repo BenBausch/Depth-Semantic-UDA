@@ -1,4 +1,4 @@
-experiment_name: 'synthia_depth'
+experiment_name: 'synthia_depth_silog'
 
 model:
     type: 'monodepth2'
