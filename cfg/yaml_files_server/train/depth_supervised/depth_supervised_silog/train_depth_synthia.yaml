@@ -44,5 +44,5 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/depth_supervised_synthia'
+    path_save: '/work/dlclarge1/bauschb-data/models/depth_supervised_synthia_silog'
 

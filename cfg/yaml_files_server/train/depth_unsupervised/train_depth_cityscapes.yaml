@@ -1,4 +1,4 @@
-experiment_name: 'synthia_depth_silog_snr'
+experiment_name: 'cityscapes_depth_unsupervised'
 
 model:
     type: 'monodepth2'
@@ -15,8 +15,8 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth_supervised/depth_supervised_silog_snr/synthia.yaml',
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth_supervised/depth_supervised_silog_snr/cityscapes_semantic.yaml']
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth_unsupervised/cityscapes_sequence.yaml', # target
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/depth_unsupervised/cityscapes_semantic.yaml'] # validation dataset
     loss_weights : [1, 0]
 
 train:
@@ -44,5 +44,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/depth_supervised_synthia_silog_snr'
-
+    path_save: '/work/dlclarge1/bauschb-data/models/depth_unsupervised_cityscapes'
