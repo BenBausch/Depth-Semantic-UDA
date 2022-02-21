@@ -1,4 +1,4 @@
-experiment_name: 'depth_semantic_test'
+experiment_name: 'semantic_cityscapes'
 
 model:
     type: 'guda'
@@ -15,8 +15,8 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\semantic_and_depth\synthia.yaml',
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\semantic_and_depth\cityscapes_semantic.yaml']
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic/train_on_cityscapes/cityscapes_semantic.yaml',
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic/train_on_cityscapes/cityscapes_semantic.yaml']
     loss_weights : [1, 0]
 
 train:
@@ -39,7 +39,7 @@ checkpoint:
     use_checkpoint: False
 
 device:
-    multiple_gpus: False
+    multiple_gpus: True
 
 io:
-    path_save: 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\cityscapes_depth'
+    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_cityscapes'

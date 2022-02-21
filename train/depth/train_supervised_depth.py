@@ -196,6 +196,7 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
             normal_img = self.get_wandb_normal_image(depth_pred.detach(), 0, 'Predicted')
             normal_gt_img = self.get_wandb_normal_image(data['depth_dense'], 0, 'GT')
             wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, depth_gt_img, normal_img, normal_gt_img]})
+        if self.rank == 0:
             wandb.log({f'epoch {self.epoch} steps': batch_idx})
             wandb.log({f"total loss epoch {self.epoch}": loss})
             wandb.log(loss_dict)

@@ -174,6 +174,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.target_loss_weight = self.cfg.datasets.loss_weights[1]
 
         # -------------------------Metrics-for-Validation---------------------------------------------
+        assert self.num_classes == 16  # if training on more or less classes please change eval setting for miou
         self.eval_13_classes = [True, True, True, False, False, False, True, True, True, True, True, True, True, True,
                                 True, True]
 
