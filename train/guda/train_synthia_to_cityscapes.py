@@ -367,7 +367,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         loss_dict[f'silog_loss epoch {self.epoch}'] = silog_loss
 
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)
-        bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt)
+        bce_loss = self.source_bce_weigth * self.source_bce(prediction=soft_semantic_pred, target=semantic_gt, epoch=self.epoch)
         loss_dict[f'bce epoch {self.epoch}'] = bce_loss
 
         #snr_loss = self.source_snr_weigth * self.source_snr(depth_prediction=depth_pred, depth_gt=depth_target)

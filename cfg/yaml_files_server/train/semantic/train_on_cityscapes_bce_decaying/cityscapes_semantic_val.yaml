@@ -1,6 +1,6 @@
 dataset:
     name: 'cityscapes_semantic'
-    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit'
+    path: '/work/dlclarge1/bauschb-data/data/Cityscapes/leftImg8bit'
     feed_img_size: [ 512, 256 ]
     use_sparse_depth: False
     use_dense_depth: False
@@ -14,17 +14,6 @@ dataset:
     max_depth : 655.35
     rgb_frame_offsets: [0]
     sequence_dataset: False
-
-losses:
-    loss_names_and_parameters:
-        - bce:
-            'r': 0.3
-            'ignore_index': 250
-            'start_decay_epoch': 2
-            'end_decay_epoch': 7
-
-    loss_names_and_weights:
-        - bce: 0.001
 
 eval:
     train:

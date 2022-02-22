@@ -50,16 +50,27 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             self.print_p_0('Training supervised on source dataset using semantic annotations!')
 
         # -------------------------Source Losses------------------------------------------------------
+        try:
+            start_decay_epoch = l_n_p[0]['bce']['start_decay_epoch']
+            end_decay_epoch = l_n_p[0]['bce']['end_decay_epoch']
+            self.print_p_0('Using decaying ratio in BCE Loss')
+        except KeyError:
+            start_decay_epoch = None
+            end_decay_epoch = None
+            self.print_p_0('Using constant ratio in BCE Loss')
+
         self.bce = get_loss('bootstrapped_cross_entropy',
                             img_height=self.img_height,
                             img_width=self.img_width,
                             r=l_n_p[0]['bce']['r'],
-                            ignore_index=IGNORE_INDEX_SEMANTIC)
+                            ignore_index=IGNORE_INDEX_SEMANTIC,
+                            start_decay_epoch=start_decay_epoch,
+                            end_decay_epoch=end_decay_epoch)
 
         self.bce_weigth = l_n_w[0]['bce']
 
         # -------------------------Metrics-for-Validation---------------------------------------------
-        assert self.num_classes == 16 # if training on more or less classes please change eval setting for miou
+        assert self.num_classes == 16  # if training on more or less classes please change eval setting for miou
 
         self.eval_13_classes = [True, True, True, False, False, False, True, True, True, True, True, True, True, True,
                                 True, True]
@@ -180,7 +191,7 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
         soft_pred_16 = F.softmax(sem_pred_16, dim=1)
         self.miou_16.update(mask_pred=soft_pred_16, mask_gt=data['semantic'])
 
-        if self.rank == 0:
+        if self.rank == 0 and batch_idx % 15 == 0:
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
                                   caption=f'Rgb {batch_idx}')
             semantic_img_13 = self.get_wandb_semantic_image(soft_pred_13[0], True, 1,
@@ -196,7 +207,7 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
         loss_dict = {}
 
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)
-        bce_loss = self.bce_weigth * self.bce(prediction=soft_semantic_pred, target=semantic_gt)
+        bce_loss = self.bce_weigth * self.bce(prediction=soft_semantic_pred, target=semantic_gt, epoch=self.epoch)
         loss_dict['bce'] = bce_loss
 
         return bce_loss, loss_dict
@@ -223,4 +234,3 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             semantic = semantic.unsqueeze(0)
         img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
         return img
-

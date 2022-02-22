@@ -11,30 +11,68 @@ class BootstrappedCrossEntropy(nn.Module):
         Calculates the cross entropy of the k pixels with the lowest confident prediction.
     """
 
-    def __init__(self, img_height, img_width, r=0.3, ignore_index=-100):
+    def __init__(self, img_height, img_width, r=0.3, ignore_index=-100, start_decay_epoch=None, end_decay_epoch=None):
         """
         :param img_height: height of the input image to the network
         :param img_width: width of the input image to the network
         :param r: percentage of pixels to consider for loss (0.3 ==> lowest 30% confident predictions)
-        :param ignore_index: class label of pixels which should be ignored in the loss
+        :param ignore_index: class label of pixels which should be ignored in the los
+        :param start_decay_epoch: last epoch with ratio = 1.0
+        :param end_decay_epoch: first epoch with ratio = r
+        :param
         """
         super(BootstrappedCrossEntropy, self).__init__()
-        self.ratio = r
-        self.criterion = nn.CrossEntropyLoss(reduction='none', ignore_index=ignore_index)
-        self.k = int(r * img_height * img_width)
 
-    def forward(self, prediction, target):
+        self.img_w = img_width
+        self.img_h = img_height
+
+        self.criterion = nn.CrossEntropyLoss(reduction='none', ignore_index=ignore_index)
+        self.start_decay_epoch = start_decay_epoch
+        self.end_decay_epoch = end_decay_epoch
+
+        if self.start_decay_epoch is None and self.end_decay_epoch is None:
+            # no decay always keep the same ratio of r
+            self.ratio = r
+            self.k = int(r * img_height * img_width)
+
+        elif self.start_decay_epoch is not None and self.end_decay_epoch is not None:
+            # decay ratio from start_decay_epoch with ratio = 1.0 to end_decay_ratio with ratio = r
+            assert self.start_decay_epoch < self.end_decay_epoch
+            self.ratio = None  # will be set in forward
+            self.k = None  # will be set in forward
+            diff_epochs = (end_decay_epoch - start_decay_epoch)
+            ratio_step = (1.0 - r) / diff_epochs
+            self.ratio_list = [1.0 - (i * ratio_step) for i in range(diff_epochs + 1)]
+            self.k_list = [int(rat * img_height * img_width) for rat in self.ratio_list]
+
+        else:
+            raise ValueError('Both start_decay_epoch and end_decay_eopch have to be set, not only one of them!')
+
+    def forward(self, prediction, target, epoch=None):
         """
         Calculates the bootstrapped cross entropy of the lowest k predictions.
         :param prediction: Tensor of shape [minibatch, n_classes, height, width]
         :param target: Tensor of shape [minibatch, height, width]
+        :param epoch: current epoch, only necessary if using decaying ratio
         :return:
         """
-        # print(f'Prediction shape: {prediction.shape}')
-        # print(f'Target shape: {target.shape}')
-
-        # todo: implement cold start where k is all the pixels down to k = ratio * height * width
-        # k = int(self.ratio * prediction.shape[2] * prediction.shape[3])
+        if self.start_decay_epoch is not None and self.end_decay_epoch is not None:
+            # when using decaying ratio, we need to pass an epoch
+            assert epoch is not None, \
+                'Bootstrapped Cross Entropy is in decay mode, please pass current epoch to forward call'
+            if epoch <= self.start_decay_epoch:
+                # epoch befor decay start
+                self.ratio = self.ratio_list[0]
+                self.k = self.k_list[0]
+            elif epoch < self.end_decay_epoch:
+                # epoch with decaying ratio
+                self.ratio = self.ratio_list[epoch - self.start_decay_epoch]
+                self.k = self.k_list[epoch - self.start_decay_epoch]
+            else:
+                # decay already reached goal
+                self.ratio = self.ratio_list[-1]
+                self.k = self.k_list[-1]
+        print(f'Bce ratio: {self.ratio}')
 
         #  calculate the loss
         loss = self.criterion(prediction, target).view(-1)
@@ -50,6 +88,7 @@ class SurfaceNormalRegularizationLoss(nn.Module):
     Surface normal regularization loss as defined in the paper
     "Geometric Unsupervised Domain Adaptation for Semantic Segmentation": https://arxiv.org/pdf/2103.16694.pdf
     """
+
     def __init__(self, ref_img_width, ref_img_height, normalized_camera_model, device):
         super(SurfaceNormalRegularizationLoss, self).__init__()
         self.device = device
@@ -82,7 +121,7 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         :param normals_gt: normals calculated from ground truth depth
         """
         return torch.mean(torch.divide(torch.sum(1 - self.cos_sim(normals_pred, normals_gt), dim=(1, 2))
-                            , 2 * self.image_height * self.image_width))
+                                       , 2 * self.image_height * self.image_width))
 
     def forward(self, depth_prediction, depth_gt):
         """
@@ -244,8 +283,10 @@ class ReconstructionLoss(nn.Module):
 
     # ToDo: Exclude "black" pixels as in selfsup and maybe use a mask for excluding pixels with depth supervision
     #  The problem with black pixels might get solved by an appropriate interpolation method!! (Comp. MD2 with selfsup)
-    def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85, mask=None):
-        assert rgb_frame_offsets[0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
+    def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
+                mask=None):
+        assert rgb_frame_offsets[
+                   0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
 
         total_loss = 0.0
 
@@ -265,14 +306,15 @@ class ReconstructionLoss(nn.Module):
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
 
                 # Compute pixelwise reconstruction loss by combining photom. loss and ssim loss
-                reconstruction_losses_s.append((1-alpha)*rec_l1_loss + alpha*rec_ssim_loss if use_ssim else rec_l1_loss)
+                reconstruction_losses_s.append(
+                    (1 - alpha) * rec_l1_loss + alpha * rec_ssim_loss if use_ssim else rec_l1_loss)
 
                 # ToDo: Actually, we shouldn't only take the minimum but exclude those pixels where the identity loss is smaller!!
                 #  CHANGE THIS! Md2 claims that this is right but I don't think so... Implement both and compare!
                 if use_automasking:
                     id_l1_loss = self.l1_loss_pixelwise(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                     id_ssim_loss = self.ssim(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
-                    identity_loss = (1-alpha)*id_l1_loss + alpha*id_ssim_loss if use_ssim else id_l1_loss
+                    identity_loss = (1 - alpha) * id_l1_loss + alpha * id_ssim_loss if use_ssim else id_l1_loss
                     identity_loss += torch.randn(identity_loss.shape, device=identity_loss.device) * 0.00001
                     identity_losses_s.append(identity_loss)
 

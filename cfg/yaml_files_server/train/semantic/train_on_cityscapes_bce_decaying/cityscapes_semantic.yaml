@@ -1,6 +1,6 @@
 dataset:
     name: 'cityscapes_semantic'
-    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit'
+    path: '/work/dlclarge1/bauschb-data/data/Cityscapes/leftImg8bit'
     feed_img_size: [ 512, 256 ]
     use_sparse_depth: False
     use_dense_depth: False
@@ -8,7 +8,7 @@ dataset:
     use_semantic_gt: True
     split: None
     camera: 'pinhole'
-    shuffle: False
+    shuffle: True
     num_classes: 16
     min_depth : 0.01
     max_depth : 655.35

@@ -10,7 +10,7 @@ import numpy as np
 import math
 
 
-class TestSurfaceNormalRegularizationLoss(unittest.TestCase):
+class TestSurfaceNormalRegularizationLoss(unittest.TestCase): #todo: update test
 
     def test_cosine_similarity(self):
         use_less_camera = PinholeCameraModel(2, 2, 1, 1, 1, 1)  # just needed for initializing the loss, not used in
@@ -28,7 +28,6 @@ class TestSurfaceNormalRegularizationLoss(unittest.TestCase):
         ).transpose(1, 3)
 
         self.assertTrue(torch.equal(loss.cosine_similarity_guda(normals_pred, normals_gt), torch.tensor([0.325])))
-
 
     def test_get_normal_vectors(self):
         use_less_camera = PinholeCameraModel(4, 3, 1, 1, 1, 1)  # just needed for initializing the loss, not used in
@@ -56,6 +55,40 @@ class TestSurfaceNormalRegularizationLoss(unittest.TestCase):
 
 
 class TestBootstrappedCrossEntropy(unittest.TestCase):
+
+    def test_decaying_ratio(self):
+        bce = BootstrappedCrossEntropy(img_height=10, img_width=10, r=0.3, start_decay_epoch=2, end_decay_epoch=7)
+        ratios = [1.0, 1.0, 1.0, 0.86, 0.72, 0.58, 0.44, 0.30, 0.30, 0.30]
+        ks = [100, 100, 100, 86, 72, 58, 44, 30, 30, 30]
+
+        pred = torch.DoubleTensor([[[[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]]]]).transpose(1, 3)
+
+        gt = torch.LongTensor([[[1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]]])
+
+        for epoch in range(10):
+            bce(pred, gt, epoch)
+            print(bce.ratio)
+            assert round(bce.ratio, 2) == ratios[epoch]
+            assert round(bce.k, 2) == ks[epoch]
+
 
     def test_normal_case(self):
         prediction = torch.tensor([[[0.3, 0.7, 0.0], [0.8, 0.2, 0.0]],

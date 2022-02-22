@@ -286,7 +286,7 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         loss_dict['silog_loss'] = silog_loss
 
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)
-        bce_loss = self.bce_weigth * self.bce(prediction=soft_semantic_pred, target=semantic_gt)
+        bce_loss = self.bce_weigth * self.bce(prediction=soft_semantic_pred, target=semantic_gt, epoch=self.epoch)
         loss_dict['bce'] = bce_loss
 
         snr_loss = self.snr_weigth * self.snr(depth_prediction=depth_pred, depth_gt=depth_target)
