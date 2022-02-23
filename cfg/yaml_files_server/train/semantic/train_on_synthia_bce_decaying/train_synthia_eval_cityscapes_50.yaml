@@ -1,11 +1,11 @@
-experiment_name: 'semantic_cityscapes'
+experiment_name: 'semantic_synthia'
 
 model:
     type: 'guda'
 
     encoder:
         params:
-            nof_layers: 101
+            nof_layers: 50
             weights_init: 'pretrained'
 
     pose_net:
@@ -15,8 +15,8 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic/train_on_cityscapes/cityscapes_semantic.yaml',
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic/train_on_cityscapes/cityscapes_semantic_val.yaml']
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic/train_on_synthia_bce_decaying/synthia.yaml',
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic/train_on_synthia_bce_decaying/cityscapes_semantic.yaml']
     loss_weights : [1, 0]
 
 train:
@@ -29,7 +29,7 @@ train:
     scheduler:
         type: 'MultiStepLR'
         gamma: 0.5
-        milestones: [50] # half the learning rate for the last 10 epochs
+        milestones: [30] # half the learning rate for the last 10 epochs
 
 val:
     batch_size: 1
@@ -42,4 +42,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_cityscapes_101'
+    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_synthia_bce_decaying'

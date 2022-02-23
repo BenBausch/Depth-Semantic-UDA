@@ -29,7 +29,7 @@ train:
     scheduler:
         type: 'MultiStepLR'
         gamma: 0.5
-        milestones: [30] # half the learning rate for the last 10 epochs
+        milestones: [50] # half the learning rate for the last 10 epochs
 
 val:
     batch_size: 1

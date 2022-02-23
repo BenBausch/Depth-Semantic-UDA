@@ -139,13 +139,13 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             bar_data = [[label, val] for (label, val) in zip(names, iou_13)]
             table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
             wandb.log({f'IOU per 13 Class epoch {self.epoch}': wandb.plot.bar(table, "Classes", "IOU",
-                                                                              title="IOU per 13 Class"),
+                                                                              title=f"IOU per 13 Class {self.epoch}"),
                        f'Mean IOU per 13 Classes': mean_iou_13})
             names = [self.c_id_to_name[i] for i in self.c_id_to_name.keys()]
             bar_data = [[label, val] for (label, val) in zip(names, iou_16)]
             table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
             wandb.log(
-                {f'IOU per 16 Class {self.epoch}': wandb.plot.bar(table, "Classes", "IOU", title="IOU per 16 Class"),
+                {f'IOU per 16 Class {self.epoch}': wandb.plot.bar(table, "Classes", "IOU", title=f"IOU per 16 Class {self.epoch}"),
                  f'Mean IOU per 16 Classes': mean_iou_16})
 
     def training_step(self, data, batch_idx):
@@ -166,7 +166,7 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
         self.optimizer.step()
 
         if self.rank == 0:
-            if batch_idx % int(50 / torch.cuda.device_count()) == 0:
+            if batch_idx % int(300 / torch.cuda.device_count()) == 0:
                 rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
                 sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0], True, 1, f'Semantic Map')
                 semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
@@ -194,9 +194,9 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
         if self.rank == 0 and batch_idx % 15 == 0:
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
                                   caption=f'Rgb {batch_idx}')
-            semantic_img_13 = self.get_wandb_semantic_image(soft_pred_13[0], True, 1,
-                                                            f'Semantic Map image with 13 classes')
-            semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
+            semantic_img_13 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
+                                                            f'Semantic Map image with 16 classes')
+            semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 2,
                                                             f'Semantic Map image with 16 classes')
             semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                         f'Semantic GT with id {batch_idx}')

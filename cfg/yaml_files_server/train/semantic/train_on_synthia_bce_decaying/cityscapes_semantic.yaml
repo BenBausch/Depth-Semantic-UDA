@@ -8,21 +8,12 @@ dataset:
     use_semantic_gt: True
     split: None
     camera: 'pinhole'
-    shuffle: True
+    shuffle: False
     num_classes: 16
     min_depth : 0.01
     max_depth : 655.35
     rgb_frame_offsets: [0]
     sequence_dataset: False
-
-losses:
-    loss_names_and_parameters:
-        - bce:
-            'r': 0.3
-            'ignore_index': 250
-
-    loss_names_and_weights:
-        - bce: 1
 
 eval:
     train:
