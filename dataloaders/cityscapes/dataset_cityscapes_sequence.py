@@ -243,7 +243,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
 
         if tgt_path_file is None:
             return None
-
+        print(tgt_path_file)
         img = pil.open(tgt_path_file)
         return img
 

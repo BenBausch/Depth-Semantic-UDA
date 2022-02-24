@@ -11,7 +11,6 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
 
-
 def evaluate_model(cfg):
     dataset = dataloaders.get_dataset(cfg.dataset.name,
                                       'train',
@@ -42,12 +41,18 @@ def evaluate_model(cfg):
         print(names_count[:-2])
 
     names_count = ''
+    inv_names_count = ''
     for idx, cls_id in enumerate(valid_classes):
         names_count += valid_names[idx] + ': '
+        inv_names_count += valid_names[idx] + ': '
         class_pixel_count[idx] = class_pixel_count[idx] / len(loader)
         names_count += str(class_pixel_count[idx]) + ', '
+        inv_names_count += str(1/class_pixel_count[idx]) + ', '
     print('Percent of pixels belonging to each individual class across whole dataset')
     print(names_count[:-2])
+    print(inv_names_count[:-2])
+    print(class_pixel_count)
+    print(1/class_pixel_count)
 
 
 if __name__ == "__main__":

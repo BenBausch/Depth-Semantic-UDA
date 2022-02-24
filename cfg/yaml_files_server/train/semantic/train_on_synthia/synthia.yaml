@@ -20,9 +20,10 @@ losses:
         - bce:
             'r': 0.3
             'ignore_index': 250
+            'weighted': True
 
     loss_names_and_weights:
-        - bce: 1
+        - bce: 0.001
 
 eval:
     train:

@@ -10,7 +10,7 @@ import numpy as np
 import math
 
 
-class TestSurfaceNormalRegularizationLoss(unittest.TestCase): #todo: update test
+class TestSurfaceNormalRegularizationLoss(unittest.TestCase):  # todo: update test
 
     def test_cosine_similarity(self):
         use_less_camera = PinholeCameraModel(2, 2, 1, 1, 1, 1)  # just needed for initializing the loss, not used in
@@ -34,16 +34,16 @@ class TestSurfaceNormalRegularizationLoss(unittest.TestCase): #todo: update test
         # this test
         loss = SurfaceNormalRegularizationLoss(use_less_camera, 'cpu')
         points3d = torch.tensor([[[[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]],
-                                       [[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0]],
-                                       [[0.0, 0.0, 2.0], [0.0, 2.0, 1.0], [0.0, 2.0, 0.0], [1.0, 2.0, 0.0]]]]
-                                     ).transpose(1, 3)
+                                  [[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0]],
+                                  [[0.0, 0.0, 2.0], [0.0, 2.0, 1.0], [0.0, 2.0, 0.0], [1.0, 2.0, 0.0]]]]
+                                ).transpose(1, 3)
 
         normals_gt = torch.tensor(
             [[[[0.0, 0.0, 0.0], [-0.707107, -0.707107, 0.0], [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0]],
               [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [-0.707107, 0.0, 0.707107], [1.0, 0.0, 0.0]],
               [[-1.0, 0.0, 0.0], [-1.0, 0.0, 0.0], [0.0, -0.447214, -0.894427],
                [0, 0.707107, 0.707107]]]]
-            ).transpose(1, 3)
+        ).transpose(1, 3)
 
         normals = loss.get_normal_vectors(points3d)
 
@@ -56,39 +56,53 @@ class TestSurfaceNormalRegularizationLoss(unittest.TestCase): #todo: update test
 
 class TestBootstrappedCrossEntropy(unittest.TestCase):
 
+    def test_weighting_of_losses(self):
+        weights = torch.DoubleTensor([2000.0, 1.0])
+        bce = BootstrappedCrossEntropy(img_height=1, img_width=10, r=0.3, weights=weights)
+        pred = torch.DoubleTensor([[[[0, 1], [0.9, 0.1], [0.2, 0.8], [0.3, 0.7], [0.4, 0.6], [0.5, 0.5], [0.6, 0.4],
+                                     [0.7, 0.3], [0.8, 0.2], [0.1, 0.9]]]]).transpose(1, 3).transpose(2, 3)
+        gt = torch.LongTensor([[[1, 1, 1, 1, 1, 1, 1, 0, 0, 0]]])
+        torch.set_printoptions(precision=9)
+        # this weigths are used 1 for class 1, 2000 for class 0
+        ce_loss = torch.tensor([[[3.132616880e-01, 1.171100666e+00, 4.374879500e-01, 5.130152520e-01,
+                                  5.981388690e-01, 6.931471810e-01, 7.981388690e-01, 1.026030504e+03,
+                                  8.749759000e+02, 2.342201332e+03]]], dtype=torch.float64)
+        loss = torch.sum(ce_loss[:, 0, 7:]) / 3  # 1414.402578667
+        assert round(bce(pred, gt).item(), 5) == round(loss.item(), 5)
+
     def test_decaying_ratio(self):
         bce = BootstrappedCrossEntropy(img_height=10, img_width=10, r=0.3, start_decay_epoch=2, end_decay_epoch=7)
         ratios = [1.0, 1.0, 1.0, 0.86, 0.72, 0.58, 0.44, 0.30, 0.30, 0.30]
         ks = [100, 100, 100, 86, 72, 58, 44, 30, 30, 30]
 
         pred = torch.DoubleTensor([[[[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
-                             [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]]]]).transpose(1, 3)
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]],
+                                    [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0],
+                                     [1, 0]]]]).transpose(1, 3)
 
         gt = torch.LongTensor([[[1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-                            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]]])
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]]])
 
         for epoch in range(10):
             bce(pred, gt, epoch)
             print(bce.ratio)
             assert round(bce.ratio, 2) == ratios[epoch]
             assert round(bce.k, 2) == ks[epoch]
-
 
     def test_normal_case(self):
         prediction = torch.tensor([[[0.3, 0.7, 0.0], [0.8, 0.2, 0.0]],
@@ -154,9 +168,9 @@ class TestL1Loss(unittest.TestCase):
         self.mask = depth > 0
 
     def test_masking(self):
-        #print("Unmasked:", self.diff_tensor)
-        #print("Mask:", self.mask)
-        #print("Masked:", self.diff_tensor[self.mask])
+        # print("Unmasked:", self.diff_tensor)
+        # print("Mask:", self.mask)
+        # print("Masked:", self.diff_tensor[self.mask])
 
         mean_unmasked = self.diff_tensor.mean()
         mean_masked = self.diff_tensor[self.mask].mean()
@@ -164,11 +178,11 @@ class TestL1Loss(unittest.TestCase):
         self.assertAlmostEqual(mean_unmasked, 3.0)
         self.assertAlmostEqual(mean_masked, 4.5)
 
-        #print("Expected unmasked mean:", 3.0)
-        #print("Actual unmasked mean:", mean_unmasked)
+        # print("Expected unmasked mean:", 3.0)
+        # print("Actual unmasked mean:", mean_unmasked)
 
-        #print("Expected masked mean:", 4.5)
-        #print("Actual masked mean:", mean_masked)
+        # print("Expected masked mean:", 4.5)
+        # print("Actual masked mean:", mean_masked)
 
 
 if "__main__" == __name__:

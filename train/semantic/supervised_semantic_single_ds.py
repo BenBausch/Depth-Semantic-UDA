@@ -18,6 +18,7 @@ import wandb
 import torch.nn.functional as F
 from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME_19, CITYSCAPES_ID_TO_NAME_16
 from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
+from utils import get_cross_entropy_weights
 
 
 class SupervisedSemanticTrainer(TrainSingleDatasetBase):
@@ -59,13 +60,22 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             end_decay_epoch = None
             self.print_p_0('Using constant ratio in BCE Loss')
 
+        if l_n_p[0]['bce']['weighted']:
+            weights_for_bce = get_cross_entropy_weights(num_classes=self.num_classes,
+                                                        dataset_name=self.cfg.datasets.configs[0].dataset.name)
+            weights_for_bce = torch.DoubleTensor(weights_for_bce).to(torch.device(self.device))
+            print(weights_for_bce)
+        else:
+            weights_for_bce = None
+
         self.bce = get_loss('bootstrapped_cross_entropy',
                             img_height=self.img_height,
                             img_width=self.img_width,
                             r=l_n_p[0]['bce']['r'],
                             ignore_index=IGNORE_INDEX_SEMANTIC,
                             start_decay_epoch=start_decay_epoch,
-                            end_decay_epoch=end_decay_epoch)
+                            end_decay_epoch=end_decay_epoch,
+                            weights=weights_for_bce)
 
         self.bce_weigth = l_n_w[0]['bce']
 
@@ -145,7 +155,8 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             bar_data = [[label, val] for (label, val) in zip(names, iou_16)]
             table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
             wandb.log(
-                {f'IOU per 16 Class {self.epoch}': wandb.plot.bar(table, "Classes", "IOU", title=f"IOU per 16 Class {self.epoch}"),
+                {f'IOU per 16 Class {self.epoch}': wandb.plot.bar(table, "Classes", "IOU",
+                                                                  title=f"IOU per 16 Class {self.epoch}"),
                  f'Mean IOU per 16 Classes': mean_iou_16})
 
     def training_step(self, data, batch_idx):

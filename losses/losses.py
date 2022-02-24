@@ -11,7 +11,8 @@ class BootstrappedCrossEntropy(nn.Module):
         Calculates the cross entropy of the k pixels with the lowest confident prediction.
     """
 
-    def __init__(self, img_height, img_width, r=0.3, ignore_index=-100, start_decay_epoch=None, end_decay_epoch=None):
+    def __init__(self, img_height, img_width, r=0.3, ignore_index=-100, start_decay_epoch=None, end_decay_epoch=None,
+                 weights=None):
         """
         :param img_height: height of the input image to the network
         :param img_width: width of the input image to the network
@@ -19,6 +20,7 @@ class BootstrappedCrossEntropy(nn.Module):
         :param ignore_index: class label of pixels which should be ignored in the los
         :param start_decay_epoch: last epoch with ratio = 1.0
         :param end_decay_epoch: first epoch with ratio = r
+        :param weights: tensor of length num_classes with one class weight for each class.
         :param
         """
         super(BootstrappedCrossEntropy, self).__init__()
@@ -26,7 +28,8 @@ class BootstrappedCrossEntropy(nn.Module):
         self.img_w = img_width
         self.img_h = img_height
 
-        self.criterion = nn.CrossEntropyLoss(reduction='none', ignore_index=ignore_index)
+        self.weights = weights
+        self.criterion = nn.CrossEntropyLoss(reduction='none', weight=self.weights, ignore_index=ignore_index)
         self.start_decay_epoch = start_decay_epoch
         self.end_decay_epoch = end_decay_epoch
 
@@ -72,7 +75,6 @@ class BootstrappedCrossEntropy(nn.Module):
                 # decay already reached goal
                 self.ratio = self.ratio_list[-1]
                 self.k = self.k_list[-1]
-        print(f'Bce ratio: {self.ratio}')
 
         #  calculate the loss
         loss = self.criterion(prediction, target).view(-1)
