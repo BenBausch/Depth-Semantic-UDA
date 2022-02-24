@@ -42,4 +42,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_cityscapes_101_bce_decaying'
+    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_cityscapes_101_bce_decaying_weighted'

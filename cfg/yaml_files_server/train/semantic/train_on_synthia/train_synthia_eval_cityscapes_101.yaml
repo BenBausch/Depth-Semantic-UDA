@@ -42,4 +42,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_synthia_101'
+    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_synthia_101_weighted'
