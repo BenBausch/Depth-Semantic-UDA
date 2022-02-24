@@ -2,6 +2,7 @@ import numpy
 import numpy as np
 import torch
 import PIL.Image as pil
+import torchvision.transforms
 from torchvision import transforms as tf
 import cv2
 
@@ -122,6 +123,18 @@ class CityscapesEncodeSegmentation(object):
     def __call__(self, sample):
         sample = self.encode_segmap(sample)
         return torch.LongTensor(sample)
+
+
+class Crop_Car_Away(object):
+    def __init__(self, img_height, img_width):
+        self.height, self.width = int(img_height * 0.85), int(img_width * 0.85)
+
+    def __call__(self, sample):
+        return torchvision.transforms.functional.crop(img=sample,
+                                                      top=0,
+                                                      left=0,
+                                                      height=self.height,
+                                                      width=self.width)
 
 
 # -------------------------------Synthia Rand Cityscapes----------------------------------

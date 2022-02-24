@@ -261,6 +261,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         """
         return transforms.Compose(
             [
+                tf_prep.Crop_Car_Away(img_height=1024, img_width=2048),
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
@@ -280,6 +281,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         """
         return transforms.Compose(
             [
+                tf_prep.Crop_Car_Away(img_height=1024, img_width=2048),
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
