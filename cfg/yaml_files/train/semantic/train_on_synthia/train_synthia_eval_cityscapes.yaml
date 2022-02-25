@@ -5,7 +5,7 @@ model:
 
     encoder:
         params:
-            nof_layers: 50
+            nof_layers: 101
             weights_init: 'pretrained'
 
     pose_net:
