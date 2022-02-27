@@ -20,7 +20,7 @@ import wandb
 
 
 def evaluate_model(cfg):
-    #wandb.init(project=f"{cfg.experiment_name}_eval", config=to_dictionary(cfg))
+    wandb.init(project=f"{cfg.experiment_name}_eval", config=to_dictionary(cfg))
     print(cfg.model.type)
     model = models.get_model(cfg.model.type, cfg)
     model = model.to('cuda:0')
@@ -109,12 +109,12 @@ def evaluate_model(cfg):
          f'Mean IOU per 16 Classes': mean_iou_16})
 
 
-def get_wandb_semantic_image(self, semantic, is_prediction=True, k=1, caption=''):
+def get_wandb_semantic_image(semantic, is_prediction=True, k=1, caption=''):
     if is_prediction:
         semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
     else:
         semantic = semantic.unsqueeze(0)
-    img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
+    img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=16), caption=caption)
     return img
 
 

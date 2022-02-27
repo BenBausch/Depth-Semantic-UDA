@@ -6,13 +6,21 @@ from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
 from helper_modules.image_warper import CoordinateWarper
 
 
+class WeightedCrossEntropy(nn.Module):
+    def __init__(self, weights, ignore_index=-100):
+        self.weight = weights
+        self.criterion = nn.CrossEntropyLoss(reduction='mean', weight=self.weights, ignore_index=ignore_index)
+
+    def __call__(self, prediction, target):
+        return self.criterion(prediction, target)
+
+
 class BootstrappedCrossEntropy(nn.Module):
     """
         Calculates the cross entropy of the k pixels with the lowest confident prediction.
     """
 
-    def __init__(self, img_height, img_width, r=0.3, ignore_index=-100, start_decay_epoch=None, end_decay_epoch=None,
-                 weights=None):
+    def __init__(self, img_height, img_width, r=0.3, ignore_index=-100, start_decay_epoch=None, end_decay_epoch=None):
         """
         :param img_height: height of the input image to the network
         :param img_width: width of the input image to the network
@@ -27,9 +35,8 @@ class BootstrappedCrossEntropy(nn.Module):
 
         self.img_w = img_width
         self.img_h = img_height
+        self.ignore_index = ignore_index
 
-        self.weights = weights
-        self.criterion = nn.CrossEntropyLoss(reduction='none', weight=self.weights, ignore_index=ignore_index)
         self.start_decay_epoch = start_decay_epoch
         self.end_decay_epoch = end_decay_epoch
 
@@ -76,12 +83,30 @@ class BootstrappedCrossEntropy(nn.Module):
                 self.ratio = self.ratio_list[-1]
                 self.k = self.k_list[-1]
 
-        #  calculate the loss
-        loss = self.criterion(prediction, target).view(-1)
+        pre_one_hot = torch.clone(target).transpose(1, 2)
+
+        # mask with true for each pixel and class probability prediction
+        # false for each class probability prediction of pixel labeled ignore_index
+        mask_loss = (pre_one_hot != self.ignore_index).expand(*prediction.shape)
+
+        # mask with true for gt class of each non ignore_index pixel, all other value are false
+        pre_one_hot[pre_one_hot == self.ignore_index] = 0
+        mask_class = torch.nn.functional.one_hot(pre_one_hot,
+                                                 num_classes=prediction.shape[1])
+        mask_class = mask_class.transpose(1, 3) == 1
+
+        # class probability prediction of only ground truth classes of non ignore index pixels
+        mask_class = torch.logical_and(mask_loss, mask_class)
+
+        prediction = prediction + 1e-9
+        loss = - torch.log(prediction[mask_class])
+
+        if self.k > loss.shape[0]:
+            self.k = loss.shape[0]
+
         # select the losses of the lowest k predictions (the same as the highest k losses)
         values, _ = torch.topk(loss, k=self.k, largest=True, sorted=False, dim=0)
         loss = torch.sum(values) / self.k
-
         return loss
 
 
