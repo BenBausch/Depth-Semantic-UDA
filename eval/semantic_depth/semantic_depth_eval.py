@@ -25,7 +25,7 @@ def evaluate_model(cfg):
     model = models.get_model(cfg.model.type, cfg)
     model = model.to('cuda:0')
     weights = torch.load(
-        r'D:\Depth-Semantic-UDA\experiments\synthia_only_weighted\checkpoints\checkpoint_epoch_15.pth')
+        r'/work/dlclarge1/bauschb-data/models/semantic_trained_on_synthia_101_bce_decaying_weighted/tmp/2022_02_24_21_15_18_synthia_rand_cityscapes/checkpoints/checkpoint_epoch_15.pth')
     for key in weights:
         if key in ['resnet_encoder', 'depth_decoder', 'semantic_decoder', 'pose_encoder', 'pose_decoder']:
             print(key)
