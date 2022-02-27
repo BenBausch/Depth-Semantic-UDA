@@ -60,22 +60,13 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             end_decay_epoch = None
             self.print_p_0('Using constant ratio in BCE Loss')
 
-        if l_n_p[0]['bce']['weighted']:
-            weights_for_bce = get_cross_entropy_weights(num_classes=self.num_classes,
-                                                        dataset_name=self.cfg.datasets.configs[0].dataset.name)
-            weights_for_bce = torch.DoubleTensor(weights_for_bce).to(torch.device(self.device))
-            print(weights_for_bce)
-        else:
-            weights_for_bce = None
-
         self.bce = get_loss('bootstrapped_cross_entropy',
                             img_height=self.img_height,
                             img_width=self.img_width,
                             r=l_n_p[0]['bce']['r'],
                             ignore_index=IGNORE_INDEX_SEMANTIC,
                             start_decay_epoch=start_decay_epoch,
-                            end_decay_epoch=end_decay_epoch,
-                            weights=weights_for_bce)
+                            end_decay_epoch=end_decay_epoch)
 
         self.bce_weigth = l_n_w[0]['bce']
 

@@ -98,8 +98,7 @@ class BootstrappedCrossEntropy(nn.Module):
         # class probability prediction of only ground truth classes of non ignore index pixels
         mask_class = torch.logical_and(mask_loss, mask_class)
 
-        prediction = prediction + 1e-9
-        loss = - torch.log(prediction[mask_class])
+        loss = - torch.log(prediction[mask_class] + 1e-9)
 
         if self.k > loss.shape[0]:
             self.k = loss.shape[0]
