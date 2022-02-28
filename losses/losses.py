@@ -87,7 +87,7 @@ class BootstrappedCrossEntropy(nn.Module):
 
         # mask with true for each pixel and class probability prediction
         # false for each class probability prediction of pixel labeled ignore_index
-        mask_loss = (pre_one_hot != self.ignore_index).expand(*prediction.shape)
+        mask_loss = (pre_one_hot != self.ignore_index).transpose(1, 2).expand(*prediction.shape)
 
         # mask with true for gt class of each non ignore_index pixel, all other value are false
         pre_one_hot[pre_one_hot == self.ignore_index] = 0
@@ -106,6 +106,7 @@ class BootstrappedCrossEntropy(nn.Module):
         # select the losses of the lowest k predictions (the same as the highest k losses)
         values, _ = torch.topk(loss, k=self.k, largest=True, sorted=False, dim=0)
         loss = torch.sum(values) / self.k
+        print(loss)
         return loss
 
 

@@ -130,16 +130,18 @@ class TestBootstrappedCrossEntropy(unittest.TestCase):
 
     def test_multiple_same_losses(self):
         prediction = torch.tensor([[[0.3, 0.7, 0.0], [0.3, 0.7, 0.0]],
-                                   [[0.1, 0.9, 0.0], [0.3, 0.7, 0.0]]],
+                                   [[0.1, 0.9, 0.0], [0.3, 0.7, 0.0]],
+                                   [[0.3, 0.7, 0.0], [0.3, 0.7, 0.0]]],
                                   requires_grad=True).transpose(0, 2).transpose(1, 2).unsqueeze(0)
 
         target = torch.tensor([[0, 0],
-                               [1, 0]], dtype=torch.long).unsqueeze(0)
+                               [1, 0],
+                               [0, 0]], dtype=torch.long).unsqueeze(0)
 
         ratio = 0.5  # worst 2 prediction is pixel [0,0] with 0.3 and [0, 1] with 0.8, since pixel [1,1] will be ignored
         btce = BootstrappedCrossEntropy(img_height=2, img_width=2, r=ratio, ignore_index=250)
 
-        loss_flat = [1.203972816, 1.203972816, 0.105360538, 1.203972816]
+        loss_flat = [1.203972816, 1.203972816, 0.105360538, 1.203972816, 1.203972816, 1.203972816]
         worst_2_avg = (loss_flat[0] + loss_flat[1]) / 2
 
         worst_2_avg = math.floor(worst_2_avg * 10000) / 10000

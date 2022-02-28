@@ -20,8 +20,6 @@ losses:
         - bce:
             'r': 0.3
             'ignore_index': 250
-            'start_decay_epoch': 2
-            'end_decay_epoch': 7
 
     loss_names_and_weights:
         - bce: 0.001
