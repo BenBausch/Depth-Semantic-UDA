@@ -5,9 +5,12 @@ import os
 import abc
 import random
 from abc import ABC
+import re
+
 # Own classes
 import numpy.random
-
+from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
+from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from cfg.config_training import to_dictionary
 
 import models
@@ -259,6 +262,48 @@ class TrainSingleDatasetBase(TrainBase, ABC):
 
         # Get number of total steps to compute remaining training time later
         self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
+
+    def set_train(self):
+        for m in self.model.networks.values():
+            m.train()
+
+    def set_eval(self):
+        for m in self.model.networks.values():
+            m.eval()
+
+    def set_from_checkpoint(self):
+        """
+        Set the parameters to the parameters of the safed checkpoints.
+        """
+        # get epoch from file name
+        self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
+
+    def get_wandb_depth_image(self, depth, batch_idx, caption_addon=''):
+        colormapped_depth = vdp(1 / depth)
+        img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}' + caption_addon)
+        return img
+
+    def get_wandb_normal_image(self, depth, dataset_id, caption_addon=''):
+        if dataset_id == 0:
+            points3d = self.snr.img_to_pointcloud(depth)
+            normals = self.snr.get_normal_vectors(points3d)
+        elif dataset_id == 1:
+            points3d = self.snr_validation.img_to_pointcloud(depth)
+            normals = self.snr_validation.get_normal_vectors(points3d)
+
+        normals_plot = normals * 255
+
+        normals_plot = normals_plot[0].detach().cpu().numpy().transpose(1, 2, 0).astype(np.uint8)
+
+        return wandb.Image(normals_plot, caption=f'{caption_addon} Normal')
+
+    def get_wandb_semantic_image(self, semantic, is_prediction=True, k=1, caption=''):
+        if is_prediction:
+            semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
+        else:
+            semantic = semantic.unsqueeze(0)
+        img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
+        return img
 
 
 class TrainSourceTargetDatasetBase(TrainBase, ABC):

@@ -8,8 +8,6 @@ import torch
 import matplotlib.pyplot as plt
 
 # Own classes
-from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
-from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from losses.metrics import MIoU, DepthEvaluator
 from train.base.train_base import TrainSingleDatasetBase
 from losses import get_loss
@@ -92,11 +90,22 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
                                     weight=l_n_p[0]['silog_depth']['weight'],
                                     ignore_value=IGNORE_VALUE_DEPTH)
 
+        try:
+            start_decay_epoch = l_n_p[0]['bce']['start_decay_epoch']
+            end_decay_epoch = l_n_p[0]['bce']['end_decay_epoch']
+            self.print_p_0('Using decaying ratio in BCE Loss')
+        except KeyError:
+            start_decay_epoch = None
+            end_decay_epoch = None
+            self.print_p_0('Using constant ratio in BCE Loss')
+
         self.bce = get_loss('bootstrapped_cross_entropy',
                             img_height=self.img_height,
                             img_width=self.img_width,
                             r=l_n_p[0]['bce']['r'],
-                            ignore_index=IGNORE_INDEX_SEMANTIC)
+                            ignore_index=IGNORE_INDEX_SEMANTIC,
+                            start_decay_epoch=start_decay_epoch,
+                            end_decay_epoch=end_decay_epoch)
 
         self.snr = get_loss('surface_normal_regularization',
                             ref_img_width=self.img_width,
@@ -125,7 +134,9 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
                                        normalized_camera_model=self.validation_camera_model,
                                        device=self.device)
 
-        assert self.num_classes == 16 # if training on more or less classes please change eval setting for miou
+        self.depth_evaluator = DepthEvaluator(use_garg_crop=self.use_garg_crop)
+
+        assert self.num_classes == 16  # if training on more or less classes please change eval setting for miou
 
         self.eval_13_classes = [True, True, True, False, False, False, True, True, True, True, True, True, True, True,
                                 True, True]
@@ -135,8 +146,6 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
                             ignore_index=IGNORE_INDEX_SEMANTIC)
         self.miou_16 = MIoU(num_classes=self.cfg.datasets.configs[1].dataset.num_classes,
                             ignore_index=IGNORE_INDEX_SEMANTIC)
-
-        self.depth_evaluator = DepthEvaluator(use_garg_crop=self.use_garg_crop)
 
         # -------------------------Initializations----------------------------------------------------
 
@@ -148,8 +157,6 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         if self.cfg.checkpoint.use_checkpoint:
             self.set_from_checkpoint()
         self.print_p_0(f'Initial epoch {self.epoch}')
-
-        initial_epoch = self.epoch - 1
 
         if self.rank == 0:
             for _, net in self.model.get_networks().items():
@@ -197,13 +204,14 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
             bar_data = [[label, val] for (label, val) in zip(names, iou_13)]
             table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
             wandb.log({f'IOU per 13 Class epoch {self.epoch}': wandb.plot.bar(table, "Classes", "IOU",
-                                                                              title="IOU per 13 Class"),
+                                                                              title=f"IOU per 13 Class {self.epoch}"),
                        f'Mean IOU per 13 Classes': mean_iou_13})
             names = [self.c_id_to_name[i] for i in self.c_id_to_name.keys()]
             bar_data = [[label, val] for (label, val) in zip(names, iou_16)]
             table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
             wandb.log(
-                {f'IOU per 16 Class {self.epoch}': wandb.plot.bar(table, "Classes", "IOU", title="IOU per 16 Class"),
+                {f'IOU per 16 Class {self.epoch}': wandb.plot.bar(table, "Classes", "IOU",
+                                                                  title=f"IOU per 16 Class {self.epoch}"),
                  f'Mean IOU per 16 Classes': mean_iou_16})
 
     def training_step(self, data, batch_idx):
@@ -227,18 +235,16 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         self.optimizer.step()
 
         if self.rank == 0:
-            if batch_idx % int(50 / torch.cuda.device_count()) == 0:
-                print(True)
+            if batch_idx % int(500 / torch.cuda.device_count()) == 0:
                 depth_errors = '\n Errors avg over this images batch \n' + \
                                self.depth_evaluator.depth_losses_as_string(data['depth_dense'], depth_pred)
-                rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
-                depth_img = self.get_wandb_depth_image(depth_pred[0], batch_idx, caption_addon=depth_errors)
+                rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Source RGB")
+                depth_img = self.get_wandb_depth_image(depth_pred[0].detach(), batch_idx, caption_addon=depth_errors)
                 semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                             f'Semantic GT with id {batch_idx}')
                 depth_gt_img = self.get_wandb_depth_image(data['depth_dense'][0], batch_idx, caption_addon=depth_errors)
                 sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0], True, 1, f'Semantic Map')
-                wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, depth_gt_img, sem_img, semantic_gt]})
-            wandb.log({f'epoch {self.epoch} steps': batch_idx})
+                wandb.log({f'Source images {self.epoch}': [rgb, depth_img, depth_gt_img, sem_img, semantic_gt]})
             wandb.log({f"total loss epoch {self.epoch}": loss})
             wandb.log(loss_dict)
 
@@ -246,11 +252,7 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         for key, val in data.items():
             data[key] = val.to(self.device)
         prediction = self.model.forward(data, dataset_id=1, predict_depth=True, train=False)[0]
-        depth = prediction['depth'][0][('depth', 0)]
 
-        # zero out the probabilities of the classes that are not considered
-        # zeroing out instead of training on subset of classes permits to train single model for the 13 and 16 class
-        # evaluation instead of two models
         sem_pred_13 = prediction['semantic']
 
         soft_pred_13 = F.softmax(sem_pred_13, dim=1)
@@ -261,20 +263,17 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
         soft_pred_16 = F.softmax(sem_pred_16, dim=1)
         self.miou_16.update(mask_pred=soft_pred_16, mask_gt=data['semantic'])
 
-        if self.rank == 0:
+        if self.rank == 0 and batch_idx % 15 == 0:
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
                                   caption=f'Rgb {batch_idx}')
-            depth_img = self.get_wandb_depth_image(depth.cpu().detach(), batch_idx)
-            normal_img = self.get_wandb_normal_image(depth.detach(), 1, 'Validation')
-            semantic_img_13 = self.get_wandb_semantic_image(soft_pred_13[0], True, 1,
-                                                            f'Semantic Map image with 13 classes')
-            semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
+            semantic_img_13 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
+                                                            f'Semantic Map image with 16 classes')
+            semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 2,
                                                             f'Semantic Map image with 16 classes')
             semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                         f'Semantic GT with id {batch_idx}')
             wandb.log(
-                {f'images of epoch {self.epoch}': [rgb_img, depth_img, normal_img,
-                                                   semantic_img_13, semantic_img_16, semantic_gt]})
+                {f'images of epoch {self.epoch}': [rgb_img, semantic_img_13, semantic_img_16, semantic_gt]})
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}
@@ -294,44 +293,3 @@ class SemanticDepthTrainer(TrainSingleDatasetBase):
 
         return silog_loss + bce_loss + snr_loss, loss_dict
 
-    def set_train(self):
-        for m in self.model.networks.values():
-            m.train()
-
-    def set_eval(self):
-        for m in self.model.networks.values():
-            m.eval()
-
-    def set_from_checkpoint(self):
-        """
-        Set the parameters to the parameters of the safed checkpoints.
-        """
-        # get epoch from file name
-        self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
-
-    def get_wandb_depth_image(self, depth, batch_idx, caption_addon=''):
-        colormapped_depth = vdp(1 / depth)
-        img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}' + caption_addon)
-        return img
-
-    def get_wandb_semantic_image(self, semantic, is_prediction=True, k=1, caption=''):
-        if is_prediction:
-            semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
-        else:
-            semantic = semantic.unsqueeze(0)
-        img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
-        return img
-
-    def get_wandb_normal_image(self, depth, dataset_id, caption_addon=''):
-        if dataset_id == 0:
-            points3d = self.snr.img_to_pointcloud(depth)
-            normals = self.snr.get_normal_vectors(points3d)
-        elif dataset_id == 1:
-            points3d = self.snr_validation.img_to_pointcloud(depth)
-            normals = self.snr_validation.get_normal_vectors(points3d)
-
-        normals_plot = normals * 255
-
-        normals_plot = normals_plot[0].detach().cpu().numpy().transpose(1, 2, 0).astype(np.uint8)
-
-        return wandb.Image(normals_plot, caption=f'{caption_addon} Normal')

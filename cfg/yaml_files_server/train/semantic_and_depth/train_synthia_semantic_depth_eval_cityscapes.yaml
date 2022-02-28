@@ -1,4 +1,4 @@
-experiment_name: 'synthia_only_to_cityscapes'
+experiment_name: 'synthia_s_d_to_cityscapes'
 
 model:
     type: 'guda'
@@ -22,7 +22,7 @@ datasets:
 train:
     nof_epochs: 40
     batch_size: 1
-    nof_workers: 5
+    nof_workers: 4
 
     optimizer:
         type: 'Adam'
@@ -30,11 +30,11 @@ train:
     scheduler:
         type: 'MultiStepLR'
         gamma: 0.5
-        milestones: [30] # half the learning rate for the last 10 epochs
+        milestones: [50] # half the learning rate for the last 10 epochs
 
 val:
     batch_size: 1
-    nof_workers: 5
+    nof_workers: 4
 
 checkpoint:
     use_checkpoint: False
@@ -44,4 +44,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes'
+    path_save: '/work/dlclarge1/bauschb-data/models/train_semantic_depth_synthia'

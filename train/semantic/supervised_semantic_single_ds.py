@@ -92,8 +92,6 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             self.set_from_checkpoint()
         self.print_p_0(f'Initial epoch {self.epoch}')
 
-        initial_epoch = self.epoch - 1
-
         if self.rank == 0:
             for _, net in self.model.get_networks().items():
                 wandb.watch(net)
@@ -168,13 +166,12 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
         self.optimizer.step()
 
         if self.rank == 0:
-            if batch_idx % int(300 / torch.cuda.device_count()) == 0:
+            if batch_idx % int(500 / torch.cuda.device_count()) == 0:
                 rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
                 sem_img = self.get_wandb_semantic_image(F.softmax(semantic_pred, dim=1)[0], True, 1, f'Semantic Map')
                 semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                             f'Semantic GT with id {batch_idx}')
-                wandb.log({f'Virtual images {self.epoch}': [rgb, sem_img, semantic_gt]})
-            wandb.log({f'epoch {self.epoch} steps': batch_idx})
+                wandb.log({f'Source images {self.epoch}': [rgb, sem_img, semantic_gt]})
             wandb.log({f"total loss epoch {self.epoch}": loss})
             wandb.log(loss_dict)
 
@@ -213,26 +210,3 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
         loss_dict['bce'] = bce_loss
 
         return bce_loss, loss_dict
-
-    def set_train(self):
-        for m in self.model.networks.values():
-            m.train()
-
-    def set_eval(self):
-        for m in self.model.networks.values():
-            m.eval()
-
-    def set_from_checkpoint(self):
-        """
-        Set the parameters to the parameters of the safed checkpoints.
-        """
-        # get epoch from file name
-        self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
-
-    def get_wandb_semantic_image(self, semantic, is_prediction=True, k=1, caption=''):
-        if is_prediction:
-            semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
-        else:
-            semantic = semantic.unsqueeze(0)
-        img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
-        return img

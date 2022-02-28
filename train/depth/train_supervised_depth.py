@@ -187,17 +187,16 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         self.optimizer.step()
 
         # log samples
-        if batch_idx % int(300 / torch.cuda.device_count()) == 0 and self.rank == 0:
+        if batch_idx % int(500 / torch.cuda.device_count()) == 0 and self.rank == 0:
             depth_errors = '\n Errors avg over this images batch \n' + \
                            self.depth_evaluator.depth_losses_as_string(data['depth_dense'], depth_pred)
-            rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
+            rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Source RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[0].detach(), batch_idx, caption_addon=depth_errors)
             depth_gt_img = self.get_wandb_depth_image(data['depth_dense'][0], batch_idx, caption_addon=depth_errors)
             normal_img = self.get_wandb_normal_image(depth_pred.detach(), 0, 'Predicted')
             normal_gt_img = self.get_wandb_normal_image(data['depth_dense'], 0, 'GT')
-            wandb.log({f'Virtual images {self.epoch}': [rgb, depth_img, depth_gt_img, normal_img, normal_gt_img]})
+            wandb.log({f'Source images {self.epoch}': [rgb, depth_img, depth_gt_img, normal_img, normal_gt_img]})
         if self.rank == 0:
-            wandb.log({f'epoch {self.epoch} steps': batch_idx})
             wandb.log({f"total loss epoch {self.epoch}": loss})
             wandb.log(loss_dict)
 
@@ -207,7 +206,7 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
         prediction = self.model.forward(data, dataset_id=1, predict_depth=True, train=False)[0]
         depth = prediction['depth'][0][('depth', 0)]
 
-        if self.rank == 0:
+        if self.rank == 0 and batch_idx % 15 == 0:
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
                                   caption=f'Rgb {batch_idx}')
             depth_img = self.get_wandb_depth_image(depth.detach(), batch_idx)
@@ -231,37 +230,3 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
             return silog_loss + snr_loss, loss_dict
         else:
             return silog_loss, loss_dict
-
-    def set_train(self):
-        for m in self.model.networks.values():
-            m.train()
-
-    def set_eval(self):
-        for m in self.model.networks.values():
-            m.eval()
-
-    def set_from_checkpoint(self):
-        """
-        Set the parameters to the parameters of the safed checkpoints.
-        """
-        # get epoch from file name
-        self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
-
-    def get_wandb_depth_image(self, depth, batch_idx, caption_addon=''):
-        colormapped_depth = vdp(1 / depth)
-        img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}' + caption_addon)
-        return img
-
-    def get_wandb_normal_image(self, depth, dataset_id, caption_addon=''):
-        if dataset_id == 0:
-            points3d = self.snr.img_to_pointcloud(depth)
-            normals = self.snr.get_normal_vectors(points3d)
-        elif dataset_id == 1:
-            points3d = self.snr_validation.img_to_pointcloud(depth)
-            normals = self.snr_validation.get_normal_vectors(points3d)
-
-        normals_plot = normals * 255
-
-        normals_plot = normals_plot[0].detach().cpu().numpy().transpose(1, 2, 0).astype(np.uint8)
-
-        return wandb.Image(normals_plot, caption=f'{caption_addon} Normal')
