@@ -106,7 +106,6 @@ class BootstrappedCrossEntropy(nn.Module):
         # select the losses of the lowest k predictions (the same as the highest k losses)
         values, _ = torch.topk(loss, k=self.k, largest=True, sorted=False, dim=0)
         loss = torch.sum(values) / self.k
-        print(loss)
         return loss
 
 
