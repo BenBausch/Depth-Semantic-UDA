@@ -1,4 +1,4 @@
-experiment_name: 'test_unsupervsied_depth'
+experiment_name: 'cityscapes_depth_unsupervised'
 
 model:
     type: 'monodepth2'
@@ -15,13 +15,14 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\depth\cityscapes_sequence.yaml',
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\depth\cityscapes_semantic.yaml']
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic_and_unsupervised_depth/cityscapes_sequence.yaml', # target
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic_and_unsupervised_depth/cityscapes_semantic.yaml'] # validation dataset
     loss_weights : [1, 0]
 
 train:
     nof_epochs: 40
-    batch_size: 3
+    batch_size: 1
+    nof_workers: 5
 
     optimizer:
         type: 'Adam'
@@ -33,13 +34,14 @@ train:
 
 val:
     batch_size: 1
-    nof_workers: 4
+    nof_workers: 5
 
 checkpoint:
     use_checkpoint: False
 
+
 device:
-    multiple_gpus: False
+    multiple_gpus: True
 
 io:
-    path_save: 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\test'
+    path_save: '/work/dlclarge1/bauschb-data/models/depth_unsupervised_cityscapes_cropped'

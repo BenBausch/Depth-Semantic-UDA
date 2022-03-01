@@ -9,23 +9,20 @@ import re
 
 # Own classes
 import numpy.random
+import numpy as np
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
 from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from cfg.config_training import to_dictionary
-
 import models
 import dataloaders
-from dataloaders.datasamplers.CompletlyRandomSampler import CompletelyRandomSampler
 from io_utils import io_utils
 from datetime import datetime
-from utils.utils import info_gpu_memory
 from dataloaders.datasamplers import get_sampler
 
 # PyTorch
 import torch
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
-import torch.nn as nn
 from models.helper_models.custom_data_parallel import CustomDistributedDataParallel
 import torch.distributed as dist
 import wandb

@@ -95,11 +95,11 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         self.reconstruction_use_automasking = l_n_p[0]['reconstruction']['use_automasking']
         self.reconstruction_weight = l_n_w[0]['reconstruction']
 
-        self.snr_source = get_loss('surface_normal_regularization',
-                                   ref_img_width=self.img_width,
-                                   ref_img_height=self.img_height,
-                                   normalized_camera_model=self.train_camera_model,
-                                   device=self.device)  # used for plotting only
+        self.snr = get_loss('surface_normal_regularization',
+                            ref_img_width=self.img_width,
+                            ref_img_height=self.img_height,
+                            normalized_camera_model=self.train_camera_model,
+                            device=self.device)  # used for plotting only
 
         self.loss_weight = self.cfg.datasets.loss_weights[0]
 
@@ -229,4 +229,3 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
                                                       use_ssim=self.reconstruction_use_ssim)
         loss_dict[f'reconstruction epoch {self.epoch}'] = reconsruction_loss
         return reconsruction_loss, loss_dict
-

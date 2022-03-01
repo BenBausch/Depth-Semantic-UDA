@@ -243,12 +243,11 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
 
         if tgt_path_file is None:
             return None
-        print(tgt_path_file)
         img = pil.open(tgt_path_file)
         return img
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var): # fixme add augmentations to train and val rgb transforms
+    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var):
         """
         Transformations of the rgb image during training.
         :param mean: mean of rgb images
