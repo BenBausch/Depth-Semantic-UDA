@@ -234,32 +234,6 @@ class TrainBase(metaclass=abc.ABCMeta):
             raise NotImplementedError(
                 "The optimizer ({}) is not yet implemented.".format(type_optimizer))
 
-
-# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
-#  are normalized...
-class TrainSingleDatasetBase(TrainBase, ABC):
-    def __init__(self, device_id, cfg, world_size=1):
-        super(TrainSingleDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
-
-        # Get training and validation datasets
-        self.train_loader, self.num_train_files = self.get_dataloader(mode="train",
-                                                                      name=self.cfg.datasets.configs[0].dataset.name,
-                                                                      split=self.cfg.datasets.configs[0].dataset.split,
-                                                                      bs=self.cfg.train.batch_size,
-                                                                      num_workers=self.cfg.train.nof_workers,
-                                                                      cfg=self.cfg.datasets.configs[0])
-        print(f'Length Train Loader: {len(self.train_loader)}')
-        self.val_loader, self.num_val_files = self.get_dataloader(mode="val",
-                                                                  name=self.cfg.datasets.configs[1].dataset.name,
-                                                                  split=self.cfg.datasets.configs[1].dataset.split,
-                                                                  bs=self.cfg.val.batch_size,
-                                                                  num_workers=self.cfg.val.nof_workers,
-                                                                  cfg=self.cfg.datasets.configs[1])
-        print(f'Length Validation Loader: {len(self.val_loader)}')
-
-        # Get number of total steps to compute remaining training time later
-        self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
-
     def set_train(self):
         for m in self.model.networks.values():
             m.train()
@@ -301,6 +275,32 @@ class TrainSingleDatasetBase(TrainBase, ABC):
             semantic = semantic.unsqueeze(0)
         img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
         return img
+
+
+# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
+#  are normalized...
+class TrainSingleDatasetBase(TrainBase, ABC):
+    def __init__(self, device_id, cfg, world_size=1):
+        super(TrainSingleDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
+
+        # Get training and validation datasets
+        self.train_loader, self.num_train_files = self.get_dataloader(mode="train",
+                                                                      name=self.cfg.datasets.configs[0].dataset.name,
+                                                                      split=self.cfg.datasets.configs[0].dataset.split,
+                                                                      bs=self.cfg.train.batch_size,
+                                                                      num_workers=self.cfg.train.nof_workers,
+                                                                      cfg=self.cfg.datasets.configs[0])
+        print(f'Length Train Loader: {len(self.train_loader)}')
+        self.val_loader, self.num_val_files = self.get_dataloader(mode="val",
+                                                                  name=self.cfg.datasets.configs[1].dataset.name,
+                                                                  split=self.cfg.datasets.configs[1].dataset.split,
+                                                                  bs=self.cfg.val.batch_size,
+                                                                  num_workers=self.cfg.val.nof_workers,
+                                                                  cfg=self.cfg.datasets.configs[1])
+        print(f'Length Validation Loader: {len(self.val_loader)}')
+
+        # Get number of total steps to compute remaining training time later
+        self.num_total_steps = self.num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs
 
 
 class TrainSourceTargetDatasetBase(TrainBase, ABC):
