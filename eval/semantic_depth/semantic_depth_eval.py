@@ -25,7 +25,7 @@ def evaluate_model(cfg):
     model = models.get_model(cfg.model.type, cfg)
     model = model.to('cuda:0')
     weights = torch.load(
-        r'/work/dlclarge1/bauschb-data/models/semantic_trained_on_synthia_101_bce_decaying_weighted/tmp/2022_02_24_21_15_18_synthia_rand_cityscapes/checkpoints/checkpoint_epoch_15.pth')
+        r'C:\Users\benba\Documents\University\Masterarbeit\models\semantic_test\tmp\2022_03_03_13_59_06_synthia_rand_cityscapes\checkpoints\checkpoint_epoch_0.pth')
     for key in weights:
         if key in ['resnet_encoder', 'depth_decoder', 'semantic_decoder', 'pose_encoder', 'pose_decoder']:
             print(key)
@@ -34,7 +34,7 @@ def evaluate_model(cfg):
     model.eval()
 
     dataset = dataloaders.get_dataset(cfg.datasets.configs[1].dataset.name,
-                                      'train',
+                                      'val',
                                       cfg.datasets.configs[1].dataset.split,
                                       cfg.datasets.configs[1])
     loader = DataLoader(dataset,

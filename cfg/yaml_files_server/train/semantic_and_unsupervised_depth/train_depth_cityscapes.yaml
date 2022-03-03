@@ -1,11 +1,11 @@
-experiment_name: 'cityscapes_depth_unsupervised'
+experiment_name: 'cityscapes_depth_semantic'
 
 model:
-    type: 'monodepth2'
+    type: 'guda'
 
     encoder:
         params:
-            nof_layers: 50
+            nof_layers: 101
             weights_init: 'pretrained'
 
     pose_net:
@@ -15,9 +15,10 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic_and_unsupervised_depth/cityscapes_sequence.yaml', # target
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic_and_unsupervised_depth/cityscapes_semantic.yaml',
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic_and_unsupervised_depth/cityscapes_sequence.yaml',
                         '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/semantic_and_unsupervised_depth/cityscapes_semantic.yaml'] # validation dataset
-    loss_weights : [1, 0]
+    loss_weights : [1, 1, 0]
 
 train:
     nof_epochs: 40
@@ -30,7 +31,7 @@ train:
     scheduler:
         type: 'MultiStepLR'
         gamma: 0.5
-        milestones: [30] # half the learning rate for the last 10 epochs
+        milestones: [50] # half the learning rate for the last 10 epochs
 
 val:
     batch_size: 1
@@ -44,4 +45,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/depth_unsupervised_cityscapes_cropped'
+    path_save: '/work/dlclarge1/bauschb-data/models/cityscapes_depth_semantic'

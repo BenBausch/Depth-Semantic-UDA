@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 
-class TestCityscapesSequenceDataset(unittest.TestCase):
+class TestSynthiaDataset(unittest.TestCase):
 
     def setUp(self):
         np.random.seed(0)
@@ -38,6 +38,7 @@ class TestCityscapesSequenceDataset(unittest.TestCase):
         Test if cityscapes labeling for each class is correct
         """
         for idx, data in enumerate(self.loader_19):
+
             # idx = 0 should be image with name 0000000.png
             # class with id 9, 14, 16 no instance in synthia
             if idx == 0:
@@ -56,6 +57,7 @@ class TestCityscapesSequenceDataset(unittest.TestCase):
                 self.assertEqual(data['semantic'][0, 617, 778].item(), 18)
                 self.assertEqual(data['semantic'][0, 439, 171].item(), 250)
             if idx == 50:
+                self.assertEqual(data['semantic'][0, 489, 110].item(), 0)
                 self.assertEqual(data['semantic'][0, 9, 330].item(), 6)
                 self.assertEqual(data['semantic'][0, 249, 754].item(), 7)
                 self.assertEqual(data['semantic'][0, 366, 36].item(), 15)
@@ -79,6 +81,7 @@ class TestCityscapesSequenceDataset(unittest.TestCase):
                 self.assertEqual(data['semantic'][0, 617, 778].item(), 15)
                 self.assertEqual(data['semantic'][0, 439, 171].item(), 250)
             if idx == 50:
+                self.assertEqual(data['semantic'][0, 489, 110].item(), 0)
                 self.assertEqual(data['semantic'][0, 9, 330].item(), 6)
                 self.assertEqual(data['semantic'][0, 249, 754].item(), 7)
                 self.assertEqual(data['semantic'][0, 366, 36].item(), 13)

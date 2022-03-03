@@ -248,7 +248,8 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         self.img_norm = cfg.dataset.img_norm
 
         self.mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
-        self.var = torch.tensor([[[0.18696375, 0.19017339, 0.18720214]]]).transpose(0, 2)
+        #self.var = torch.tensor([[[0.18696375, 0.19017339, 0.18720214]]]).transpose(0, 2)
+        self.var = torch.tensor([[[1.0, 1.0, 1.0]]]).transpose(0, 2)
 
         self.do_normalization = self.cfg.dataset.img_norm
 

@@ -1,4 +1,4 @@
-experiment_name: 'cityscapes_depth_unsupervised_test'
+experiment_name: 'cityscapes_depth_semantic_test'
 
 model:
     type: 'guda'
