@@ -254,13 +254,9 @@ class TrainBase(metaclass=abc.ABCMeta):
         img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}' + caption_addon)
         return img
 
-    def get_wandb_normal_image(self, depth, dataset_id, caption_addon=''):
-        if dataset_id == 0:
-            points3d = self.snr.img_to_pointcloud(depth)
-            normals = self.snr.get_normal_vectors(points3d)
-        elif dataset_id == 1:
-            points3d = self.snr_validation.img_to_pointcloud(depth)
-            normals = self.snr_validation.get_normal_vectors(points3d)
+    def get_wandb_normal_image(self, depth, snr_module, caption_addon=''):
+        points3d = snr_module.img_to_pointcloud(depth)
+        normals = snr_module.get_normal_vectors(points3d)
 
         normals_plot = normals * 255
 

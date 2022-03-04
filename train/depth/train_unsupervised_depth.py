@@ -197,7 +197,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[('depth', 0)][0].detach(),
                                                    batch_idx)
-            normal_img = self.get_wandb_normal_image(depth_pred[('depth', 0)].detach(), 0, 'Predicted')
+            normal_img = self.get_wandb_normal_image(depth_pred[('depth', 0)].detach(), self.snr, 'Predicted')
             wandb.log({f'Source images {self.epoch}': [rgb, depth_img, normal_img]})
         if self.rank == 0:
             wandb.log({f"total loss epoch {self.epoch}": loss})
@@ -213,7 +213,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
                                   caption=f'Rgb {batch_idx}')
             depth_img = self.get_wandb_depth_image(depth.detach(), batch_idx)
-            normal_img = self.get_wandb_normal_image(depth.detach(), 1, 'Validation')
+            normal_img = self.get_wandb_normal_image(depth.detach(), self.snr_validation, 'Validation')
             wandb.log(
                 {f'images of epoch {self.epoch}': [rgb_img, depth_img, normal_img]})
 

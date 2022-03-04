@@ -291,7 +291,7 @@ class SupervisedSemanticUnsupervisedDepthTrainer(TrainSourceTargetDatasetBase):
             # sequence
             rgb_1 = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Source RGB")
             depth_img_1 = self.get_wandb_depth_image(depth_pred[('depth', 0)].detach(), batch_idx)
-            normal_img_1 = self.get_wandb_normal_image(depth_pred[('depth', 0)].detach(), 0, 'Predicted')
+            normal_img_1 = self.get_wandb_normal_image(depth_pred[('depth', 0)].detach(), self.snr, 'Predicted')
             wandb.log({f'Epoch {self.epoch} Sequence Train Dataset Images': [rgb_1, depth_img_1, normal_img_1]})
 
         if self.rank == 0:

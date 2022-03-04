@@ -42,4 +42,4 @@ device:
     multiple_gpus: False
 
 io:
-    path_save: 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\semantic_test'
+    path_save: 'D:\Depth-Semantic-UDA\experiments\todelete'
