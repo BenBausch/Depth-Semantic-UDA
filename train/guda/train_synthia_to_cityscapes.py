@@ -18,6 +18,9 @@ from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
+    """
+    Trainer to run the guda algorithm for synthia to cityscapes.
+    """
     def __init__(self, device_id, cfg, world_size=1):
         super(GUDATrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 

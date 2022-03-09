@@ -261,7 +261,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         """
         return transforms.Compose(
             [
-                tf_prep.Crop_Car_Away(img_height=1024, img_width=2048),
+                tf_prep.CropCarAway(img_height=1024, img_width=2048),
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
@@ -281,34 +281,8 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         """
         return transforms.Compose(
             [
-                tf_prep.Crop_Car_Away(img_height=1024, img_width=2048),
+                tf_prep.CropCarAway(img_height=1024, img_width=2048),
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )
-
-
-if __name__ == "__main__":
-    from cfg.config_dataset import get_cfg_dataset_defaults
-    import sys
-
-    path = sys.argv[1]
-    cfg = get_cfg_dataset_defaults()
-    cfg.merge_from_file(path)
-    cfg.freeze()
-
-    CITY_dataset = CityscapesSequenceDataset("train", None, cfg)
-
-    wandb.init(project='dataset-cityscapes-sequence')
-
-    ds = DataLoader(CITY_dataset, batch_size=1, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
-
-    wandb.log({'len_dataset': len(ds)})
-
-    for i, data in enumerate(ds):
-        img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB 0")
-        img_minus_1 = wandb.Image(data[('rgb', -1)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB -1")
-        img_plus_1 = wandb.Image(data[('rgb', 1)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB +1")
-        wandb.log({'images': [img0, img_minus_1, img_plus_1]})
-        if i == 10:
-            break

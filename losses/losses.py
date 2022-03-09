@@ -7,6 +7,9 @@ from helper_modules.image_warper import CoordinateWarper
 
 
 class WeightedCrossEntropy(nn.Module):
+    """
+    A simple wrapper for the cross entropy loss implemented in pytorch requiring weights
+    """
     def __init__(self, weights, ignore_index=-100):
         self.weight = weights
         self.criterion = nn.CrossEntropyLoss(reduction='mean', weight=self.weights, ignore_index=ignore_index)
@@ -164,9 +167,13 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         return self.cosine_similarity_guda(normals_pred=normals_prediction, normals_gt=normals_gt)
 
 
-# This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
-# no measurements to zero
 class L1LossDepth(nn.Module):
+    """
+    Implements the average over pixel of absolute difference between prediction and target.
+
+    This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
+    no measurements to zero.
+    """
     def __init__(self):
         super(L1LossDepth, self).__init__()
 
@@ -179,6 +186,10 @@ class L1LossDepth(nn.Module):
 
 
 class SilogLossDepth(nn.Module):
+    """
+    Implementation of the Scale Invariant Log Loss introduced in
+    'Depth map prediction from a single image using a multi-scale deep network'.
+    """
     def __init__(self, weight=0.85, ignore_value=-100):
         super(SilogLossDepth, self).__init__()
         self.weight = weight
@@ -194,23 +205,10 @@ class SilogLossDepth(nn.Module):
         return silog_var - silog_wsme
 
 
-class SilogLossDepthGUDA(nn.Module):
-    def __init__(self, weight=0.85, ignore_value=-100):
-        super(SilogLossDepthGUDA, self).__init__()
-        self.weight = weight
-        self.ignore_value = ignore_value
-
-    def forward(self, pred, target):
-        mask = (torch.logical_and(target > 0, target != self.ignore_value)).detach()
-        log_diff = (torch.log(target) - torch.log(pred))[mask]
-
-        silog_var = torch.mean(log_diff ** 2)
-        silog_wsme = self.weight * (log_diff.mean() ** 2)
-
-        return silog_var - silog_wsme
-
-
 class L1LossPixelwise(nn.Module):
+    """
+    Implements the absolute difference between prediction and target per pixel.
+    """
     def __init__(self):
         super(L1LossPixelwise, self).__init__()
 
@@ -220,9 +218,13 @@ class L1LossPixelwise(nn.Module):
         return loss
 
 
-# This can also be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
-# no measurements to zero
 class MSELoss(nn.Module):
+    """
+    Implements the mean squared difference between prediction and target.
+
+    This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
+    no measurements to zero.
+    """
     def __init__(self):
         super(MSELoss, self).__init__()
 
@@ -235,6 +237,9 @@ class MSELoss(nn.Module):
 
 
 class EdgeAwareSmoothnessLoss(nn.Module):
+    """
+    The edge aware smoothness Loss enforces smooth depth gradients in regions where no edges are detected.
+    """
     def __init__(self):
         super(EdgeAwareSmoothnessLoss, self).__init__()
 
@@ -256,6 +261,10 @@ class EdgeAwareSmoothnessLoss(nn.Module):
 
 
 class SSIMLoss(nn.Module):
+    """
+    Implements the structural similarity component from
+    'Image quality assessment: from error visibility to structural similarity'
+    """
     def __init__(self, window_size=3):
         super(SSIMLoss, self).__init__()
         padding = window_size // 2
@@ -287,6 +296,12 @@ class SSIMLoss(nn.Module):
 
 # TODO: Self.sup is using a mask. What for? -> Use mask to exclude black pixels
 class ReconstructionLoss(nn.Module):
+    """
+    Implements the reconstruction Loss from
+    'Loss functions for image restoration with neural networks'
+    with optional SSIM loss and minimum error selection from
+    ' Unsupervised learning of depth and ego-motion from video'
+    """
     # Attention, we use a camera model here, that is normalized by the image size, in order to be able to compute
     # reprojections for each possible size of the image
     # ref_img_width and ref_img_height denote the original image sizes without scalings

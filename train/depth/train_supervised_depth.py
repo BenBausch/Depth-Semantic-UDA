@@ -20,6 +20,9 @@ from utils.constans import IGNORE_VALUE_DEPTH
 
 
 class SupervisedDepthTrainer(TrainSingleDatasetBase):
+    """
+    Used for training on datasets with dense depth, like Synthia
+    """
     def __init__(self, device_id, cfg, world_size=1):
         super(SupervisedDepthTrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 

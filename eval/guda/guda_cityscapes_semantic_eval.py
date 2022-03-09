@@ -18,6 +18,7 @@ import wandb
 
 
 def evaluate_model(cfg):
+
     wandb.init(project=f"{cfg.experiment_name}_eval", config=to_dictionary(cfg))
     print(cfg.model.type)
     model = models.get_model(cfg.model.type, cfg)

@@ -393,7 +393,7 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ToInt64Array(),
-                tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
+                tf_prep.EncodeSegmentationGTA5(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
 
@@ -429,7 +429,7 @@ class GTA5Dataset(dataset_base.DatasetRGB, dataset_base.DatasetSemantic):
             [
                 tf_prep.PILResize(tgt_size, pil.NEAREST),
                 tf_prep.ToInt64Array(),
-                tf_prep.EncodeSegmentation(void_classes, valid_classes, class_map, ignore_index)
+                tf_prep.EncodeSegmentationGTA5(void_classes, valid_classes, class_map, ignore_index)
             ]
         )
 

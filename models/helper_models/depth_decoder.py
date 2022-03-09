@@ -13,6 +13,9 @@ from models.helper_models.layers import *
 
 
 class DepthDecoderMONODEPTH2(nn.Module):
+    """
+    Depth decoder from the 'Unsupervised learning of depth and ego-motion from video' paper
+    """
     def __init__(self, num_ch_enc, scales=range(4), num_output_channels=1, use_skips=True, upsample_mode='nearest'):
         super(DepthDecoderMONODEPTH2, self).__init__()
 

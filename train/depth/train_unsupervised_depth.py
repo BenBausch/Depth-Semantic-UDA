@@ -20,6 +20,9 @@ from utils.constans import IGNORE_VALUE_DEPTH
 
 
 class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
+    """
+    Used for training on datasets that consist of RGB Images, like Cityscapes Sequence dataset
+    """
     def __init__(self, device_id, cfg, world_size=1):
         super(UnsupervisedDepthTrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 

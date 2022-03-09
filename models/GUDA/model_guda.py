@@ -142,6 +142,7 @@ class Guda(SemanticDepthFromMotionModelBase):
     # --------------------------------------------------------------------------
 
     def latent_features(self, images):
+        """Passes the images through the encoder to get the latent features"""
         return self.networks["resnet_encoder"](images)
 
     def predict_depth(self, features, dataset_id):
@@ -196,16 +197,16 @@ class Guda(SemanticDepthFromMotionModelBase):
         return poses
 
     def predict_semantic(self, features):
+        """Predict semantics using the latent features"""
         a = self.networks["semantic_decoder"](features)
         return a
 
     def forward(self, data, predict_depth=False, dataset_id=3, train=True):
         """
-        :param batch: batch of data to process
-        :param dataset_id: number of datasets in the list of datasets (source: 0, target:1, ...)
-        :param predict_depth: used to manually enforce depth prediction (for example: during specific samples in
-        validation for visualization purposes) Note: Don't use to manage depth prediction per dataset -->
-        set use_..._depth to True in the config of that specific dataset!
+        Performs multiple forward passes, one for each dataset. This is need because of the distributed data parallel
+        training, where a model is allowed to perform only a single forward pass before backward pass in order to keep
+        the gradients synced across the gpus (DDP Hooks into the forward passes)
+        :returns list of dictionary results, one for each dataset
         """
         all_results = []
         if train:
@@ -216,6 +217,14 @@ class Guda(SemanticDepthFromMotionModelBase):
         return all_results
 
     def single_forward(self, batch, dataset_id, predict_depth=False):
+        """
+        Forward pass on a single batch.
+        param batch: batch of data to process
+        :param dataset_id: number of datasets in the list of datasets (source: 0, target:1, ...)
+        :param predict_depth: used to manually enforce depth prediction (for example: during specific samples in
+        validation for visualization purposes) Note: Don't use to manage depth prediction per dataset -->
+        set use_..._depth to True in the config of that specific dataset!
+        """
         latent_features_batch = self.latent_features(batch[("rgb", 0)])
 
         results = {}

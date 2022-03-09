@@ -22,6 +22,9 @@ from utils import get_cross_entropy_weights
 
 
 class SupervisedSemanticTrainer(TrainSingleDatasetBase):
+    """
+    Training on datasets with semantic labels, like Synthia or Cityscapes Semantic dataset
+    """
     def __init__(self, device_id, cfg, world_size=1):
         super(SupervisedSemanticTrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 

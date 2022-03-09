@@ -35,17 +35,23 @@ except ImportError:
 
 
 def setup_multi_processing():
+    """
+    Set environment variables for ddp training.
+    """
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12344'
 
 
 def run_trainer(device_id, cfg, world_size, TrainerClass):
+    """Wrapper function to initiate the trainer"""
     trainer = TrainerClass(device_id, cfg, world_size)
     trainer.run()
 
 
 class TrainBase(metaclass=abc.ABCMeta):
+    """Base class for trainers"""
     def __init__(self, device_id, cfg, world_size=1):
+        """Loads the ddp or conventional model, datasets, optimizers, learning rate schedulers, ..."""
         self.cfg = cfg
 
         self.rank = device_id  # shall be defined also for 1 gpu training for less logical branching while training
@@ -83,8 +89,7 @@ class TrainBase(metaclass=abc.ABCMeta):
             numpy.random.seed(self.rank)
             random.seed(self.rank)
 
-
-        # printing some random parameters to make sure same parameters on all gpus
+        # printing some random parameters samples to make sure same parameters on all gpus
         for name, param in self.model.networks['pose_decoder'].named_parameters():
             if param.requires_grad:
                 print(name, param.data[0, 0, 0])
@@ -125,9 +130,11 @@ class TrainBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def train(self):
+        """Main training function to be implemented."""
         pass
 
     def save_checkpoint(self):
+        """Creates and saves a checkpoint of the model and the information necessary."""
         checkpoint = io_utils.IOHandler.gen_checkpoint(
             self.model.get_networks(),
             **{"optimizer": self.optimizer.state_dict(),
@@ -202,7 +209,6 @@ class TrainBase(metaclass=abc.ABCMeta):
         if self.rank == 0:
             print(str(obj))
 
-    # Define those methods that can be used for any kind of depth estimation algorithms
     @staticmethod
     def get_lr_scheduler(optimizer, cfg):
         assert isinstance(cfg.train.scheduler.type,
@@ -250,11 +256,20 @@ class TrainBase(metaclass=abc.ABCMeta):
         self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
 
     def get_wandb_depth_image(self, depth, batch_idx, caption_addon=''):
+        """
+        Creates a Wandb depth image with yellow (close) to far (black) encoding
+        :param depth: depth batch, prediction or ground truth
+        :param batch_idx: idx of batch in the epoch
+        :param caption_addon: string
+        """
         colormapped_depth = vdp(1 / depth)
         img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}' + caption_addon)
         return img
 
     def get_wandb_normal_image(self, depth, snr_module, caption_addon=''):
+        """
+        Creates a Wandb image of the surface normals with coordinate to rgb encoding x-->R, y-->G, z-->B
+        """
         points3d = snr_module.img_to_pointcloud(depth)
         normals = snr_module.get_normal_vectors(points3d)
 
@@ -265,6 +280,13 @@ class TrainBase(metaclass=abc.ABCMeta):
         return wandb.Image(normals_plot, caption=f'{caption_addon} Normal')
 
     def get_wandb_semantic_image(self, semantic, is_prediction=True, k=1, caption=''):
+        """
+        Creates a Wandb image of the semantic segmentation in cityscapes rgb encoding.
+        :param semantic: semantic sample
+        :param is_prediction: true if sample is a prediction
+        :param k: top k prediction to be plotted
+        :param caption: string
+        """
         if is_prediction:
             semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
         else:
@@ -273,9 +295,8 @@ class TrainBase(metaclass=abc.ABCMeta):
         return img
 
 
-# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
-#  are normalized...
 class TrainSingleDatasetBase(TrainBase, ABC):
+    """Used for training on a single dataset and validation on a second dataset."""
     def __init__(self, device_id, cfg, world_size=1):
         super(TrainSingleDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
 
@@ -300,6 +321,7 @@ class TrainSingleDatasetBase(TrainBase, ABC):
 
 
 class TrainSourceTargetDatasetBase(TrainBase, ABC):
+    """Used for training on two datasets (each sample gets an equal length) and validation on a second dataset."""
     def __init__(self, device_id, cfg, world_size=1):
         super(TrainSourceTargetDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
         # Get training and validation datasets for source and target

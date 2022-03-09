@@ -1,6 +1,4 @@
 # Project Imports
-import warnings
-
 import torch
 from torch import tensor
 from torch.utils.data import DataLoader
@@ -24,11 +22,17 @@ from torchvision import transforms
 from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 
 
-# fixme: if split is None, the whole dataset will be used no matter the mode 'train' or 'val', is this an appropriate
-#  behaviour
 class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
+    """
+    Class for handling the paths to the images and labels.
+    """
 
     def __init__(self, mode, split, cfg):
+        """
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param split: split name of the data
+        :param cfg: configuration
+        """
 
         if split is not None and not split in available_splits.keys():
             raise Exception('Non existing split selected!')
@@ -42,6 +46,13 @@ class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
                             f'script before using the Synthia dataset!')
 
     def get_rgb_image_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Gets all the RGB image paths.
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param frame_ids: ids of frames to be selected, * = all images
+        :param file_format: format of the files
+        :param split: split name of the data
+        """
         if split is None:  # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -58,6 +69,13 @@ class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
                 )
 
     def get_semantic_label_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Gets all the semantic label paths.
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param frame_ids: ids of frames to be selected, * = all images
+        :param file_format: format of the files
+        :param split: split name of the data
+        """
         if split is None:  # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -74,6 +92,13 @@ class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
                 )
 
     def get_gt_depth_image_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Gets all the depth label paths.
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param frame_ids: ids of frames to be selected, * = all images
+        :param file_format: format of the files
+        :param split: split name of the data
+        """
         if split is None:  # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -150,10 +175,15 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
     """
 
     def __init__(self, mode, split, cfg):
+        """
+        :param mode: mode of usage, synthia only supports 'train'
+        :param split: split name of the data, currently only None is supported
+        :param cfg: configuration
+        """
         # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
         assert len(cfg.dataset.rgb_frame_offsets) == 1
         assert cfg.dataset.rgb_frame_offsets[0] == 0
-
+        assert split is None, 'Synthia_Rand_Cityscapes currently does not support the spilt of the data!'
         assert mode == 'train', 'Synthia_Rand_Cityscapes does not support any other mode than train!'
 
         self.paths = _PathsSynthiaRandCityscapes(mode, split, cfg)
@@ -220,7 +250,6 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
         # todo: validate these values
         self.mean = torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
-        #self.var = tensor([[[0.073771872, 0.062956616, 0.062426906]]]).transpose(0, 2)
         self.var = tensor([[[1.0, 1.0, 1.0]]]).transpose(0, 2)
 
     def __len__(self):
@@ -423,15 +452,21 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
                 tf_prep.CV2HorizontalFlip(do_flip=do_flip),
                 tf_prep.ToInt64Array(),
-                tf_prep.Syntia_To_Cityscapes_Encoding(s_to_c_mapping=s_to_c_mapping,
-                                                      valid_classes=valid_classes,
-                                                      void_classes=void_classes,
-                                                      ignore_index=ignore_index)
+                tf_prep.SynthiaToCityscapesEncoding(s_to_c_mapping=s_to_c_mapping,
+                                                    valid_classes=valid_classes,
+                                                    void_classes=void_classes,
+                                                    ignore_index=ignore_index)
             ]
         )
 
     @staticmethod
     def tf_depth_train(tgt_size, do_flip):
+        """
+            Transformations of the depth label during training.
+            :param tgt_size: target size of the labels after resize operation
+            :param do_flip: True if the image should be horizontally flipped else False
+            :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
@@ -442,6 +477,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         )
 
     def get_valid_ids_and_names(self):
+        """Returns valid training class ids and the corresponding class names."""
         names_ids = {}
         for idx, name in enumerate(self.class_names):
             if idx in self.valid_classes:
@@ -450,7 +486,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         names = [names_ids[key_id] for key_id in ids]
         return ids, names
 
-    #---------------------------functions below are useless but need to be defined--------------------------------------
+    # ---------------------------functions below are useless but need to be defined--------------------------------------
     def transform_val(self, *args, **kwargs):
         pass
 
@@ -465,4 +501,3 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
     @staticmethod
     def tf_depth_val(*args, **kwargs):
         pass
-

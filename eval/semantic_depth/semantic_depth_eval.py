@@ -1,3 +1,7 @@
+# Basic script used for evaluation a single model on a validation dataset.
+# Depending on the model, I change the script if needed so this is not really a plug and play script for evaluating
+# every model
+
 # default python packages
 import sys
 

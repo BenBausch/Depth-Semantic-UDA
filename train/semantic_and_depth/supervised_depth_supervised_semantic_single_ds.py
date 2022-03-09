@@ -19,6 +19,9 @@ from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 
 
 class SemanticDepthTrainer(TrainSingleDatasetBase):
+    """
+    Trainer to train on datasets with semantic and depth labels, like Synthia
+    """
     def __init__(self, device_id, cfg, world_size=1):
         super(SemanticDepthTrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 

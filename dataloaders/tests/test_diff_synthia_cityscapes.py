@@ -16,6 +16,10 @@ import numpy as np
 
 
 class TestSynthiaDataset(unittest.TestCase):
+    """
+    This is not really a test class, but it is simply used to visualize and plot differences in the data
+    across cityscapes and synthia, to verify that they are loaded similarly
+    """
 
     def setUp(self):
         np.random.seed(0)

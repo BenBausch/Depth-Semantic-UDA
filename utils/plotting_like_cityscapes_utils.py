@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------------
+# Everything needed to plot semantic samples like in Cityscapes Semantic dataset
+# Plus a function to plot depth like in Monodepth2
+# ------------------------------------------------------------------------------
 # Package imports
 import matplotlib
 import numpy as np

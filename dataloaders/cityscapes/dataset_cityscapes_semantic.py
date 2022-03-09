@@ -248,7 +248,6 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
         self.img_norm = cfg.dataset.img_norm
 
         self.mean = torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
-        #self.var = torch.tensor([[[0.18696375, 0.19017339, 0.18720214]]]).transpose(0, 2)
         self.var = torch.tensor([[[1.0, 1.0, 1.0]]]).transpose(0, 2)
 
         self.do_normalization = self.cfg.dataset.img_norm
@@ -474,26 +473,8 @@ class CityscapesSemanticDataset(dataset_base.DatasetRGB, dataset_base.DatasetSem
             ]
         )
 
-    def decode_segmap(self, temp):
-        """
-        Copied from https://github.com/RogerZhangzz/CAG_UDA/blob/master/data/gta5_dataset.py
-        Decodes the class-id encoded segmentation map to an rgb encoded segmentation map.
-        """
-        r = temp.copy()
-        g = temp.copy()
-        b = temp.copy()
-        for l in range(0, self.n_classes):
-            r[temp == l] = self.label_colours[l][0]
-            g[temp == l] = self.label_colours[l][1]
-            b[temp == l] = self.label_colours[l][2]
-
-        rgb = np.zeros((temp.shape[0], temp.shape[1], 3))
-        rgb[:, :, 0] = r / 255.0
-        rgb[:, :, 1] = g / 255.0
-        rgb[:, :, 2] = b / 255.0
-        return rgb
-
     def get_valid_ids_and_names(self):
+        """Returns valid training class ids and the corresponding class names."""
         ids = []
         names = []
         for idx in self.valid_classes:

@@ -14,6 +14,7 @@ from utils.utils import info_gpu_memory
 
 
 class SemanticDecoderGUDA(nn.Module):
+    """Semantic Decoder from the 'Geometric Unsupervised Domain Adaptation for Semantic Segmentation' paper"""
     def __init__(self, num_ch_enc, num_classes, use_skips=True,
                  upsample_mode='nearest', num_ch_dec=[16, 32, 64, 128, 256]):
         super(SemanticDecoderGUDA, self).__init__()
