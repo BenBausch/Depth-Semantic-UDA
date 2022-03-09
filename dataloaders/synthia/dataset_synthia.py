@@ -22,11 +22,17 @@ from torchvision import transforms
 from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 
 
-# fixme: if split is None, the whole dataset will be used no matter the mode 'train' or 'val', is this an appropriate
-#  behaviour
 class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
+    """
+    Class for handling the paths to the images and labels.
+    """
 
     def __init__(self, mode, split, cfg):
+        """
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param split: split name of the data
+        :param cfg: configuration
+        """
 
         if split is not None and not split in available_splits.keys():
             raise Exception('Non existing split selected!')
@@ -40,6 +46,13 @@ class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
                             f'script before using the Synthia dataset!')
 
     def get_rgb_image_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Gets all the RGB image paths.
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param frame_ids: ids of frames to be selected, * = all images
+        :param file_format: format of the files
+        :param split: split name of the data
+        """
         if split is None:  # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -56,6 +69,13 @@ class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
                 )
 
     def get_semantic_label_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Gets all the semantic label paths.
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param frame_ids: ids of frames to be selected, * = all images
+        :param file_format: format of the files
+        :param split: split name of the data
+        """
         if split is None:  # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -72,6 +92,13 @@ class _PathsSynthiaRandCityscapes(PathsHandlerSemantic, PathsHandlerDepthDense):
                 )
 
     def get_gt_depth_image_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Gets all the depth label paths.
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param frame_ids: ids of frames to be selected, * = all images
+        :param file_format: format of the files
+        :param split: split name of the data
+        """
         if split is None:  # i.e. no specific subset of files is given, hence use all data
             return sorted(
                 glob.glob(
@@ -148,36 +175,61 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
     """
 
     def __init__(self, mode, split, cfg):
+        """
+        :param mode: mode of usage, synthia only supports 'train'
+        :param split: split name of the data, currently only None is supported
+        :param cfg: configuration
+        """
         # The dataset does not contain sequences therefore the offsets refer only to the selected RGB image(offset == 0)
         assert len(cfg.dataset.rgb_frame_offsets) == 1
         assert cfg.dataset.rgb_frame_offsets[0] == 0
-
+        assert split is None, 'Synthia_Rand_Cityscapes currently does not support the spilt of the data!'
         assert mode == 'train', 'Synthia_Rand_Cityscapes does not support any other mode than train!'
 
         self.paths = _PathsSynthiaRandCityscapes(mode, split, cfg)
 
         super(SynthiaRandCityscapesDataset, self).__init__(pathsObj=self.paths, cfg=cfg)
 
-        # Stuff realted to class encoding -------------------------------------------------------------
+        # Stuff related to class encoding -------------------------------------------------------------
         # class name index in list corresponds to id of label
         self.class_names = ['void', 'sky', 'Building', 'Road', 'Sidewalk', 'Fence', 'Vegetation', 'Pole', 'Car',
                             'Traffic_sign', 'Pedestrian', 'Bicycle', 'Motorcycle', 'Parking-slot', 'Road-work',
                             'Traffic_light', 'Terrain', 'Rider', 'Truck', 'Bus', 'Train', 'Wall', 'Lanemarking']
 
         self.synthia_id_to_synthia_name = {i: name for i, name in enumerate(self.class_names)}
+        self.synthia_id_to_cityscapes_id = {1: 10, 2: 2, 3: 0, 4: 1, 5: 4, 6: 8, 7: 5, 8: 13, 9: 7,
+                                            10: 11, 11: 18, 12: 17, 15: 6, 16: 9,
+                                            17: 12, 18: 14, 19: 15, 20: 16, 21: 3, 22: 0}
 
         # classes considered void have no equivalent valid label in cityscapes
         # See: https://www.cityscapes-dataset.com/dataset-overview/ for void and valid classes
-        self.valid_classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21]
-        self.void_classes = [0, 13, 14, 22]
+        if self.cfg.dataset.num_classes == 19:
+            self.synthia_id_to_cityscapes_id = {1: 10, 2: 2, 3: 0, 4: 1, 5: 4, 6: 8, 7: 5, 8: 13, 9: 7,
+                                                10: 11, 11: 18, 12: 17, 15: 6, 16: 9,
+                                                17: 12, 18: 14, 19: 15, 20: 16, 21: 3, 22: 0}
+            self.valid_classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 22]
+            self.void_classes = [0, 13, 14]
+        elif self.cfg.dataset.num_classes == 16:
+            self.synthia_id_to_cityscapes_id = {1: 9, 2: 2, 3: 0, 4: 1, 5: 4, 6: 8, 7: 5, 8: 12, 9: 7,
+                                                10: 10, 11: 15, 12: 14, 15: 6,
+                                                17: 11, 19: 13, 21: 3, 22: 0}
+            self.valid_classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 17, 19, 21, 22]
+            self.void_classes = [0, 13, 14, 16, 18, 20]
+        else:
+            raise ValueError(f'Synthia not implemented for {self.cfg.dataset.num_classes} classes.')
+
+        if cfg.dataset.debug:
+            print('Training on the following classes:\n name | synthia_id | training_id (cityscapes_id)')
+            for i in self.valid_classes:
+                print(f'{self.class_names[i]:<15} | {str(i):<2} | {str(self.synthia_id_to_cityscapes_id[i]):<2}')
+            print('Ignoring the following classes:\n name | synthia_id')
+            for i in self.void_classes:
+                print(f'{self.class_names[i]:<15} | {str(i):<2}')
 
         # cityscapes maps the ids of all the valid classes back to ids ranging from 0 to 18
         # (road initially labeled 7 remapped to label 0)
         # all other classes are considered void classes (pole group, guard rail, ...)
         # when talking about cityscapes label, we refer to the remapped labels
-        self.synthia_id_to_cityscapes_id = {1: 10, 2: 2, 3: 0, 4: 1, 5: 4, 6: 8, 7: 5, 8: 13, 9: 7,
-                                            10: 11, 11: 18, 12: 17, 15: 6, 16: 9,
-                                            17: 12, 18: 14, 19: 15, 20: 16, 21: 3}
 
         self.ignore_index = IGNORE_INDEX_SEMANTIC
         # will be assigned to void classes in the transformation
@@ -198,7 +250,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
         # todo: validate these values
         self.mean = torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
-        self.var = tensor([[[0.073771872, 0.062956616, 0.062426906]]]).transpose(0, 2)
+        self.var = tensor([[[1.0, 1.0, 1.0]]]).transpose(0, 2)
 
     def __len__(self):
         """
@@ -233,7 +285,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         if self.mode == 'train':
             rgb_imgs, gt_semantic, gt_depth_dense = self.transform_train(rgb_imgs, gt_semantic, gt_depth_dense)
         elif self.mode == 'val' or self.mode == 'test':
-            rgb_imgs, gt_semantic, gt_depth_dense = self.transform_val(rgb_imgs, gt_semantic, gt_depth_dense)
+            raise ValueError("Synthia only available for training")
         else:
             assert False, "The mode {} is not defined!".format(self.mode)
 
@@ -283,8 +335,12 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             :param gt_semantic: semantic ground truth of the image with offset = 0
             :return: dict of transformed rgb images and transformed label
         """
-        do_flip = random.random() > 0.5
-        do_aug = random.random() > 0.5
+        if self.cfg.dataset.debug:
+            do_flip = True
+            do_aug = True
+        else:
+            do_flip = random.random() > 0.5
+            do_aug = random.random() > 0.5
 
         # Get the transformation objects
         tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,
@@ -301,10 +357,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                                                    void_classes=self.void_classes,
                                                    ignore_index=self.ignore_index)
         tf_depth_dense_train = self.tf_depth_train(tgt_size=self.feed_img_size,
-                                                   do_flip=do_flip,
-                                                   min_depth=self.min_depth,
-                                                   max_depth=self.max_depth,
-                                                   ignore_value=self.ignore_value)
+                                                   do_flip=do_flip)
 
         # Apply transformations
         rgb_dict_tf = {}
@@ -314,38 +367,6 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         gt_semantic = tf_semantic_train(gt_semantic) if gt_semantic is not None else None
 
         gt_depth_dense = tf_depth_dense_train(gt_depth_dense) if gt_depth_dense is not None else None
-
-        return rgb_dict_tf, gt_semantic, gt_depth_dense
-
-    def transform_val(self, rgb_dict, gt_semantic, gt_depth_dense):
-        """
-            Transforms the rgb images and the semantic ground truth for validation.
-            :param gt_depth_dense: depth ground truth of the image with offset = 0
-            :param rgb_dict: dict of rgb images of a sequence, for this dataset it should be a one image sequence.
-            :param gt_semantic: semantic ground truth of the image with offset = 0
-            :return: dict of transformed rgb images and transformed label
-        """
-        # Get the transformation objects
-        tf_rgb_val = self.tf_rgb_val(tgt_size=self.feed_img_size,
-                                     do_normalization=self.do_normalization,
-                                     mean=self.mean,
-                                     var=self.var)
-        tf_semantic_val = self.tf_semantic_val(tgt_size=self.feed_img_size,
-                                               s_to_c_mapping=self.synthia_id_to_cityscapes_id,
-                                               valid_classes=self.valid_classes,
-                                               void_classes=self.void_classes,
-                                               ignore_index=self.ignore_index)
-
-        tf_depth_dense_val = self.tf_depth_val(tgt_size=self.feed_img_size)
-
-        # Apply transformations
-        rgb_dict_tf = {}
-        for k, img in rgb_dict.items():
-            rgb_dict_tf[k] = tf_rgb_val(img) if img is not None else None
-
-        gt_semantic = tf_semantic_val(gt_semantic) if gt_semantic is not None else None
-
-        gt_depth_dense = tf_depth_dense_val(gt_depth_dense) if gt_depth_dense is not None else None
 
         return rgb_dict_tf, gt_semantic, gt_depth_dense
 
@@ -360,8 +381,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             return None
         else:
             assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
-
-            img = pil.open(path_file)
+            img = pil.open(path_file).convert('RGB')
             return img
 
     def get_semantic(self, path_file):
@@ -393,15 +413,6 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             label = cv2.imread(path_file, cv2.IMREAD_UNCHANGED)[:, :, 0]
             return label
 
-    def get_valid_ids_and_names(self):
-        names_ids = {}
-        for idx, name in enumerate(self.class_names):
-            if idx in self.valid_classes:
-                names_ids[self.synthia_id_to_cityscapes_id[idx]] = self.synthia_id_to_synthia_name[idx]
-        ids = sorted([idx for idx in names_ids.keys()])
-        names = [names_ids[key_id] for key_id in ids]
-        return ids, names
-
     @staticmethod
     def tf_rgb_train(tgt_size, do_flip, do_aug, do_normalization, aug_params, mean, var):
         """
@@ -417,7 +428,7 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         """
         return transforms.Compose(
             [
-                tf_prep.PILResize(tgt_size, pil.BILINEAR),
+                tf_prep.PILResize(tgt_size, pil.BICUBIC),
                 tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ColorAug(do_aug, aug_params),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
@@ -441,15 +452,21 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
                 tf_prep.CV2HorizontalFlip(do_flip=do_flip),
                 tf_prep.ToInt64Array(),
-                tf_prep.Syntia_To_Cityscapes_Encoding(s_to_c_mapping=s_to_c_mapping,
-                                                      valid_classes=valid_classes,
-                                                      void_classes=void_classes,
-                                                      ignore_index=ignore_index)
+                tf_prep.SynthiaToCityscapesEncoding(s_to_c_mapping=s_to_c_mapping,
+                                                    valid_classes=valid_classes,
+                                                    void_classes=void_classes,
+                                                    ignore_index=ignore_index)
             ]
         )
 
     @staticmethod
-    def tf_depth_train(tgt_size, do_flip, min_depth, max_depth, ignore_value):
+    def tf_depth_train(tgt_size, do_flip):
+        """
+            Transformations of the depth label during training.
+            :param tgt_size: target size of the labels after resize operation
+            :param do_flip: True if the image should be horizontally flipped else False
+            :return: Transformation composition
+        """
         return transforms.Compose(
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
@@ -459,162 +476,28 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             ]
         )
 
-    @staticmethod
-    def tf_rgb_val(tgt_size, do_normalization, mean, var):
-        """
-        Transformations of the rgb image during validation.
-        :param tgt_size: target size of the images after resize operation
-        :param do_normalization: true if image should be normalized
-        :param mean: mean of R,G,B of rgb images
-        :param var: variance in R,G,B of rgb images
-        :return: Transformation composition
-        """
-        return transforms.Compose(
-            [
-                tf_prep.PILResize(tgt_size, pil.BILINEAR),
-                tf_prep.PrepareForNet(do_normalization, mean, var)
-            ]
-        )
+    def get_valid_ids_and_names(self):
+        """Returns valid training class ids and the corresponding class names."""
+        names_ids = {}
+        for idx, name in enumerate(self.class_names):
+            if idx in self.valid_classes:
+                names_ids[self.synthia_id_to_cityscapes_id[idx]] = self.synthia_id_to_synthia_name[idx]
+        ids = sorted([idx for idx in names_ids.keys()])
+        names = [names_ids[key_id] for key_id in ids]
+        return ids, names
+
+    # ---------------------------functions below are useless but need to be defined--------------------------------------
+    def transform_val(self, *args, **kwargs):
+        pass
 
     @staticmethod
-    def tf_semantic_val(tgt_size, s_to_c_mapping, valid_classes, void_classes, ignore_index):
-        """
-            Transformations of the label during training.
-            :param ignore_index: pixel will be labeled ignore_index if they are not part of a valid class
-            :param s_to_c_mapping: dict mapping Synthia classes to valid Cityscapes classes
-            :param valid_classes: list of valid classes
-            :param void_classes: list of non valid classes (such pixel will be set to ignore index)
-            :param tgt_size: target size of the labels after resize operation
-            :return: Transformation composition
-        """
-        return transforms.Compose(
-            [
-                tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
-                tf_prep.ToInt64Array(),
-                tf_prep.Syntia_To_Cityscapes_Encoding(s_to_c_mapping=s_to_c_mapping,
-                                                      valid_classes=valid_classes,
-                                                      void_classes=void_classes,
-                                                      ignore_index=ignore_index)
-            ]
-        )
+    def tf_rgb_val(*args, **kwargs):
+        pass
 
     @staticmethod
-    def tf_depth_val(tgt_size):
-        return transforms.Compose(
-            [
-                tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
-                tf_prep.TransformToDepthSynthia(),
-                tf_prep.tf.ToTensor()
-            ]
-        )
+    def tf_semantic_val(*args, **kwargs):
+        pass
 
-
-if __name__ == "__main__":
-    from cfg.config_dataset import get_cfg_dataset_defaults
-    import sys
-
-    path = sys.argv[1]
-    cfg = get_cfg_dataset_defaults()
-    cfg.merge_from_file(path)
-    cfg.freeze()
-
-    img_h = cfg.dataset.feed_img_size[1]
-    img_w = cfg.dataset.feed_img_size[0]
-
-    ds = SynthiaRandCityscapesDataset(mode='val', split=None, cfg=cfg)
-    batch_size = 1
-    ds = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True, drop_last=True)
-    import wandb
-    from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME, CITYSCAPES_CLASS_IDS, CITYSCAPES_CLASS_NAMES, \
-    CITYSCAPES_ID_TO_COLOR
-    from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb, visu_depth_prediction
-    import matplotlib.patches as mpatches
-    import matplotlib.colors as colors
-
-    #wandb.init(project='synthia')
-
-    torch.set_printoptions(precision=9)
-
-    for i, data in enumerate(ds):
-        #img0 = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0), caption="RGB")
-        #img_semantic = wandb.Image(data[('rgb', 0)].squeeze(0).numpy().transpose(1, 2, 0),
-        #                           masks={'ground_truth': {
-        #                               'mask_data': data['semantic'].squeeze(0).numpy(),
-        #                               'class_labels': CITYSCAPES_ID_TO_NAME
-        #                           }}, caption="Semantic")
-        #img_depth = wandb.Image(data['depth_dense'].squeeze(0).numpy().transpose(1, 2, 0), caption="Depth")
-        #wandb.log({'images': [img0, img_semantic, img_depth]})
-        plt.imshow(visu_depth_prediction(1/data['depth_dense'][0]))
-        plt.show()
-        if i == 10:
-            break
-
-    """mean = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
-    for i, data in enumerate(ds):
-        #print(i)
-        data = data[('rgb', 0)].to('cuda:0')
-        data = data.view(data.size(0), data.size(1), -1)
-        mean += data.mean(2).sum(0) / batch_size
-    print(mean / len(ds))
-
-    print('Calculating var:')
-    var = torch.tensor([0.0, 0.0, 0.0]).to('cuda:0')
-    for i, data in enumerate(ds):
-        #print(i)
-        data = data[('rgb', 0)].to('cuda:0')
-        # data = data.view(data.size(0), data.size(1), -1)
-        var += torch.sum(((data - torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)) ** 2), dim=(0, 2, 3)) / (batch_size * img_h * img_w)
-        print(var / (i + 1))
-    var = var / len(ds)"""
-    r"""data = next(iter(ds))
-    for i, data in enumerate(ds):
-        if i == 10:
-            break
-        data = data
-    plt.subplot(2, 2, 1)
-    plt.imshow(data[('rgb', 0)].numpy().transpose(1, 2, 0))
-    plt.subplot(2, 2, 2)
-
-    from utils.plotting_utils import CITYSCAPES_CLASS_NAMES,CITYSCAPES_ID_TO_COLOR,CITYSCAPES_CLASS_IDS,\
-        cityscapes_cmap_norm, cityscapes_cmap
-    import matplotlib.patches as mpatches
-    import matplotlib.colors as colors
-
-    patches = [mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[i]), label=f'{i}. {CITYSCAPES_CLASS_NAMES[i]}') for
-               i in
-               range(len(CITYSCAPES_CLASS_IDS) - 1)]
-    patches.append(
-        mpatches.Patch(color=colors.to_rgba(CITYSCAPES_ID_TO_COLOR[250]), label=f'{250}. {CITYSCAPES_CLASS_NAMES[-1]}'))
-
-    im = plt.imshow(data['semantic'], cmap=cityscapes_cmap, norm=cityscapes_cmap_norm)
-
-    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-    plt.subplot(2, 2, 3)
-
-    file = r'/data/SYNTHIA_RAND_CITYSCAPES/RAND_CITYSCAPES/GT/LABELS/0000631.png'
-
-    import torch
-    print(torch.max(data['depth_dense']))
-    plt.imshow(data['depth_dense'].squeeze(0))
-    plt.colorbar()
-
-    plt.show()
-    semantic = ds.get_semantic(file)
-    plt.subplot(1, 2, 1)
-    plt.imshow(semantic)
-    print(semantic.shape)
-    tran = ds.tf_semantic_train(tgt_size=cfg.dataset.feed_img_size,
-                                do_flip=False,
-                                s_to_c_mapping=ds.synthia_id_to_cityscapes_id,
-                                valid_classes=ds.valid_classes,
-                                void_classes=ds.void_classes,
-                                ignore_index=ds.ignore_index)
-    semantic = tran(semantic)
-    plt.subplot(1, 2, 2)
-    plt.imshow(semantic)
-    plt.show()
-    print(semantic.shape)"""
-    r"""file = r'C:\Users\benba\Documents\University\Masterarbeit\data\SYNTHIA_RAND_CITYSCAPES\RAND_CITYSCAPES\Depth\Depth\0000638.png'
-    d = np.array(pil.open(file).convert('L'))
-    print(d)"""
+    @staticmethod
+    def tf_depth_val(*args, **kwargs):
+        pass

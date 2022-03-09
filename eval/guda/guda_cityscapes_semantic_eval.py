@@ -6,7 +6,7 @@ import models
 import dataloaders
 from cfg.config_training import create_configuration, to_dictionary
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb, \
-    CITYSCAPES_ID_TO_NAME
+    CITYSCAPES_ID_TO_NAME_19
 from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from losses.metrics import MIoU
 
@@ -18,6 +18,7 @@ import wandb
 
 
 def evaluate_model(cfg):
+
     wandb.init(project=f"{cfg.experiment_name}_eval", config=to_dictionary(cfg))
     print(cfg.model.type)
     model = models.get_model(cfg.model.type, cfg)
@@ -85,12 +86,12 @@ def evaluate_model(cfg):
     mean_iou_13, iou_13 = miou_13.get_miou()
     mean_iou_16, iou_16 = miou_16.get_miou()
 
-    names = [CITYSCAPES_ID_TO_NAME[i] for i in CITYSCAPES_ID_TO_NAME.keys()]
+    names = [CITYSCAPES_ID_TO_NAME_19[i] for i in CITYSCAPES_ID_TO_NAME_19.keys()]
     bar_data = [[label, val] for (label, val) in zip(names, iou_13)]
     table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
     wandb.log({'IOU per 13 Class': wandb.plot.bar(table, "Classes", "IOU", title="IOU per 13 Class"),
                'Mean IOU per 13 Classes': mean_iou_13})
-    names = [CITYSCAPES_ID_TO_NAME[i] for i in CITYSCAPES_ID_TO_NAME.keys()]
+    names = [CITYSCAPES_ID_TO_NAME_19[i] for i in CITYSCAPES_ID_TO_NAME_19.keys()]
     bar_data = [[label, val] for (label, val) in zip(names, iou_16)]
     table = wandb.Table(data=bar_data, columns=(["Classes", "IOU"]))
     wandb.log({'IOU per 16 Class': wandb.plot.bar(table, "Classes", "IOU", title="IOU per 16 Class"),

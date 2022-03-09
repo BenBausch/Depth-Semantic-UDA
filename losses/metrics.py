@@ -7,9 +7,8 @@ import matplotlib.pyplot as plt
 
 class MIoU:
     """
-    Mean Intersection Over Union
-    Code based on https://www.kaggle.com/ligtfeather/semantic-segmentation-is-easy-with-pytorch and adapted to calculate
-    MIoU over whole dataset.
+    Mean Intersection Over Union. Calculates MIOU as the division of the sum of all intersection pixels over the dataset
+    for a given class c and all union pixels over the whole dataset for the same class c.
     """
 
     def __init__(self, num_classes, ignore_classes=None, ignore_index=250):
@@ -21,7 +20,7 @@ class MIoU:
         if ignore_classes is not None:
             assert len(ignore_classes) == len(self.classes)
             self.classes = self.classes[ignore_classes]
-            print(self.classes)
+        print(len(self.classes))
 
     def update(self, mask_pred, mask_gt):
         """
@@ -64,6 +63,12 @@ class DepthEvaluator:
         self.use_garg_crop = use_garg_crop
 
     def depth_losses_as_string(self, depth_gt, depth_pred):
+        """
+        Returns the depth loss as formatted string.
+        :param depth_gt: depth ground truth
+        :param depth_pred: depth prediction
+        :return: string describing depth error
+        """
         depth_losses = self.compute_depth_losses(depth_gt=depth_gt, depth_pred=depth_pred)
         loss_string = 'Losses: \n'
         for metric, value in depth_losses.items():

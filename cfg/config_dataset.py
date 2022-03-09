@@ -23,6 +23,7 @@ cfg_dataset.dataset.img_norm = True
 cfg_dataset.dataset.num_classes = 1
 cfg_dataset.dataset.rgb_frame_offsets = []
 cfg_dataset.dataset.sequence_dataset = False
+cfg_dataset.dataset.debug = False
 
 # ********************************************************************
 # /----- Augmentation parameters
@@ -69,4 +70,3 @@ def get_cfg_dataset_defaults():
     # Return a clone so that the defaults will not be altered
     # This is for the "local variable" use pattern
     return cfg_dataset.clone()
-

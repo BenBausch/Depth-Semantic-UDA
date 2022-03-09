@@ -1,16 +1,12 @@
 from models.monodepth.model_md2 import Monodepth2
 from models.GUDA.model_guda import Guda
-
+from models.deeplabV2_dada.deepLabV2Depth import DeepLabV2DADA
 
 def get_model(model_name, *args):
     """
     """
     if model_name not in available_models:
         raise NotImplementedError('Model {} is not yet implemented'.format(model_name))
-    elif model_name == 'packnet':
-        # TODO remove this if when packnet is properly implemented
-        raise NotImplementedError('Packnet implementation is depricated, ' +
-                                  'please update implementation to new structure of repo')
     else:
         try:
             return available_models[model_name](*args)
@@ -21,5 +17,6 @@ def get_model(model_name, *args):
 
 available_models = {
     'guda': Guda,
+    'dada_modif': DeepLabV2DADA,
     'monodepth2': Monodepth2
 }

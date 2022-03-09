@@ -110,3 +110,4 @@ wincertstore==0.2
 yacs==0.1.8
 yaspin==2.1.0
 zipp==3.6.0
+seaborn

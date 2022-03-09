@@ -11,7 +11,8 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
 
-def evaluate_model(cfg):
+def evaluate_dataset(cfg):
+    """Used to analyse depth ranges on a dataset"""
     dataset = dataloaders.get_dataset(cfg.dataset.name,
                                       'train',
                                       cfg.dataset.split,
@@ -41,11 +42,10 @@ def evaluate_model(cfg):
             plt.show()
 
 
-
 if __name__ == "__main__":
     path = sys.argv[1]
     print(f'Evaluating using {path} configuration file!')
     cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(path)
     cfg.freeze()
-    evaluate_model(cfg)
+    evaluate_dataset(cfg)

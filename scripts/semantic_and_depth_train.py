@@ -23,4 +23,3 @@ if __name__ == "__main__":
         depth_trainer = SemanticDepthTrainer(0, cfg)
         depth_trainer.run()
 
-

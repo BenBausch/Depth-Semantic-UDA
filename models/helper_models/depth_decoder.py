@@ -13,6 +13,9 @@ from models.helper_models.layers import *
 
 
 class DepthDecoderMONODEPTH2(nn.Module):
+    """
+    Depth decoder from the 'Unsupervised learning of depth and ego-motion from video' paper
+    """
     def __init__(self, num_ch_enc, scales=range(4), num_output_channels=1, use_skips=True, upsample_mode='nearest'):
         super(DepthDecoderMONODEPTH2, self).__init__()
 
@@ -51,7 +54,6 @@ class DepthDecoderMONODEPTH2(nn.Module):
                 self.convs[f"dispconv_{i}"] = Conv3x3(self.num_ch_dec[i], self.num_output_channels)
                 self.ordered_layers.append(f"dispconv_{i}")
 
-        self.decoder = nn.ModuleList(list(self.convs.values()))
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_features):
@@ -103,7 +105,6 @@ class DepthDecoderDADA(nn.Module):
         self.enc4_2.weight.data.normal_(0, 0.01)
         self.enc4_3.weight.data.normal_(0, 0.01)
         self.relu = nn.ReLU(inplace=True)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_features):
         x4_enc = self.enc4_1(input_features)
@@ -111,5 +112,5 @@ class DepthDecoderDADA(nn.Module):
         x4_enc = self.enc4_2(x4_enc)
         x4_enc = self.relu(x4_enc)
         x4_enc = self.enc4_3(x4_enc)
-        raw_sigmoid = nn.sigmoid(torch.mean(x4_enc, dim=1, keepdim=True))
-        return x4_enc, raw_sigmoid
+        depth = torch.mean(x4_enc, dim=1, keepdim=True)
+        return x4_enc, depth

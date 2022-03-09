@@ -2,10 +2,20 @@ import numpy
 import numpy as np
 import torch
 import PIL.Image as pil
+import torchvision.transforms
 from torchvision import transforms as tf
 import cv2
 
+# own modules
+from utils.decorators import deprecated
+
+
 class PrepareForNet(object):
+    """
+    Turns data into a double tensor and optionally normalizes the data by subtracting the mean and
+    dividing by the variance.
+    """
+
     def __init__(self, do_normaliazion=False, mean=None, var=None):
         self.to_tensor = tf.transforms.ToTensor()
         self.do_norm = do_normaliazion
@@ -26,8 +36,9 @@ class PrepareForNet(object):
         return sample
 
 
-# Wrapper for the PIL resize method to be able to use it in the Compose structure later
 class PILResize(object):
+    """Wrapper for the PIL resize method to be able to use it in the Compose structure of the datasets"""
+
     def __init__(self, size, interpolation, box=None, reducing_gap=None):
         self.size = size
         self.interpolation = interpolation
@@ -38,8 +49,9 @@ class PILResize(object):
         return sample.resize(self.size, resample=self.interpolation, box=self.box, reducing_gap=self.reducing_gap)
 
 
-# Wrapper for the cv2 resize method to be able to use it in the Compose structure later
 class CV2Resize(object):
+    """Wrapper for the cv2 resize method to be able to use it in the Compose structure of the datasets"""
+
     def __init__(self, size, interpolation, box=None, reducing_gap=None):
         self.size = size
         self.interpolation = interpolation
@@ -50,8 +62,9 @@ class CV2Resize(object):
         return cv2.resize(sample, dsize=self.size, interpolation=self.interpolation)
 
 
-# Wrapper for the PIL transpose method to be able to use it in the Compose structure later
 class PILHorizontalFlip(object):
+    """Wrapper for the PIL transpose method to be able to use it in the Compose structure of the datasets"""
+
     def __init__(self, do_flip):
         self.do_flip = do_flip
 
@@ -62,8 +75,10 @@ class PILHorizontalFlip(object):
             sample = sample
         return sample
 
-# Wrapper for the CV2 flip method to be able to use it in the Compose structure later
+
 class CV2HorizontalFlip(object):
+    """Wrapper for the CV2 flip method to be able to use it in the Compose structure of the datasets"""
+
     def __init__(self, do_flip):
         self.do_flip = do_flip
 
@@ -74,8 +89,9 @@ class CV2HorizontalFlip(object):
             return sample
 
 
-# Wrapper for the PIL transpose method to be able to use it in the Compose structure later
 class ColorAug(object):
+    """Wrapper for the PIL transpose method to be able to use it in the Compose structure of the datasets"""
+
     def __init__(self, do_aug, aug_params):
         self.do_aug = do_aug
         if do_aug:
@@ -98,6 +114,8 @@ class ColorAug(object):
 
 # --------------------------------------------Cityscapes----------------------------------
 class ToInt32Array(object):
+    """Transforms the data (PIL Image) into a numpy int32 array"""
+
     def __init__(self):
         pass
 
@@ -106,7 +124,12 @@ class ToInt32Array(object):
 
 
 class CityscapesEncodeSegmentation(object):
-    def __init__(self,valid_classes, class_map, ignore_index, label_color):
+    """
+    Encodes valid classes the semantic label of cityscapes into labels of the training ids and the rest to the
+    ignore_index
+    """
+
+    def __init__(self, valid_classes, class_map, ignore_index, label_color):
         self.valid_classes = valid_classes
         self.class_map = class_map
         self.ignore_index = ignore_index
@@ -124,8 +147,28 @@ class CityscapesEncodeSegmentation(object):
         return torch.LongTensor(sample)
 
 
+class CropCarAway(object):
+    """
+    Crops the lower 15 percent of the Image away, this is used only for training on the cityscapes sequence dataset.
+    The reflectiveness of the engine hood, which is always positioned in the lower half of the image,
+    can create unwanted artefacts during training.
+    """
+
+    def __init__(self, img_height, img_width):
+        self.height, self.width = int(img_height * 0.85), int(img_width * 0.85)
+
+    def __call__(self, sample):
+        return torchvision.transforms.functional.crop(img=sample,
+                                                      top=0,
+                                                      left=0,
+                                                      height=self.height,
+                                                      width=self.width)
+
+
 # -------------------------------Synthia Rand Cityscapes----------------------------------
-class Syntia_To_Cityscapes_Encoding(object):
+class SynthiaToCityscapesEncoding(object):
+    """Encodes the Synthia labels into Cityscapes training labels."""
+
     def __init__(self, s_to_c_mapping, valid_classes, void_classes, ignore_index):
         self.s_to_c = s_to_c_mapping
         self.valid_classes = valid_classes
@@ -143,17 +186,20 @@ class Syntia_To_Cityscapes_Encoding(object):
 
 
 class TransformToDepthSynthia(object):
+    """Transforms the depth ground truth of Synthia given in centimeters into meters."""
+
     def __init__(self):
         pass
 
     def __call__(self, sample):
-        return np.array(sample).astype(np.float32) / 100 # fix me find out number by which to divide
+        return np.array(sample).astype(np.float32) / 100
 
 
 class MaskPixelOutsideDepthRange(object):
     """
-    set the depth value of pixels, that have depth value outside the specified range, to ignore_value.
+    Set the depth value of pixels, that have depth value outside the specified range, to ignore_value.
     """
+
     def __init__(self, min_depth, max_depth, ignore_value):
         self.min_depth = min_depth
         self.max_depth = max_depth
@@ -167,10 +213,11 @@ class MaskPixelOutsideDepthRange(object):
         return sample
 
 
-
-
 # ------------------------------------------GTA5------------------------------------------
+@deprecated
 class ToInt64Array(object):
+    """Transforms the data (e.g. PIL Image) into an numpy int64 array"""
+
     def __init__(self):
         pass
 
@@ -179,8 +226,10 @@ class ToInt64Array(object):
         return sample
 
 
+@deprecated
+class EncodeSegmentationGTA5(object):
+    """Encodes the GTA5 semantic labels into Cityscapes traingin labels"""
 
-class EncodeSegmentation(object):
     def __init__(self, void_classes, valid_classes, class_map, ignore_index):
         self.void_classes = void_classes
         self.valid_classes = valid_classes
@@ -205,6 +254,7 @@ class EncodeSegmentation(object):
 
 
 # ------------------------------------------Kitti-----------------------------------------
+@deprecated
 class TransformToDepthKitti(object):
     def __init__(self):
         pass
@@ -214,6 +264,7 @@ class TransformToDepthKitti(object):
 
 
 # ------------------------------------------Kalimu----------------------------------------
+@deprecated
 class TransformToDepthKalimu(object):
     def __init__(self):
         pass

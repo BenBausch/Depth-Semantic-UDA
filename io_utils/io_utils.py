@@ -8,13 +8,19 @@ class IOHandler:
     """
     Class for handling model saving and model loading.
     """
+
     def __init__(self, path_base):
         self.path_base = path_base
 
-    # ToDo: Specify the best model and save it as such
     def save_checkpoint(self, info, checkpoint):
+        """
+        Saves the model as .pth file
+        :param info: information on the run
+        :param checkpoint: checkpoint of the model, see gen.checkpoint
+        :return:
+        """
         # Create folder
-        path_save_folder = os.path.join(self.path_base, info["time"] + "_" + info["dataset"],  "checkpoints")
+        path_save_folder = os.path.join(self.path_base, info["time"] + "_" + info["dataset"], "checkpoints")
 
         if not os.path.exists(path_save_folder):
             os.makedirs(path_save_folder)
@@ -50,11 +56,20 @@ class IOHandler:
 
     @staticmethod
     def load_cfg(path_cfg):
+        """
+            Creates a configuration from a saved model.
+        """
         cfg = create_configuration(path_cfg)
         return cfg
 
     @staticmethod
     def load_weights(checkpoint, models, optimizer=None):
+        """
+        Loads the weights into the different submodules.
+        :param checkpoint: the checkpoint to be loaded
+        :param models: the model without the loaded weights
+        :param optimizer: the optimizer used
+        """
         # Go through each model and update weights with those stored in the checkpoint
         for model_name, model in models.items():
             model.load_state_dict(checkpoint[model_name])
@@ -73,6 +88,7 @@ class IOHandler:
 
     @staticmethod
     def gen_checkpoint(models, **kwargs):
+        """Generates a checkpoint from a given model"""
         checkpoint = {k: val for k, val in kwargs.items()}
         models_dict = {k: val.state_dict() for k, val in models.items()}
         checkpoint.update(models_dict)
@@ -80,6 +96,12 @@ class IOHandler:
 
     @staticmethod
     def load_checkpoint(path_base_checkpoint, filename_checkpoint, device_id):
+        """
+        Loads the checkpoint from the file path
+        :param path_base_checkpoint: path to the folder containing the checkpoint
+        :param filename_checkpoint: the filename of the checkpoint
+        :param device_id: the id of the device on which to load the weights on, for cuda:0 the id is 0
+        """
         path_checkpoint = os.path.join(path_base_checkpoint, 'checkpoints', filename_checkpoint)
         assert os.path.exists(path_checkpoint), "The path {} does not exist!".format(path_checkpoint)
         checkpoint = torch.load(path_checkpoint, map_location=torch.device(device_id))

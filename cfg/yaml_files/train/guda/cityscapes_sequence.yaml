@@ -1,6 +1,6 @@
 dataset:
     name: 'cityscapes_sequence'
-    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit_sequence\'
+    path: 'D:\Depth-Semantic-UDA\data\Cityscapes_datasets\leftImg8bit_sequence'
     feed_img_size: [ 512, 256 ]
     use_sparse_depth: False
     use_dense_depth: False
@@ -9,9 +9,9 @@ dataset:
     split: None
     camera: 'pinhole'
     shuffle: True
-    num_classes: 19
+    num_classes: 16
     min_depth : 0.01
-    max_depth : 100.0
+    max_depth : 100.00
     rgb_frame_offsets: [0, -1, +1]
     sequence_dataset: True
 

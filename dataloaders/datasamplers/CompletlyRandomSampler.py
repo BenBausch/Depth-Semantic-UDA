@@ -27,7 +27,9 @@ class CompletelyRandomSampler(Sampler):
 
     def __iter__(self):
         n = len(self.data_source)
-        return iter(torch.randint(low=0, high=n, size=(self.num_samples,), dtype=torch.int64))
+        id_list = torch.randint(low=0, high=n, size=(self.num_samples,), dtype=torch.int64)
+        print(f'First 10 samples ids for length {n} dataset: {[id_list[idx] for idx in range(10)]}')
+        return iter(id_list)
 
     def __len__(self):
         return self.num_samples

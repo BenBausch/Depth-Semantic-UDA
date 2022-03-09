@@ -3,23 +3,26 @@ Create an abstract class to force all subclasses to define the methods provided 
 """
 import os
 import abc
+import random
 from abc import ABC
-# Own classes
-from cfg.config_training import to_dictionary
+import re
 
+# Own classes
+import numpy.random
+import numpy as np
+from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
+from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
+from cfg.config_training import to_dictionary
 import models
 import dataloaders
-from dataloaders.datasamplers.CompletlyRandomSampler import CompletelyRandomSampler
 from io_utils import io_utils
 from datetime import datetime
-from utils.utils import info_gpu_memory
 from dataloaders.datasamplers import get_sampler
 
 # PyTorch
 import torch
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
-import torch.nn as nn
 from models.helper_models.custom_data_parallel import CustomDistributedDataParallel
 import torch.distributed as dist
 import wandb
@@ -32,17 +35,23 @@ except ImportError:
 
 
 def setup_multi_processing():
+    """
+    Set environment variables for ddp training.
+    """
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12344'
 
 
 def run_trainer(device_id, cfg, world_size, TrainerClass):
+    """Wrapper function to initiate the trainer"""
     trainer = TrainerClass(device_id, cfg, world_size)
     trainer.run()
 
 
 class TrainBase(metaclass=abc.ABCMeta):
+    """Base class for trainers"""
     def __init__(self, device_id, cfg, world_size=1):
+        """Loads the ddp or conventional model, datasets, optimizers, learning rate schedulers, ..."""
         self.cfg = cfg
 
         self.rank = device_id  # shall be defined also for 1 gpu training for less logical branching while training
@@ -50,7 +59,6 @@ class TrainBase(metaclass=abc.ABCMeta):
             #  setup Multi_device
             self.world_size = world_size
             torch.cuda.set_device(device_id)
-            torch.manual_seed(0)  # fixme add seed to cfg
 
             dist.init_process_group(
                 backend='nccl',
@@ -77,9 +85,20 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         if self.cfg.device.multiple_gpus:
             self.model = CustomDistributedDataParallel(self.model, device_ids=[device_id], find_unused_parameters=True)
+            torch.manual_seed(self.rank)
+            numpy.random.seed(self.rank)
+            random.seed(self.rank)
+
+        # printing some random parameters samples to make sure same parameters on all gpus
+        for name, param in self.model.networks['pose_decoder'].named_parameters():
+            if param.requires_grad:
+                print(name, param.data[0, 0, 0])
+                print(name, param.data[7, 0, 0])
+                print(name, param.data[2, 0, 0])
+            break
 
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
-                                            self.model.parameters_to_train,
+                                            self.model.params_to_train(self.cfg.train.optimizer.learning_rate),
                                             self.cfg.train.optimizer.learning_rate)
 
         # Initialization of the optimizer and lr scheduler
@@ -111,9 +130,11 @@ class TrainBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def train(self):
+        """Main training function to be implemented."""
         pass
 
     def save_checkpoint(self):
+        """Creates and saves a checkpoint of the model and the information necessary."""
         checkpoint = io_utils.IOHandler.gen_checkpoint(
             self.model.get_networks(),
             **{"optimizer": self.optimizer.state_dict(),
@@ -188,7 +209,6 @@ class TrainBase(metaclass=abc.ABCMeta):
         if self.rank == 0:
             print(str(obj))
 
-    # Define those methods that can be used for any kind of depth estimation algorithms
     @staticmethod
     def get_lr_scheduler(optimizer, cfg):
         assert isinstance(cfg.train.scheduler.type,
@@ -220,10 +240,63 @@ class TrainBase(metaclass=abc.ABCMeta):
             raise NotImplementedError(
                 "The optimizer ({}) is not yet implemented.".format(type_optimizer))
 
+    def set_train(self):
+        for m in self.model.networks.values():
+            m.train()
 
-# TODO: You might not be able to normalize any camera model. So maybe we shouldn't assume that the camera intrinsics
-#  are normalized...
+    def set_eval(self):
+        for m in self.model.networks.values():
+            m.eval()
+
+    def set_from_checkpoint(self):
+        """
+        Set the parameters to the parameters of the safed checkpoints.
+        """
+        # get epoch from file name
+        self.epoch = int(re.match("checkpoint_epoch_([0-9]*).pth", self.cfg.checkpoint.filename).group(1)) + 1
+
+    def get_wandb_depth_image(self, depth, batch_idx, caption_addon=''):
+        """
+        Creates a Wandb depth image with yellow (close) to far (black) encoding
+        :param depth: depth batch, prediction or ground truth
+        :param batch_idx: idx of batch in the epoch
+        :param caption_addon: string
+        """
+        colormapped_depth = vdp(1 / depth)
+        img = wandb.Image(colormapped_depth, caption=f'Depth Map of {batch_idx}' + caption_addon)
+        return img
+
+    def get_wandb_normal_image(self, depth, snr_module, caption_addon=''):
+        """
+        Creates a Wandb image of the surface normals with coordinate to rgb encoding x-->R, y-->G, z-->B
+        """
+        points3d = snr_module.img_to_pointcloud(depth)
+        normals = snr_module.get_normal_vectors(points3d)
+
+        normals_plot = normals * 255
+
+        normals_plot = normals_plot[0].detach().cpu().numpy().transpose(1, 2, 0).astype(np.uint8)
+
+        return wandb.Image(normals_plot, caption=f'{caption_addon} Normal')
+
+    def get_wandb_semantic_image(self, semantic, is_prediction=True, k=1, caption=''):
+        """
+        Creates a Wandb image of the semantic segmentation in cityscapes rgb encoding.
+        :param semantic: semantic sample
+        :param is_prediction: true if sample is a prediction
+        :param k: top k prediction to be plotted
+        :param caption: string
+        """
+        if is_prediction:
+            semantic = torch.topk(semantic, k=k, dim=0, sorted=True).indices[k - 1].unsqueeze(0)
+        else:
+            semantic = semantic.unsqueeze(0)
+        img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
+        return img
+
+
 class TrainSingleDatasetBase(TrainBase, ABC):
+    """Used for training on a single dataset and validation on a second dataset."""
     def __init__(self, device_id, cfg, world_size=1):
         super(TrainSingleDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
 
@@ -248,6 +321,7 @@ class TrainSingleDatasetBase(TrainBase, ABC):
 
 
 class TrainSourceTargetDatasetBase(TrainBase, ABC):
+    """Used for training on two datasets (each sample gets an equal length) and validation on a second dataset."""
     def __init__(self, device_id, cfg, world_size=1):
         super(TrainSourceTargetDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
         # Get training and validation datasets for source and target
@@ -259,7 +333,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[1],
                                 sample_completely_random=True,
-                                num_samples=2975)
+                                num_samples=int(2975/torch.cuda.device_count()))
         print(f'Length Target Train Loader: {len(self.target_train_loader)}')
 
         self.target_val_loader, self.target_num_val_files = \
@@ -279,7 +353,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[0],
                                 sample_completely_random=True,
-                                num_samples=2975)
+                                num_samples=int(2975/torch.cuda.device_count()))
         print(f'Length Source Train Loader: {len(self.source_train_loader)}')
         # Get number of total steps to compute remaining training time later
         # calculate time using target dataset length

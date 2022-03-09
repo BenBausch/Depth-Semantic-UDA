@@ -1,6 +1,6 @@
 import matplotlib.pyplot
 from torch.utils.data import DataLoader
-
+from utils.decorators import deprecated
 import time
 
 from models.base.model_base import SemanticDepthFromMotionModelBase
@@ -10,7 +10,7 @@ from models.helper_models.semantic_decoder import SemanticDecoderGUDA
 from models.helper_models.pose_decoder import PoseDecoder
 from models.helper_models.layers import *
 
-
+@deprecated
 class Guda(SemanticDepthFromMotionModelBase):
 
     # --------------------------------------------------------------------------
@@ -239,7 +239,7 @@ class Guda(SemanticDepthFromMotionModelBase):
     # -----------------------------Helper-Methods-------------------------------
     # --------------------------------------------------------------------------
 
-    def params_to_train(self):
+    def params_to_train(self, *args):
         """
         Get all the trainable parameters.
         """

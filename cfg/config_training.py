@@ -182,7 +182,6 @@ def to_dictionary(value):
         return value
 
 
-
 if __name__ == '__main__':
     configuration_path = r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train' \
                          r'\guda\train_guda_synthia_cityscapes.yaml'

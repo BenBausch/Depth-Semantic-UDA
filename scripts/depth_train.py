@@ -3,7 +3,7 @@ import sys
 import torch.cuda
 import torch.multiprocessing as mp
 from train.base.train_base import run_trainer,setup_multi_processing
-from train.depth.train_depth import DepthTrainer
+from train.depth.train_unsupervised_depth import UnsupervisedDepthTrainer
 from cfg.config_training import create_configuration  # local variable usage pattern, or:
 # from config import cfg  # global singleton usage pattern
 
@@ -17,10 +17,10 @@ if __name__ == "__main__":
         # use DDP and 1 process per gpu for training
         setup_multi_processing()
         mp.spawn(run_trainer, nprocs=torch.cuda.device_count(),
-                 args=(cfg, torch.cuda.device_count(), DepthTrainer,))
+                 args=(cfg, torch.cuda.device_count(), UnsupervisedDepthTrainer,))
     else:
         # standart single gpu 'cuda:0' training
-        depth_trainer = DepthTrainer(0, cfg)
+        depth_trainer = UnsupervisedDepthTrainer(0, cfg)
         depth_trainer.run()
 
 

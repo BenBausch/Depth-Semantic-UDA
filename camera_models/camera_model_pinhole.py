@@ -14,9 +14,9 @@ class PinholeCameraModel(camera_model.CameraModel):
     def __init__(self, img_width, img_height, fx, fy, cx, cy):
         super(PinholeCameraModel, self).__init__()
         # if not isinstance(img_width, int) or img_width < 0:
-        #     raise TypeError("You have to specify an unsigned integer value for the image width! Input type {}".file_format(type(img_width)))
+        #     raise TypeError("You have to specify an unsigned integer value for the image width! Input type {}".format(type(img_width)))
         # if not isinstance(img_height, int) or img_height < 0:
-        #     raise TypeError("You have to specify an unsigned integer value for the image height! Input type {}".file_format(type(img_height)))
+        #     raise TypeError("You have to specify an unsigned integer value for the image height! Input type {}".format(type(img_height)))
         assert fx >= 0, "fx < 0 is not allowed"
         assert fy >= 0, "fy < 0 is not allowed"
         assert cx >= 0, "cx < 0 is not allowed"
@@ -47,8 +47,8 @@ class PinholeCameraModel(camera_model.CameraModel):
         return cls(msg.width, msg.height, fx, fy, cx, cy)
 
     def get_scaled_model(self, scale_u, scale_v):
-        return PinholeCameraModel(int(self.img_width * scale_u),
-                                  int(self.img_height * scale_v),
+        return PinholeCameraModel(self.img_width * scale_u,
+                                  self.img_height * scale_v,
                                   self.fx() * scale_u,
                                   self.fy() * scale_v,
                                   self.cx() * scale_u,
@@ -91,8 +91,8 @@ class PinholeCameraModel(camera_model.CameraModel):
         :param x3d, y3d, z3d: x,y,z coordinates of the incoming 3d world point(s)
         :return: u,v coordinates of the computed 2d image point(s)
         """
-        u2d = (x3d/z3d) * self.intrinsics["fx"] + self.intrinsics["cx"]
-        v2d = (y3d/z3d) * self.intrinsics["fy"] + self.intrinsics["cy"]
+        u2d = (x3d / z3d) * self.intrinsics["fx"] + self.intrinsics["cx"]
+        v2d = (y3d / z3d) * self.intrinsics["fy"] + self.intrinsics["cy"]
         return u2d, v2d
 
     def get_viewing_ray(self, u2d, v2d):
@@ -138,4 +138,3 @@ class PinholeCameraModel(camera_model.CameraModel):
 
     def cy(self):
         return self.intrinsics["cy"]
-

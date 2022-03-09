@@ -11,8 +11,10 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
 
-
-def evaluate_model(cfg):
+def evaluate_dataset(cfg):
+    """
+    Prints the frequency of classes in % of pixels in the dataset.
+    """
     dataset = dataloaders.get_dataset(cfg.dataset.name,
                                       'train',
                                       cfg.dataset.split,
@@ -42,12 +44,18 @@ def evaluate_model(cfg):
         print(names_count[:-2])
 
     names_count = ''
+    inv_names_count = ''
     for idx, cls_id in enumerate(valid_classes):
         names_count += valid_names[idx] + ': '
+        inv_names_count += valid_names[idx] + ': '
         class_pixel_count[idx] = class_pixel_count[idx] / len(loader)
         names_count += str(class_pixel_count[idx]) + ', '
+        inv_names_count += str(1/class_pixel_count[idx]) + ', '
     print('Percent of pixels belonging to each individual class across whole dataset')
     print(names_count[:-2])
+    print(inv_names_count[:-2])
+    print(class_pixel_count)
+    print(1/class_pixel_count)
 
 
 if __name__ == "__main__":
@@ -56,4 +64,4 @@ if __name__ == "__main__":
     cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(path)
     cfg.freeze()
-    evaluate_model(cfg)
+    evaluate_dataset(cfg)

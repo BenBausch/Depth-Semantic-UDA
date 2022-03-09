@@ -23,6 +23,7 @@ class PathsHandlerRGB(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_rgb_image_paths(self):
+        """Get all RGB image paths"""
         pass
 
     def paths_rgb(self):
@@ -56,10 +57,12 @@ class PathsHandlerDepthFromMotion(PathsHandlerRGB):
 
     @abc.abstractmethod
     def get_sparse_depth_image_paths(self):
+        """Get paths to all spare depth labels"""
         pass
 
     @abc.abstractmethod
     def get_calib_path(self):
+        """Get the path to the calibration file of the dataset"""
         pass
 
     def paths_depth_sparse(self):
@@ -100,6 +103,7 @@ class PathsHandlerDepthDense(PathsHandlerRGB):
 
     @abc.abstractmethod
     def get_gt_depth_image_paths(self):
+        """Get path to all dense depth labels"""
         pass
 
     def paths_depth_gt(self):
@@ -127,6 +131,7 @@ class PathsHandlerSemantic(PathsHandlerRGB):
 
     @abc.abstractmethod
     def get_semantic_label_paths(self):
+        """Get path to all semantic labels"""
         pass
 
     def paths_semantic(self):
@@ -155,22 +160,27 @@ class DatasetRGB(data.Dataset, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def transform_train(self, *args, **kwargs):
+        """Transform training data"""
         pass
 
     @abc.abstractmethod
     def transform_val(self, *args, **kwargs):
+        """Transform validation data"""
         pass
 
     @abc.abstractmethod
     def get_rgb(self, path_file, offset):
+        """Get a single RGB image"""
         pass
 
     @staticmethod
     def tf_rgb_train(*args, **kwargs):
+        """Transform composition for rgb images during training"""
         pass
 
     @staticmethod
     def tf_rgb_val(*args, **kwargs):
+        """Transform composition for rgb images during validation"""
         pass
 
 
@@ -180,22 +190,29 @@ class DatasetSemantic(data.Dataset, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_semantic(self, path_file):
+        """Get single semantic label"""
         pass
 
     @staticmethod
     def tf_semantic_train(*args, **kwargs):
+        """Transform composition for semantic labels during training"""
         pass
 
     @staticmethod
     def tf_semantic_val(*args, **kwargs):
+        """Transform composition for semantic labels during validation"""
         pass
 
 
 class DatasetDepth(data.Dataset, metaclass=abc.ABCMeta):
+    """
+        Dataset handling dense and sparse depth, as well as image sequences.
+    """
     def __init__(self, pathsObj, cfg):
         super(DatasetSemantic, self).__init__(pathsObj, cfg)
 
     def __len__(self):
+        """Returns the number of rgb images as length of the dataset"""
         return len(self.paths.paths_rgb)
 
     def __getitem__(self, index):
@@ -236,12 +253,15 @@ class DatasetDepth(data.Dataset, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_depth(self, path_file):
+        """Get single depth label"""
         pass
 
     @staticmethod
     def tf_depth_train(*args, **kwargs):
+        """Transform composition for depth labels during training"""
         pass
 
     @staticmethod
     def tf_depth_val(*args, **kwargs):
+        """Transform composition for depth labels during validation"""
         pass

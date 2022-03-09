@@ -12,6 +12,7 @@ from collections import OrderedDict
 
 
 class PoseDecoder(nn.Module):
+    """Pose decoder from the 'Unsupervised learning of depth and ego-motion from video' paper"""
     def __init__(self, num_ch_enc, num_input_features, num_frames_to_predict_for=None, stride=1):
         super(PoseDecoder, self).__init__()
 

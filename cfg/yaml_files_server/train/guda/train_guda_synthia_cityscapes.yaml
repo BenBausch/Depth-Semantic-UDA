@@ -9,7 +9,7 @@ model:
             weights_init: 'pretrained'
 
     pose_net:
-        input: 'pairs' # 'all'
+        input: 'pairs'
         params:
             nof_layers: 18
             weights_init: 'pretrained'

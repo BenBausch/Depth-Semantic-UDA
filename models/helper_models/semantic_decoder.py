@@ -14,6 +14,7 @@ from utils.utils import info_gpu_memory
 
 
 class SemanticDecoderGUDA(nn.Module):
+    """Semantic Decoder from the 'Geometric Unsupervised Domain Adaptation for Semantic Segmentation' paper"""
     def __init__(self, num_ch_enc, num_classes, use_skips=True,
                  upsample_mode='nearest', num_ch_dec=[16, 32, 64, 128, 256]):
         super(SemanticDecoderGUDA, self).__init__()
@@ -55,8 +56,6 @@ class SemanticDecoderGUDA(nn.Module):
         self.convs["final_conv"] = Conv3x3(channels_of_last_4_scales_added, self.num_output_channels)
         self.ordered_layers.append("final_conv")
 
-        self.decoder = nn.ModuleList(list(self.convs.values()))
-
     def forward(self, input_features):
 
         outputs = []
@@ -83,8 +82,8 @@ class SemanticDecoderGUDA(nn.Module):
                 outputs.append(upsample(x, self.upsample_mode, scale_factor=self.scale_factors[i]))
 
         x = torch.cat(outputs, 1)
-
-        return self.convs["final_conv"](x)
+        x = self.convs["final_conv"](x)
+        return x
 
     def __str__(self):
         description = ''
