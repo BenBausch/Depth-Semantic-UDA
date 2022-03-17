@@ -242,7 +242,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
             self.train()
             print('Validation')
-            self.validate()
+            if self.cfg.val.do_validation:
+                self.validate()
 
         print("Training done.")
 

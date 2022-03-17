@@ -97,7 +97,7 @@ class KalimuSequenceDataset(dataset_base.DatasetRGB):
 
         self.ids = np.asarray([i for i in range(len(self.paths.paths_rgb))])
 
-        self.mean = torch.tensor([[[0.0, 0.0, 0.0]]]).transpose(0, 2)
+        self.mean = torch.tensor([[[0.210395798, 0.199310437, 0.183492795]]]).transpose(0, 2)
         self.var = torch.tensor([[[1.0, 1.0, 1.0]]]).transpose(0, 2)
 
         self.do_normalization = self.cfg.dataset.img_norm
@@ -250,7 +250,7 @@ class KalimuSequenceDataset(dataset_base.DatasetRGB):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\kalimu\kalimu.yaml'
+    path = r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\kalimu_guda\kalimu.yaml'
     cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(path)
     cfg.freeze()

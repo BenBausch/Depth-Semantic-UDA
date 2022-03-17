@@ -33,6 +33,7 @@ cfg.train.scheduler.milestones = [] # needed only if scheduler type is MultiStep
 # /------ Validation parameters
 # ********************************************************************
 cfg.val = CN()
+cfg.val.do_validation = True
 cfg.val.batch_size = 12
 cfg.val.nof_workers = 4
 

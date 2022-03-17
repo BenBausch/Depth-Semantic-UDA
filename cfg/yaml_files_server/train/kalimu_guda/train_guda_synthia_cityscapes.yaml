@@ -1,0 +1,46 @@
+experiment_name: 'synthia_to_cityscapes'
+
+model:
+    type: 'guda'
+
+    encoder:
+        params:
+            nof_layers: 101
+            weights_init: 'pretrained'
+
+    pose_net:
+        input: 'pairs'
+        params:
+            nof_layers: 18
+            weights_init: 'pretrained'
+
+datasets:
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/kalimu_guda/synthia.yaml', #source
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/kalimu_guda/kalimu.yaml', # target
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/kalimu_guda/kalimu_val.yaml'] # validation dataset
+    loss_weights : [1, 1, 0]
+
+train:
+    nof_epochs: 40
+    batch_size: 1
+    nof_workers: 5
+
+    optimizer:
+        type: 'Adam'
+        learning_rate: 0.0001
+    scheduler:
+        type: 'MultiStepLR'
+        gamma: 0.5
+        milestones: [30] # half the learning rate for the last 10 epochs
+
+val:
+    do_validation: False
+
+checkpoint:
+    use_checkpoint: False
+
+device:
+    multiple_gpus: True
+
+io:
+    path_save: '/work/dlclarge1/bauschb-data/models/kalimu'

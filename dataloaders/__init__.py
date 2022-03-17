@@ -1,6 +1,7 @@
 from dataloaders.gta5 import dataset_gta5
 from dataloaders.synthia import dataset_synthia
 from dataloaders.cityscapes import dataset_cityscapes_sequence, dataset_cityscapes_semantic
+from dataloaders.kalimu import dataset_kalimu
 
 available_datasets = {
     #"kitti_depricated": dataset_kitti.KittiDataset,
@@ -8,8 +9,10 @@ available_datasets = {
     "gta5": dataset_gta5.GTA5Dataset,
     "synthia_rand_cityscapes": dataset_synthia.SynthiaRandCityscapesDataset,
     "cityscapes_sequence": dataset_cityscapes_sequence.CityscapesSequenceDataset,
-    "cityscapes_semantic": dataset_cityscapes_semantic.CityscapesSemanticDataset
+    "cityscapes_semantic": dataset_cityscapes_semantic.CityscapesSemanticDataset,
+    'kalimu': dataset_kalimu.KalimuSequenceDataset
 }
+
 
 def get_dataset(name_dataset, *args):
     if name_dataset not in available_datasets:
