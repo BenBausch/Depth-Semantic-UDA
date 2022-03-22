@@ -12,6 +12,7 @@ class MIoU:
     """
 
     def __init__(self, num_classes, ignore_classes=None, ignore_index=250):
+        self.num_classes = num_classes
         self.classes = torch.tensor([i for i in range(num_classes)])
         self.intersection = torch.tensor([0.0 for i in range(num_classes)])
         self.union = torch.tensor([0.0 for i in range(num_classes)])
@@ -55,7 +56,15 @@ class MIoU:
         Additionally the mean iou per class, which averages over all images per class, is returned.
         """
         iou_per_class = self.intersection / self.union
+        self.reset_statistics()
         return torch.nansum(iou_per_class) / len(self.classes), iou_per_class
+
+    def reset_statistics(self):
+        """
+        Sets the intersection and union count per class back to 0.
+        """
+        self.intersection = torch.tensor([0.0 for i in range(self.num_classes)])
+        self.union = torch.tensor([0.0 for i in range(self.num_classes)])
 
 
 class DepthEvaluator:
