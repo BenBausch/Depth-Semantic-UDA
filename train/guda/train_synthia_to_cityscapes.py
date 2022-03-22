@@ -34,7 +34,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         elif self.num_classes == 16:
             self.c_id_to_name = CITYSCAPES_ID_TO_NAME_16
         else:
-            raise ValueError("GUDA training not defined for {self.num_classes} classes!")
+            raise ValueError(f"GUDA training not defined for {self.num_classes} classes!")
 
         # -------------------------Source dataset parameters------------------------------------------
         assert self.cfg.datasets.configs[0].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'

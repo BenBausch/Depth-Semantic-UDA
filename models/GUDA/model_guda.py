@@ -57,7 +57,6 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.num_pose_frames = self.get_number_of_posenet_input_frames(cfg)
 
         self.create_PoseNet()
-        print('After creating networks')
 
     def get_dataset_parameters(self):
         """

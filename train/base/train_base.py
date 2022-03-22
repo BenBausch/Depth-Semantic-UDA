@@ -89,14 +89,6 @@ class TrainBase(metaclass=abc.ABCMeta):
             numpy.random.seed(self.rank)
             random.seed(self.rank)
 
-        # printing some random parameters samples to make sure same parameters on all gpus
-        for name, param in self.model.networks['pose_decoder'].named_parameters():
-            if param.requires_grad:
-                print(name, param.data[0, 0, 0])
-                print(name, param.data[7, 0, 0])
-                print(name, param.data[2, 0, 0])
-            break
-
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
                                             self.model.params_to_train(self.cfg.train.optimizer.learning_rate),
                                             self.cfg.train.optimizer.learning_rate)

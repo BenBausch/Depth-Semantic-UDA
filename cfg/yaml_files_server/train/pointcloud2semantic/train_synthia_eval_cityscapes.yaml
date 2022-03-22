@@ -1,0 +1,45 @@
+experiment_name: 'pointcloud_2_semantic'
+
+model:
+    type: 'pointcloud2semantic'
+
+    encoder:
+        params:
+            nof_layers: 50
+            weights_init: 'pretrained'
+
+    pose_net:
+        input: 'pairs' # 'all'
+        params:
+            nof_layers: 18
+            weights_init: 'pretrained'
+
+datasets:
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/pointcloud2semantic/synthia.yaml',
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/pointcloud2semantic/cityscapes_semantic.yaml'] # not used at all
+    loss_weights : [1, 0]
+
+train:
+    nof_epochs: 120
+    batch_size: 1
+
+    optimizer:
+        type: 'Adam'
+        learning_rate: 0.0001
+    scheduler:
+        type: 'MultiStepLR'
+        gamma: 0.5
+        milestones: [60] # half the learning rate for the last 10 epochs
+
+val:
+    batch_size: 1
+    nof_workers: 4
+
+checkpoint:
+    use_checkpoint: False
+
+device:
+    multiple_gpus: True
+
+io:
+    path_save: '/work/dlclarge1/bauschb-data/models/pc2s'
