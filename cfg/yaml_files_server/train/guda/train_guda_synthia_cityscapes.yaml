@@ -21,7 +21,7 @@ datasets:
     loss_weights : [1, 1, 0]
 
 train:
-    nof_epochs: 40
+    nof_epochs: 120
     batch_size: 1
     nof_workers: 5
 
@@ -31,18 +31,20 @@ train:
     scheduler:
         type: 'MultiStepLR'
         gamma: 0.5
-        milestones: [30] # half the learning rate for the last 10 epochs
+        milestones: [200] # half the learning rate for the last 10 epochs
 
 val:
     batch_size: 1
     nof_workers: 5
-
-checkpoint:
-    use_checkpoint: False
 
 
 device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes_full_range_synthia'
+    path_save: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes_final'
+
+checkpoint:
+    use_checkpoint: True
+    path_base: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes_final/tmp/2022_03_16_17_03_39_synthia_rand_cityscapes'
+    filename: 'checkpoint_epoch_75.pth'

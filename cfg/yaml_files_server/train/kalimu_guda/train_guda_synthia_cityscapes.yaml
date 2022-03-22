@@ -1,4 +1,4 @@
-experiment_name: 'synthia_to_cityscapes'
+experiment_name: 'synthia_to_kalimu'
 
 model:
     type: 'guda'
@@ -37,7 +37,9 @@ val:
     do_validation: False
 
 checkpoint:
-    use_checkpoint: False
+    use_checkpoint: True
+    path_base : '/work/dlclarge1/bauschb-data/models/kalimu/tmp/2022_03_18_03_05_42_synthia_rand_cityscapes'
+    filename : 'checkpoint_epoch_27.pth'
 
 device:
     multiple_gpus: True

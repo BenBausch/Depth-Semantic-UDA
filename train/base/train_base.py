@@ -114,6 +114,7 @@ class TrainBase(metaclass=abc.ABCMeta):
 
         # See whether a checkpoint shall be used and load the corresponding weights
         # Load the checkpoint if one is provided
+        print(f'Using a checkpoint {cfg.checkpoint.use_checkpoint}')
         if cfg.checkpoint.use_checkpoint:
             print("Using pretrained weights for the model and optimizer from \n",
                   os.path.join(cfg.checkpoint.path_base, cfg.checkpoint.filename))
