@@ -271,6 +271,9 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
         gt_semantic = self.get_semantic(
             self.paths.paths_semantic[index]) if self.paths.paths_semantic is not None else None
 
+        gt_instance = self.get_instance(  # instance id is first channel of semantic label image
+            self.paths.paths_semantic[index]) if self.paths.paths_semantic is not None else None
+
         gt_depth_dense = self.get_depth(self.paths.paths_depth_gt[index]) if self.paths.paths_depth_gt is not None \
             else None
 
@@ -283,7 +286,8 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                 rgb_imgs[offset] = self.get_rgb(self.paths.paths_rgb[index], 0)
 
         if self.mode == 'train':
-            rgb_imgs, gt_semantic, gt_depth_dense = self.transform_train(rgb_imgs, gt_semantic, gt_depth_dense)
+            rgb_imgs, gt_semantic, gt_instance, gt_depth_dense = self.transform_train(rgb_imgs, gt_semantic,
+                                                                                      gt_instance, gt_depth_dense)
         elif self.mode == 'val' or self.mode == 'test':
             raise ValueError("Synthia only available for training")
         else:
@@ -297,6 +301,9 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
         if gt_depth_dense is not None:
             data["depth_dense"] = gt_depth_dense
+
+        if gt_instance is not None:
+            data["instance"] = gt_instance
 
         for offset, val in rgb_imgs.items():
             data[("rgb", offset)] = val
@@ -327,17 +334,18 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
         return description
 
-    def transform_train(self, rgb_dict, gt_semantic, gt_depth_dense):
+    def transform_train(self, rgb_dict, gt_semantic, gt_instance, gt_depth_dense):
         """
             Transforms the rgb images and the semantic ground truth for training.
             :param gt_depth_dense: depth ground truth of image with offset = 0
             :param rgb_dict: dict of rgb images of a sequence.
             :param gt_semantic: semantic ground truth of the image with offset = 0
+            :param gt_instance: instance labels of image with offset = 0
             :return: dict of transformed rgb images and transformed label
         """
         if self.cfg.dataset.debug:
-            do_flip = True
-            do_aug = True
+            do_flip = False
+            do_aug = False
         else:
             do_flip = random.random() > 0.5
             do_aug = random.random() > 0.5
@@ -350,12 +358,17 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                                          do_normalization=self.do_normalization,
                                          mean=self.mean,
                                          var=self.var)
+
         tf_semantic_train = self.tf_semantic_train(tgt_size=self.feed_img_size,
                                                    do_flip=do_flip,
                                                    s_to_c_mapping=self.synthia_id_to_cityscapes_id,
                                                    valid_classes=self.valid_classes,
                                                    void_classes=self.void_classes,
                                                    ignore_index=self.ignore_index)
+
+        tf_instance_train = self.tf_instance_train(tgt_size=self.feed_img_size,
+                                                   do_flip=do_flip)
+
         tf_depth_dense_train = self.tf_depth_train(tgt_size=self.feed_img_size,
                                                    do_flip=do_flip)
 
@@ -366,9 +379,11 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
 
         gt_semantic = tf_semantic_train(gt_semantic) if gt_semantic is not None else None
 
+        gt_instance = tf_instance_train(gt_instance) if gt_instance is not None else None
+
         gt_depth_dense = tf_depth_dense_train(gt_depth_dense) if gt_depth_dense is not None else None
 
-        return rgb_dict_tf, gt_semantic, gt_depth_dense
+        return rgb_dict_tf, gt_semantic, gt_instance, gt_depth_dense
 
     def get_rgb(self, path_file, *args):
         """
@@ -396,6 +411,20 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
             assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
 
             label = cv2.imread(path_file, cv2.IMREAD_UNCHANGED)[:, :, 2]
+            return label
+
+    def get_instance(self, path_file):
+        """
+            Loads the instance Labels with opencv (loading with pillow destroys encoding).
+            :param path_file: path to the label
+            :return: numpy ndarray of instance ground truth.
+        """
+        if path_file is None:
+            return None
+        else:
+            assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
+
+            label = cv2.imread(path_file, cv2.IMREAD_UNCHANGED)[:, :, 1]
             return label
 
     def get_depth(self, path_file):
@@ -456,6 +485,22 @@ class SynthiaRandCityscapesDataset(DatasetRGB, DatasetSemantic, DatasetDepth):
                                                     valid_classes=valid_classes,
                                                     void_classes=void_classes,
                                                     ignore_index=ignore_index)
+            ]
+        )
+
+    @staticmethod
+    def tf_instance_train(tgt_size, do_flip):
+        """
+            Transformations of the label during training.
+            :param tgt_size: target size of the labels after resize operation
+            :param do_flip: True if the image should be horizontally flipped else False
+            :return: Transformation composition
+        """
+        return transforms.Compose(
+            [
+                tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
+                tf_prep.CV2HorizontalFlip(do_flip=do_flip),
+                tf_prep.ToInt64Array()
             ]
         )
 

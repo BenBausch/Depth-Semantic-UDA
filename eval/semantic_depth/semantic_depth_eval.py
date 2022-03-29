@@ -9,6 +9,7 @@ import sys
 import models
 import dataloaders
 from cfg.config_training import create_configuration, to_dictionary
+from io_utils import io_utils
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb, \
     CITYSCAPES_ID_TO_NAME_19
 from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
@@ -26,16 +27,15 @@ import wandb
 def evaluate_model(cfg):
     wandb.init(project=f"{cfg.experiment_name}_eval", config=to_dictionary(cfg))
     print(cfg.model.type)
-    model = models.get_model(cfg.model.type, cfg)
-    model = model.to('cuda:0')
-    weights = torch.load(
-        r'C:\Users\benba\Documents\University\Masterarbeit\models\semantic_test\tmp\2022_03_03_13_59_06_synthia_rand_cityscapes\checkpoints\checkpoint_epoch_0.pth')
-    for key in weights:
-        if key in ['resnet_encoder', 'depth_decoder', 'semantic_decoder', 'pose_encoder', 'pose_decoder']:
-            print(key)
-            model.networks[key].load_state_dict(weights[key])
-            model.networks[key].eval()
-    model.eval()
+
+    model_guda = models.get_model('guda', cfg)
+    model_guda = model_guda.to('cuda:0')
+    path_to_model1 = r'D:\Depth-Semantic-UDA\experiments\guda'
+    model_file_name1 = r"checkpoint_epoch_113.pth"
+    checkpoint1 = io_utils.IOHandler.load_checkpoint(path_to_model1, model_file_name1, 0)
+    # Load pretrained weights for the model and the optimizer status
+    io_utils.IOHandler.load_weights(checkpoint1, model_guda.get_networks(), None)
+    model_guda.eval()
 
     dataset = dataloaders.get_dataset(cfg.datasets.configs[1].dataset.name,
                                       'val',
@@ -71,9 +71,10 @@ def evaluate_model(cfg):
                    ignore_index=IGNORE_INDEX_SEMANTIC)
 
     for batch_idx, data in enumerate(loader):
+        print(batch_idx)
         for key, val in data.items():
             data[key] = val.to('cuda:0')
-        prediction = model.forward(data, dataset_id=1, predict_depth=True, train=False)[0]
+        prediction = model_guda.forward(data, dataset_id=1, predict_depth=True, train=False)[0]
 
         sem_pred_13 = prediction['semantic']
 
@@ -85,7 +86,7 @@ def evaluate_model(cfg):
         soft_pred_16 = F.softmax(sem_pred_16, dim=1)
         miou_16.update(mask_pred=soft_pred_16, mask_gt=data['semantic'])
 
-        if batch_idx % 15 == 0:
+        """if batch_idx % 15 == 0:
             rgb_img = wandb.Image(data[('rgb', 0)][0].cpu().detach().numpy().transpose(1, 2, 0),
                                   caption=f'Rgb {batch_idx}')
             semantic_img_13 = get_wandb_semantic_image(soft_pred_16[0], True, 1,
@@ -93,7 +94,7 @@ def evaluate_model(cfg):
             semantic_gt = get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                         f'Semantic GT with id {batch_idx}')
             wandb.log(
-                {f'images': [rgb_img, semantic_img_13, semantic_gt]})
+                {f'images': [rgb_img, semantic_img_13, semantic_gt]})"""
 
     mean_iou_13, iou_13 = miou_13.get_miou()
     mean_iou_16, iou_16 = miou_16.get_miou()

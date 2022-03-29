@@ -5,7 +5,7 @@ dataset:
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: False
-    use_semantic_gt: True
+    use_semantic_gt: False
     split: None
     camera: 'pinhole'
     shuffle: False
@@ -19,12 +19,12 @@ eval:
     train:
         use_gt_scale: False
         gt_depth_available: False
-        gt_semantic_available: True
+        gt_semantic_available: False
     val:
         use_gt_scale: False
         gt_depth_available: False
-        gt_semantic_available: True
+        gt_semantic_available: False
     test:
         use_gt_scale: False
         gt_depth_available: False
-        gt_semantic_available: True
+        gt_semantic_available: False

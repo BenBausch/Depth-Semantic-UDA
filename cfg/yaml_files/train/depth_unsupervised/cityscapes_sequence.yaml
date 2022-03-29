@@ -1,7 +1,7 @@
 dataset:
     name: 'cityscapes_sequence'
     path: 'D:\Depth-Semantic-UDA\data\Cityscapes_datasets\leftImg8bit_sequence'
-    feed_img_size: [ 512, 256 ]
+    feed_img_size: [ 1024, 512 ]
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: True

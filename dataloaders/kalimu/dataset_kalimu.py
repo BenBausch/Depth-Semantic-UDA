@@ -153,8 +153,8 @@ class KalimuSequenceDataset(dataset_base.DatasetRGB):
         :param gt_semantic: ground truth of the image with offset = 0
         :return: dict of transformed rgb images and transformed label
         """
-        do_flip = False  # random.random() > 0.5
-        do_aug = False  # random.random() > 0.5
+        do_flip = random.random() > 0.5
+        do_aug = random.random() > 0.5
 
         # Get the transformation objects
         tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,
