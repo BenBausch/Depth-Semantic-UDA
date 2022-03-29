@@ -36,6 +36,17 @@ class PrepareForNet(object):
         return sample
 
 
+class PILResizeByFactor(object):
+    """Wrapper for the PIL resize method to be able to use it in the Compose structure of the datasets"""
+
+    def __init__(self, interpolation, factor=1):
+        self.interpolation = interpolation
+        self.f = factor
+
+    def __call__(self, sample):
+        return sample.resize([int(sample.size[0]/self.f), int(sample.size[1]/self.f)], resample=self.interpolation)
+
+
 class PILResize(object):
     """Wrapper for the PIL resize method to be able to use it in the Compose structure of the datasets"""
 
@@ -47,6 +58,19 @@ class PILResize(object):
 
     def __call__(self, sample):
         return sample.resize(self.size, resample=self.interpolation, box=self.box, reducing_gap=self.reducing_gap)
+
+
+class CV2ResizeByFactor(object):
+    """Wrapper for the cv2 resize method to be able to use it in the Compose structure of the datasets"""
+
+    def __init__(self,interpolation, factor=1):
+        self.interpolation = interpolation
+        self.f = factor
+
+    def __call__(self, sample):
+        return cv2.resize(sample,
+                          dsize=[int(sample.shape[1]/self.f), int(sample.shape[0]/self.f)],
+                          interpolation=self.interpolation)
 
 
 class CV2Resize(object):
@@ -213,8 +237,6 @@ class MaskPixelOutsideDepthRange(object):
         return sample
 
 
-# ------------------------------------------GTA5------------------------------------------
-@deprecated
 class ToInt64Array(object):
     """Transforms the data (e.g. PIL Image) into an numpy int64 array"""
 
@@ -225,6 +247,7 @@ class ToInt64Array(object):
         sample = np.asarray(sample, dtype=np.int64)
         return sample
 
+# ------------------------------------------GTA5------------------------------------------
 
 @deprecated
 class EncodeSegmentationGTA5(object):

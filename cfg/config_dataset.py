@@ -7,14 +7,16 @@ cfg_dataset.dataset = CN()
 # ********************************************************************
 # /----- Dataset parameters
 # ********************************************************************
-cfg_dataset.dataset.name = ''  # 'KITTI'
-cfg_dataset.dataset.path = ''  # '/home/petek/kalimu_depricated/data/kitti_depricated/base'
-cfg_dataset.dataset.feed_img_size = []  # [640, 192]
+cfg_dataset.dataset.name = ''
+cfg_dataset.dataset.path = ''
+cfg_dataset.dataset.feed_img_size = []  # used for datasets with fixed image sizes, or when resizing everything to
+# same resolution
+cfg_dataset.dataset.resize_factor = 1  # used for datasets with variable image sizes
 cfg_dataset.dataset.use_sparse_depth = True
 cfg_dataset.dataset.use_dense_depth = False
 cfg_dataset.dataset.use_self_supervised_depth = True
 cfg_dataset.dataset.use_semantic_gt = False
-cfg_dataset.dataset.split = None  # 'eigen_zhou'
+cfg_dataset.dataset.split = None
 cfg_dataset.dataset.camera = ''  # 'pinhole'
 cfg_dataset.dataset.min_depth = 0.001
 cfg_dataset.dataset.max_depth = 80.0
