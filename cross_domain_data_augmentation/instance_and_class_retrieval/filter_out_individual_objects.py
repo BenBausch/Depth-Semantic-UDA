@@ -139,7 +139,7 @@ for batch_idx, data in enumerate(loader0):
         cropped_to_content_depth = (cropped_to_content_depth * 100)
         axs[1, 2].imshow(vdp(1 / cropped_to_content_depth))
 
-        """"# rule 3
+        # rule 3
         # calculate avg depth outside mask for each instance/non-dynamic class except for road, sky, sidewalk pixels
         # compare to average depth of instance if smaller object not occluded
 
@@ -217,7 +217,7 @@ for batch_idx, data in enumerate(loader0):
             plt.close(fig)
             continue
 
-        axs[1, 3].imshow(cropped_outside_instance_mask.cpu())"""
+        axs[1, 3].imshow(cropped_outside_instance_mask.cpu())
 
         print(f'Instance with id {inst}')
         print(f'Consists of {size_of_instance} pixels!')
@@ -240,7 +240,7 @@ for batch_idx, data in enumerate(loader0):
 
         to_pil = transforms.ToPILImage()
 
-        #plt.show()
+        plt.show()
 
         if True:
             cropped_to_content_rgb = to_pil(cropped_to_content_rgb)
