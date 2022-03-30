@@ -55,6 +55,7 @@ cfg.model.depth_net.nof_scales = 4
 
 cfg.model.semantic_net = CN()
 cfg.model.semantic_net.params = CN()
+cfg.model.semantic_net.params.predict_semantic_for_each_img_in_sequence = False
 
 cfg.model.pose_net = CN()
 cfg.model.pose_net.input = 'pairs'

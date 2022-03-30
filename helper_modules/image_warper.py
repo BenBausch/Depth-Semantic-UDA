@@ -100,6 +100,7 @@ class CoordinateWarper(nn.Module):
         image_as_pointcloud_homogeneous = torch.cat([image_as_pointcloud, ones], 1)
 
         # Transform the obtained pointcloud into the local coordinate system of the target camera pose (homogeneous)
+        print(f'T: {T}')
         transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
             batch_depth_map.size(0), 4, -1).double())
         transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
@@ -115,11 +116,16 @@ class CoordinateWarper(nn.Module):
 
 class ImageWarper(nn.Module):
     def __init__(self, camera_model, device):
+        """
+        :param camera_model: non normalized camera model
+        :param device: cuda or cpu device
+        """
         super(ImageWarper, self).__init__()
         self.coordinate_warper = CoordinateWarper(camera_model, device)
 
-    def forward(self, batch_src_img, batch_depth_map, T):
+    def forward(self, batch_src_img, batch_depth_map, T, batch_semantic=None):
         """
+        :param batch_semantics: batch of semantic logits
         :param pointcloud: batch of pointclouds
         :param T: Transformation matrix
         :return:
@@ -132,8 +138,21 @@ class ImageWarper(nn.Module):
         assert batch_src_img.size(1) == 3, 'The input batch of source images has {} channels which is != 3'.format(
             batch_src_img.size(1))
 
+        print(f'Shape of the depth map {batch_depth_map.shape}')
+
         pixel_coordinates = self.coordinate_warper(batch_depth_map, T)
+        print(f' Pixel Coordinates shape {pixel_coordinates.shape}')
 
         warped_image = F.grid_sample(batch_src_img, pixel_coordinates, padding_mode="border")
 
-        return warped_image
+        if batch_semantic is None:
+            return warped_image
+
+        warped_semantic = F.grid_sample(batch_semantic, pixel_coordinates, padding_mode="border", mode='nearest')
+
+        return warped_image, warped_semantic
+
+
+
+
+

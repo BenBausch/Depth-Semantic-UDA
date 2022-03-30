@@ -38,6 +38,8 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.multiple_gpus = cfg.device.multiple_gpus
         self.pose_model_input = cfg.model.pose_net.input
 
+        self.predict_semantic_for_sequence = cfg.model.semantic_net.params.predict_semantic_for_each_img_in_sequence
+
         self.num_classes = None  # initialized in get_dataset_parameters
         self.rgb_frame_offsets = None  # initialized in get_dataset_parameters
 
@@ -242,7 +244,18 @@ class Guda(SemanticDepthFromMotionModelBase):
             results['semantic'] = self.predict_semantic(latent_features_batch)
         else:
             results['semantic'] = None
+
+        if self.predict_semantic_for_sequence and len(self.rgb_frame_offsets[dataset_id]) > 1:
+            # predict semantic for the sequence if wanted and if dataset has sequences
+            semantic_sequence = {0: results['semantic']}
+            for offset in self.rgb_frame_offsets[dataset_id][1:]:
+                offset_img_features = self.latent_features(batch[("rgb", offset)])
+                semantic_sequence[offset] = self.predict_semantic(offset_img_features)
+
+            results['semantic_sequence_frames'] = semantic_sequence
+
         return results
+
 
     # --------------------------------------------------------------------------
     # -----------------------------Helper-Methods-------------------------------

@@ -322,26 +322,57 @@ class ReconstructionLoss(nn.Module):
             self.image_warpers[i] = ImageWarper(camera_model_, device)
             self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=s, stride=s)
 
-    # ToDo: Exclude "black" pixels as in selfsup and maybe use a mask for excluding pixels with depth supervision
-    #  The problem with black pixels might get solved by an appropriate interpolation method!! (Comp. MD2 with selfsup)
     def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
-                mask=None):
+                mask=None, semantic_logits=None):
+        """
+        :param batch_data: batch of data containing the rgb images
+        :param pred_depth: batch of predicted depths for the middle frames
+        :param poses: batch of predicted poses
+        :param rgb_frame_offsets: offsets of the rgb images to the middle frame
+        :param use_automasking: auto mask stationary pixels
+        :param use_ssim: if ssim compontent of loss should be used
+        :param alpha: weighting between both losses
+        :param mask:
+        :param batch_semantic_logits: batch of semantic softmax predictions
+        :return:
+        """
         assert rgb_frame_offsets[
                    0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
 
         total_loss = 0.0
 
+
+
         # Scale down the depth image (scaling must be part of the optimization graph!)
         for s in range(self.num_scales):
+
             reconstruction_losses_s = []
             identity_losses_s = []
 
             scaled_depth = pred_depth[('depth', s)]
             scaled_tgt_img = self.scaling_modules[s](batch_data[("rgb", 0)])
 
+            semantic_cosistency_losses = []
+
             for frame_id in rgb_frame_offsets[1:]:
+
                 scaled_adjacent_img_ = self.match_sizes(batch_data[("rgb", frame_id)], scaled_depth.shape)
-                warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_, scaled_depth, poses[frame_id])
+
+                if s == 0 and semantic_logits is not None:
+                    # compare semantic predictions (if available) only on the original input resolution
+                    warped_scaled_adjacent_img_, warped_semantic_logits_frame = \
+                        self.image_warpers[s](scaled_adjacent_img_,
+                                              scaled_depth,
+                                              poses[frame_id],
+                                              semantic_logits[frame_id])
+
+                    semantic_cosistency_losses.append(self.l1_loss_pixelwise(warped_semantic_logits_frame,
+                                                                           semantic_logits[0]))
+
+                else:
+                    warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_,
+                                                                        scaled_depth,
+                                                                        poses[frame_id])
 
                 rec_l1_loss = self.l1_loss_pixelwise(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
@@ -350,8 +381,6 @@ class ReconstructionLoss(nn.Module):
                 reconstruction_losses_s.append(
                     (1 - alpha) * rec_l1_loss + alpha * rec_ssim_loss if use_ssim else rec_l1_loss)
 
-                # ToDo: Actually, we shouldn't only take the minimum but exclude those pixels where the identity loss is smaller!!
-                #  CHANGE THIS! Md2 claims that this is right but I don't think so... Implement both and compare!
                 if use_automasking:
                     id_l1_loss = self.l1_loss_pixelwise(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                     id_ssim_loss = self.ssim(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
@@ -377,7 +406,17 @@ class ReconstructionLoss(nn.Module):
             #  later. Do not forget to change this then
             total_loss += final_loss_s / (2 ** s)
 
-        return total_loss
+        if semantic_logits is None:
+            # no semantic consistency calculated
+            return total_loss
+        else:
+
+            semantic_cosistency_loss_mean = semantic_cosistency_losses[0]
+            for scl in semantic_cosistency_losses[1:]:
+                semantic_cosistency_loss_mean += scl
+            semantic_cosistency_loss_mean /= len(semantic_cosistency_losses)
+
+            return total_loss, semantic_cosistency_loss_mean
 
     def match_sizes(self, image, target_shape, mode='bilinear', align_corners=True):
         if len(target_shape) > 2:
