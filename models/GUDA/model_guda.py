@@ -38,14 +38,10 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.multiple_gpus = cfg.device.multiple_gpus
         self.pose_model_input = cfg.model.pose_net.input
 
-        self.predict_semantic_for_sequence = cfg.model.semantic_net.params.predict_semantic_for_each_img_in_sequence
-
         self.num_classes = None  # initialized in get_dataset_parameters
         self.rgb_frame_offsets = None  # initialized in get_dataset_parameters
 
         self.get_dataset_parameters()
-
-
 
         self.networks = nn.ModuleDict()
         self.parameters_to_train = []
@@ -74,12 +70,14 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.dataset_predict_semantic = []
         self.dataset_predict_pose = []
         self.dataset_min_max_depth = []
+        self.predict_semantic_for_whole_sequence = []
 
         # all datasets should have the same number of classes because they use the same semantic head
         self.num_classes = self.cfg.datasets.configs[0].dataset.num_classes
 
         # collect the parameters from all the datasets
         for i, dcfg in enumerate(self.cfg.datasets.configs):
+            self.predict_semantic_for_whole_sequence.append(dcfg.dataset.predict_semantic_for_each_img_in_sequence)
             self.rgb_frame_offsets.append(dcfg.dataset.rgb_frame_offsets)
 
             # get the depth ranges for each dataset
@@ -93,7 +91,8 @@ class Guda(SemanticDepthFromMotionModelBase):
             # pose prediction is only needed in context of self-supervised monocular depth
             self.dataset_predict_pose.append(dcfg.dataset.use_self_supervised_depth)
 
-            self.dataset_predict_semantic.append(dcfg.dataset.use_semantic_gt)
+            predict_semantics = dcfg.dataset.use_semantic_gt or dcfg.dataset.predict_semantic_for_each_img_in_sequence
+            self.dataset_predict_semantic.append(predict_semantics)
 
             if self.num_classes != dcfg.dataset.num_classes:
                 raise ValueError('All datasets need to have same number of classes!')
@@ -101,6 +100,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         print(f'Predict depth per dataset: {self.dataset_predict_depth}')
         print(f'Predict pose per dataset: {self.dataset_predict_pose}')
         print(f'Predict semantic mask per dataset: {self.dataset_predict_semantic}')
+        print(f'Predict semantic for each frame in sequence: {self.predict_semantic_for_whole_sequence}')
         print(f'Number classes: {self.num_classes}')
 
     def create_Encoder(self):
@@ -245,14 +245,16 @@ class Guda(SemanticDepthFromMotionModelBase):
         else:
             results['semantic'] = None
 
-        if self.predict_semantic_for_sequence and len(self.rgb_frame_offsets[dataset_id]) > 1:
+        if self.predict_semantic_for_whole_sequence[dataset_id]:
             # predict semantic for the sequence if wanted and if dataset has sequences
             semantic_sequence = {0: results['semantic']}
+            print(results['semantic'])
             for offset in self.rgb_frame_offsets[dataset_id][1:]:
                 offset_img_features = self.latent_features(batch[("rgb", offset)])
                 semantic_sequence[offset] = self.predict_semantic(offset_img_features)
+                print(f'predicted semantic for offset {offset} and dataset {dataset_id}')
 
-            results['semantic_sequence_frames'] = semantic_sequence
+            results['semantic_sequence'] = semantic_sequence
 
         return results
 

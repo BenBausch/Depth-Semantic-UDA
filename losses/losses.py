@@ -4,12 +4,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
 from helper_modules.image_warper import CoordinateWarper
+from utils.constans import IGNORE_INDEX_SEMANTIC
 
 
 class WeightedCrossEntropy(nn.Module):
     """
     A simple wrapper for the cross entropy loss implemented in pytorch requiring weights
     """
+
     def __init__(self, weights, ignore_index=-100):
         self.weight = weights
         self.criterion = nn.CrossEntropyLoss(reduction='mean', weight=self.weights, ignore_index=ignore_index)
@@ -174,6 +176,7 @@ class L1LossDepth(nn.Module):
     This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
     no measurements to zero.
     """
+
     def __init__(self):
         super(L1LossDepth, self).__init__()
 
@@ -190,6 +193,7 @@ class SilogLossDepth(nn.Module):
     Implementation of the Scale Invariant Log Loss introduced in
     'Depth map prediction from a single image using a multi-scale deep network'.
     """
+
     def __init__(self, weight=0.85, ignore_value=-100):
         super(SilogLossDepth, self).__init__()
         self.weight = weight
@@ -205,10 +209,28 @@ class SilogLossDepth(nn.Module):
         return silog_var - silog_wsme
 
 
+class SemanticL1LossPixelwise(nn.Module):
+    """
+    Implements the absolute difference between prediction and target per pixel.
+    """
+
+    def __init__(self):
+        super(SemanticL1LossPixelwise, self).__init__()
+
+    def forward(self, nonwarped_img_semantic, warped_img_semantic):
+        mask = (warped_img_semantic == IGNORE_INDEX_SEMANTIC).detach()
+        assert nonwarped_img_semantic.dim() == warped_img_semantic.dim(), "Inconsistent dimensions in L1Loss between prediction and target"
+        loss = (nonwarped_img_semantic - warped_img_semantic).abs()
+        zeros = torch.zeros_like(loss).detach()
+        loss[mask] = zeros[mask]
+        return loss
+
+
 class L1LossPixelwise(nn.Module):
     """
     Implements the absolute difference between prediction and target per pixel.
     """
+
     def __init__(self):
         super(L1LossPixelwise, self).__init__()
 
@@ -225,6 +247,7 @@ class MSELoss(nn.Module):
     This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
     no measurements to zero.
     """
+
     def __init__(self):
         super(MSELoss, self).__init__()
 
@@ -240,6 +263,7 @@ class EdgeAwareSmoothnessLoss(nn.Module):
     """
     The edge aware smoothness Loss enforces smooth depth gradients in regions where no edges are detected.
     """
+
     def __init__(self):
         super(EdgeAwareSmoothnessLoss, self).__init__()
 
@@ -265,6 +289,7 @@ class SSIMLoss(nn.Module):
     Implements the structural similarity component from
     'Image quality assessment: from error visibility to structural similarity'
     """
+
     def __init__(self, window_size=3):
         super(SSIMLoss, self).__init__()
         padding = window_size // 2
@@ -302,6 +327,7 @@ class ReconstructionLoss(nn.Module):
     with optional SSIM loss and minimum error selection from
     ' Unsupervised learning of depth and ego-motion from video'
     """
+
     # Attention, we use a camera model here, that is normalized by the image size, in order to be able to compute
     # reprojections for each possible size of the image
     # ref_img_width and ref_img_height denote the original image sizes without scalings
@@ -309,6 +335,7 @@ class ReconstructionLoss(nn.Module):
         super(ReconstructionLoss, self).__init__()
         self.num_scales = num_scales
         self.l1_loss_pixelwise = L1LossPixelwise()
+        self.semantic_l1_loss_pixelwise = SemanticL1LossPixelwise()
         self.ssim = SSIMLoss(ssim_kernel_size)
         self.image_warpers = {}
         self.scaling_modules = {}
@@ -325,6 +352,7 @@ class ReconstructionLoss(nn.Module):
     def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
                 mask=None, semantic_logits=None):
         """
+        :param semantic_logits: dictionary of semantic softmax predictions
         :param batch_data: batch of data containing the rgb images
         :param pred_depth: batch of predicted depths for the middle frames
         :param poses: batch of predicted poses
@@ -337,11 +365,13 @@ class ReconstructionLoss(nn.Module):
         :return:
         """
         assert rgb_frame_offsets[
-                   0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
+                   0] == 0  # This should always be zero to make sure that the first id corresponds
+        # to the current rgb image the depth is predicted for
 
         total_loss = 0.0
 
-
+        semantic_cosistency_losses = []  # init list here unlike other losses,
+        # since semantic only evaluated at largest scale
 
         # Scale down the depth image (scaling must be part of the optimization graph!)
         for s in range(self.num_scales):
@@ -351,8 +381,6 @@ class ReconstructionLoss(nn.Module):
 
             scaled_depth = pred_depth[('depth', s)]
             scaled_tgt_img = self.scaling_modules[s](batch_data[("rgb", 0)])
-
-            semantic_cosistency_losses = []
 
             for frame_id in rgb_frame_offsets[1:]:
 
@@ -366,8 +394,9 @@ class ReconstructionLoss(nn.Module):
                                               poses[frame_id],
                                               semantic_logits[frame_id])
 
-                    semantic_cosistency_losses.append(self.l1_loss_pixelwise(warped_semantic_logits_frame,
-                                                                           semantic_logits[0]))
+                    semantic_cosistency_losses.append(self.semantic_l1_loss_pixelwise(
+                        semantic_logits[0],
+                        warped_semantic_logits_frame).mean(1, True))
 
                 else:
                     warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_,
@@ -410,13 +439,13 @@ class ReconstructionLoss(nn.Module):
             # no semantic consistency calculated
             return total_loss
         else:
+            # semantic_cosistency_loss_min = min over warpings of mean loss over classes per pixel
+            print(f'Semantic Losses length : {len(semantic_cosistency_losses)}')
+            semantic_cosistency_loss_min = torch.cat(semantic_cosistency_losses, 1)
+            semantic_cosistency_loss_min = torch.min(semantic_cosistency_loss_min, dim=1)[0].mean()
+            print(total_loss)
 
-            semantic_cosistency_loss_mean = semantic_cosistency_losses[0]
-            for scl in semantic_cosistency_losses[1:]:
-                semantic_cosistency_loss_mean += scl
-            semantic_cosistency_loss_mean /= len(semantic_cosistency_losses)
-
-            return total_loss, semantic_cosistency_loss_mean
+            return total_loss, semantic_cosistency_loss_min
 
     def match_sizes(self, image, target_shape, mode='bilinear', align_corners=True):
         if len(target_shape) > 2:

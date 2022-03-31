@@ -24,6 +24,7 @@ cfg_dataset.dataset.num_classes = 1
 cfg_dataset.dataset.rgb_frame_offsets = []
 cfg_dataset.dataset.sequence_dataset = False
 cfg_dataset.dataset.debug = False
+cfg_dataset.dataset.predict_semantic_for_each_img_in_sequence = False
 
 # ********************************************************************
 # /----- Augmentation parameters

@@ -1,11 +1,11 @@
 """
 Provide the image warping layer based on a pre-defined camera model
 """
-
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s2rgb
 
 class _PointcloudToImage(nn.Module):
     """
@@ -138,17 +138,35 @@ class ImageWarper(nn.Module):
         assert batch_src_img.size(1) == 3, 'The input batch of source images has {} channels which is != 3'.format(
             batch_src_img.size(1))
 
-        print(f'Shape of the depth map {batch_depth_map.shape}')
-
         pixel_coordinates = self.coordinate_warper(batch_depth_map, T)
-        print(f' Pixel Coordinates shape {pixel_coordinates.shape}')
 
         warped_image = F.grid_sample(batch_src_img, pixel_coordinates, padding_mode="border")
 
         if batch_semantic is None:
             return warped_image
 
-        warped_semantic = F.grid_sample(batch_semantic, pixel_coordinates, padding_mode="border", mode='nearest')
+        # get pixels that are padded with padding_mode value as defined for torch.grid_sample
+        # torch.grid_sample: 'If grid has values outside the range of [-1, 1],
+        # the corresponding outputs are handled as defined by padding_mode'
+        pixel_outside_of_image = torch.logical_or(pixel_coordinates < -1, pixel_coordinates > 1)
+        pixel_outside_of_image = torch.logical_or(pixel_outside_of_image[:, :, :, 0],
+                                                  pixel_outside_of_image[:, :, :, 1]).unsqueeze(1)
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+        #ax1.imshow(pixel_outside_of_image.squeeze(0).squeeze(0).cpu())
+        pixel_outside_of_image = pixel_outside_of_image.repeat(1, batch_semantic.shape[1], 1, 1)
+        print(f'Padded pixel mask shape: {pixel_outside_of_image.shape}')
+
+        plt_img = warped_image[0] + torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2).cuda()
+        #ax2.imshow(plt_img.detach().cpu().numpy().transpose(1, 2, 0))
+
+        warped_semantic = F.grid_sample(batch_semantic, pixel_coordinates, padding_mode="zeros", mode='nearest')
+        warped_semantic[pixel_outside_of_image] = 250
+        print(warped_semantic)
+        img_to_plot = torch.topk(warped_semantic[0], k=1, dim=0, sorted=True).indices[0].unsqueeze(0).cpu()
+        img_to_plot[pixel_outside_of_image[:, 0, :, :]] = 250
+        #ax3.imshow(s2rgb(img_to_plot, 16))
+        #plt.show()
+        # set the padded pixels to the semantic ignore value since these should not be considered
 
         return warped_image, warped_semantic
 

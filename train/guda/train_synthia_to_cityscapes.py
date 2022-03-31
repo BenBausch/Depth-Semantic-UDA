@@ -21,6 +21,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
     """
     Trainer to run the guda algorithm for synthia to cityscapes.
     """
+
     def __init__(self, device_id, cfg, world_size=1):
         super(GUDATrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 
@@ -127,6 +128,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.target_use_garg_crop = self.cfg.datasets.configs[1].eval.use_garg_crop
 
+        self.target_predict_semantic_for_whole_sequence = \
+            self.cfg.datasets.configs[1].dataset.predict_semantic_for_each_img_in_sequence
+
         # Set up normalized camera model for target domain
         try:
             self.target_normalized_camera_model = \
@@ -174,6 +178,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.source_loss_weight = self.cfg.datasets.loss_weights[0]
 
         # -------------------------Target Losses------------------------------------------------------
+        self.target_edge_smoothness_loss = get_loss("edge_smooth")
         self.target_reconstruction_loss = get_loss('reconstruction',
                                                    ref_img_width=self.target_img_width,
                                                    ref_img_height=self.target_img_height,
@@ -182,7 +187,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                    device=self.device)
         self.target_reconstruction_use_ssim = target_l_n_p[0]['reconstruction']['use_ssim']
         self.target_reconstruction_use_automasking = target_l_n_p[0]['reconstruction']['use_automasking']
+        self.target_temporal_semantic_consistency_weigth = target_l_n_w[0]['temporal_semantic_consistency']
         self.target_reconstruction_weight = target_l_n_w[0]['reconstruction']
+        self.target_edge_smoothness_weight = target_l_n_w[0]['edge_smooth']
+
+        assert target_l_n_p[0]['reconstruction']['use_temporal_semantic_consistency'] == \
+               self.target_predict_semantic_for_whole_sequence, \
+            'If the model should predict semantics the whole target sequence, ' \
+            'if should also be used in the target loss! Otherwise unused predictions'
 
         self.target_loss_weight = self.cfg.datasets.loss_weights[1]
 
@@ -322,7 +334,19 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         depth_pred_t, raw_sigmoid_t = prediction_t['depth'][0], prediction_t['depth'][1]
 
-        loss_target, loss_target_dict = self.compute_losses_target(data[1], depth_pred_t, pose_pred_t)
+        if self.target_predict_semantic_for_whole_sequence:
+            semantic_sequence = {}
+            for offset in prediction_t['semantic_sequence'].keys():
+                print(offset)
+                semantic_sequence[offset] = F.softmax(prediction_t['semantic_sequence'][offset], dim=1)
+        else:
+            semantic_prediction = None
+
+        loss_target, loss_target_dict = self.compute_losses_target(data[1],
+                                                                   depth_pred_t,
+                                                                   pose_pred_t,
+                                                                   raw_sigmoid_t[('disp', 0)],
+                                                                   semantic_sequence)
 
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------------Optimization-------------------------------------------
@@ -356,7 +380,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             # target plotting
             rgb_1 = wandb.Image(data[1][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Target RGB")
             depth_img_1 = self.get_wandb_depth_image(depth_pred_t[('depth', 0)][0], batch_idx)
-            normal_img_1 = self.get_wandb_normal_image(depth_pred_t[('depth', 0)].detach(), self.snr_validation, 'Predicted')
+            normal_img_1 = self.get_wandb_normal_image(depth_pred_t[('depth', 0)].detach(), self.snr_validation,
+                                                       'Predicted')
             wandb.log({f'Target Images {self.epoch}': [rgb_1, depth_img_1, normal_img_1]})
 
         if self.rank == 0:
@@ -412,15 +437,26 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         return silog_loss + bce_loss + snr_loss, loss_dict
 
-    def compute_losses_target(self, data, depth_pred, poses):
+    def compute_losses_target(self, data, depth_pred, poses, raw_sigmoid, semantic_sequence):
         loss_dict = {}
-        reconsruction_loss = self.target_reconstruction_weight * \
-                             self.target_reconstruction_loss(batch_data=data,
-                                                             pred_depth=depth_pred,
-                                                             poses=poses,
-                                                             rgb_frame_offsets=self.cfg.datasets.configs[
-                                                                 1].dataset.rgb_frame_offsets,
-                                                             use_automasking=self.target_reconstruction_use_automasking,
-                                                             use_ssim=self.target_reconstruction_use_ssim)
+        reconsruction_loss, semantic_reconstruction_loss = self.target_reconstruction_loss(
+                                                               batch_data=data,
+                                                               pred_depth=depth_pred,
+                                                               poses=poses,
+                                                               rgb_frame_offsets=
+                                                               self.cfg.datasets.configs[
+                                                                   1].dataset.rgb_frame_offsets,
+                                                               use_automasking=self.target_reconstruction_use_automasking,
+                                                               use_ssim=self.target_reconstruction_use_ssim,
+                                                               semantic_logits=semantic_sequence)
+        reconsruction_loss = reconsruction_loss * self.target_reconstruction_weight
+        semantic_reconstruction_loss = semantic_reconstruction_loss * self.target_temporal_semantic_consistency_weigth
         loss_dict[f'reconstruction epoch {self.epoch}'] = reconsruction_loss
-        return reconsruction_loss, loss_dict
+
+        mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
+        norm_disp = raw_sigmoid / (mean_disp + 1e-7)
+        smoothness_loss = self.target_edge_smoothness_weight * \
+                          self.target_edge_smoothness_loss(norm_disp, data["rgb", 0])
+        loss_dict[f'Edge smoothess epoch {self.epoch}'] = smoothness_loss
+
+        return reconsruction_loss + smoothness_loss + semantic_reconstruction_loss, loss_dict
