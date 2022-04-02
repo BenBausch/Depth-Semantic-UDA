@@ -21,14 +21,9 @@ losses:
         - reconstruction:
             'use_ssim' : True
             'use_automasking' : True
-            'use_temporal_semantic_consistency': True
-        - edge_smooth:
-            'parameters': None
 
     loss_names_and_weights:
-        - temporal_semantic_consistency: 0.01
         - reconstruction : 1
-        - edge_smooth: 0.001
 
 eval:
     train:

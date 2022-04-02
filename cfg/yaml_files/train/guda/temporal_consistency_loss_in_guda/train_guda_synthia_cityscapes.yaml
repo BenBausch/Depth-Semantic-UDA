@@ -1,0 +1,48 @@
+experiment_name: 'testing_guda_update_tcs'
+
+model:
+    type: 'guda'
+
+    encoder:
+        params:
+            nof_layers: 101
+            weights_init: 'pretrained'
+
+    pose_net:
+        input: 'pairs' # 'all'
+        params:
+            nof_layers: 18
+            weights_init: 'pretrained'
+
+datasets:
+    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\temporal_consistency_loss_in_guda\synthia.yaml', #source
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\temporal_consistency_loss_in_guda\cityscapes_sequence.yaml', # target
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\temporal_consistency_loss_in_guda\cityscapes_semantic.yaml'] # validation dataset
+    loss_weights : [1, 1, 0]
+
+train:
+    nof_epochs: 40
+    batch_size: 1
+
+    optimizer:
+        type: 'Adam'
+        learning_rate: 0.0001
+    scheduler:
+        type: 'MultiStepLR'
+        gamma: 0.5
+        milestones: [30] # half the learning rate for the last 10 epochs
+
+val:
+    batch_size: 1
+    nof_workers: 4
+
+checkpoint:
+    use_checkpoint: False
+    path_base : 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\guda_model'
+    filename : 'checkpoint_epoch_0.pth'
+
+device:
+    multiple_gpus: False
+
+io:
+    path_save: 'D:\Depth-Semantic-UDA\experiments\todelete'

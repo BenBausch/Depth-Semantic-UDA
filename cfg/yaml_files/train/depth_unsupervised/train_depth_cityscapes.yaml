@@ -37,7 +37,9 @@ val:
     nof_workers: 5
 
 checkpoint:
-    use_checkpoint: False
+    use_checkpoint: True
+    path_base: 'D:\Depth-Semantic-UDA\experiments\cityscapes_monodepth2'
+    filename: 'checkpoint_epoch_1.pth'
 
 
 device:
@@ -45,3 +47,4 @@ device:
 
 io:
     path_save: 'D:\Depth-Semantic-UDA\experiments\todelete'
+

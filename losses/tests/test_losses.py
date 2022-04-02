@@ -150,6 +150,43 @@ class TestBootstrappedCrossEntropy(unittest.TestCase):
         assert worst_2_avg == loss_btce_value
 
 
+class TestSemanticL1LossPixelwise(unittest.TestCase):
+    def setUp(self):
+        # Create two dummy tensors on the cpu
+        # test with a batchsize = 2, num classes =3, img width = 3, img_height = 2
+        self.non_warped_img = torch.FloatTensor(
+            [[[[0.1, 0.8, 0.1], [0.7, 0.2, 0.1], [0.1, 0.4, 0.5]],
+              [[0.1, 0.8, 0.1], [0.7, 0.2, 0.1], [0.1, 0.4, 0.5]]],
+
+             [[[0.1, 0.6, 0.3], [0.7, 0.2, 0.1], [0.2, 0.7, 0.1]],
+              [[0.1, 0.8, 0.1], [0.1, 0.6, 0.3], [0.2, 0.7, 0.1]]]])
+
+        # test image that would have been warped and padded with the semantic Ignore_index
+        # first image in batch warped from top
+        # second image in batch warped from left
+        self.warped_img_padded = torch.FloatTensor(
+            [[[[250.0, 250.0, 250.0], [250.0, 250.0, 250.0], [250.0, 250.0, 250.0]],
+              [[0.1, 0.8, 0.1], [0.9, 0.0, 0.1], [0.1, 0.2, 0.7]]],
+
+             [[[250.0, 250.0, 250.0], [0.3, 0.3, 0.4], [0.1, 0.7, 0.2]],
+              [[250.0, 250.0, 250.0], [0.4, 0.3, 0.3], [0.3, 0.6, 0.1]]]])
+
+        # difference on Ingore value pixels should be set to 0
+        self.diff_tensor = torch.FloatTensor(
+            [[[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+              [[0.0, 0.0, 0.0], [0.2, 0.2, 0.0], [0.0, 0.2, 0.2]]],
+
+             [[[0.0, 0.0, 0.0], [0.4, 0.1, 0.3], [0.1, 0.0, 0.1]],
+              [[0.0, 0.0, 0.0], [0.3, 0.3, 0.0], [0.1, 0.1, 0.0]]]])
+
+        self.loss = SemanticL1LossPixelwise()
+
+    def test_masking(self):
+        loss_result = self.loss(self.non_warped_img, self.warped_img_padded)
+        equlatiy = torch.isclose(loss_result, self.diff_tensor)
+        assert torch.all(equlatiy).item()
+
+
 class TestL1Loss(unittest.TestCase):
     def setUp(self):
         # Create two dummy tensors on the cpu
@@ -159,7 +196,6 @@ class TestL1Loss(unittest.TestCase):
         self.mask = depth > 0
 
     def test_masking(self):
-
         mean_unmasked = self.diff_tensor.mean()
         mean_masked = self.diff_tensor[self.mask].mean()
 

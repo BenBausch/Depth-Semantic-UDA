@@ -196,7 +196,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         self.optimizer.step()
 
         # log samples
-        if batch_idx % int(300 / torch.cuda.device_count()) == 0 and self.rank == 0:
+        if batch_idx % int(5 / torch.cuda.device_count()) == 0 and self.rank == 0:
             rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
             depth_img = self.get_wandb_depth_image(depth_pred[('depth', 0)][0].detach(),
                                                    batch_idx)

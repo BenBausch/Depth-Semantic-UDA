@@ -21,7 +21,7 @@ datasets:
     loss_weights : [1, 1, 0]
 
 train:
-    nof_epochs: 40
+    nof_epochs: 400
     batch_size: 1
 
     optimizer:
@@ -30,16 +30,16 @@ train:
     scheduler:
         type: 'MultiStepLR'
         gamma: 0.5
-        milestones: [30] # half the learning rate for the last 10 epochs
+        milestones: [110] # half the learning rate for the last 10 epochs
 
 val:
     batch_size: 1
     nof_workers: 4
 
 checkpoint:
-    use_checkpoint: False
-    path_base : 'C:\\Users\\benba\\Documents\\University\\Masterarbeit\\models\\guda_model'
-    filename : 'checkpoint_epoch_0.pth'
+    use_checkpoint: True
+    path_base : 'D:\Depth-Semantic-UDA\experiments\guda'
+    filename : 'checkpoint_epoch_113.pth'
 
 device:
     multiple_gpus: False

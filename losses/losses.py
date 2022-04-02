@@ -4,12 +4,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
 from helper_modules.image_warper import CoordinateWarper
+from utils.constans import IGNORE_INDEX_SEMANTIC
 
 
 class WeightedCrossEntropy(nn.Module):
     """
     A simple wrapper for the cross entropy loss implemented in pytorch requiring weights
     """
+
     def __init__(self, weights, ignore_index=-100):
         self.weight = weights
         self.criterion = nn.CrossEntropyLoss(reduction='mean', weight=self.weights, ignore_index=ignore_index)
@@ -174,6 +176,7 @@ class L1LossDepth(nn.Module):
     This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
     no measurements to zero.
     """
+
     def __init__(self):
         super(L1LossDepth, self).__init__()
 
@@ -190,6 +193,7 @@ class SilogLossDepth(nn.Module):
     Implementation of the Scale Invariant Log Loss introduced in
     'Depth map prediction from a single image using a multi-scale deep network'.
     """
+
     def __init__(self, weight=0.85, ignore_value=-100):
         super(SilogLossDepth, self).__init__()
         self.weight = weight
@@ -205,10 +209,28 @@ class SilogLossDepth(nn.Module):
         return silog_var - silog_wsme
 
 
+class SemanticL1LossPixelwise(nn.Module):
+    """
+    Implements the absolute difference between prediction and target per pixel.
+    """
+
+    def __init__(self):
+        super(SemanticL1LossPixelwise, self).__init__()
+
+    def forward(self, nonwarped_img_semantic, warped_img_semantic):
+        mask = (warped_img_semantic == IGNORE_INDEX_SEMANTIC).detach()
+        assert nonwarped_img_semantic.dim() == warped_img_semantic.dim(), "Inconsistent dimensions in L1Loss between prediction and target"
+        loss = (nonwarped_img_semantic - warped_img_semantic).abs()
+        zeros = torch.zeros_like(loss).detach()
+        loss[mask] = zeros[mask]
+        return loss
+
+
 class L1LossPixelwise(nn.Module):
     """
     Implements the absolute difference between prediction and target per pixel.
     """
+
     def __init__(self):
         super(L1LossPixelwise, self).__init__()
 
@@ -225,6 +247,7 @@ class MSELoss(nn.Module):
     This can be used for both sparse and dense depth supervision. Sparse: Set the depth values for those pixels with
     no measurements to zero.
     """
+
     def __init__(self):
         super(MSELoss, self).__init__()
 
@@ -240,6 +263,7 @@ class EdgeAwareSmoothnessLoss(nn.Module):
     """
     The edge aware smoothness Loss enforces smooth depth gradients in regions where no edges are detected.
     """
+
     def __init__(self):
         super(EdgeAwareSmoothnessLoss, self).__init__()
 
@@ -265,6 +289,7 @@ class SSIMLoss(nn.Module):
     Implements the structural similarity component from
     'Image quality assessment: from error visibility to structural similarity'
     """
+
     def __init__(self, window_size=3):
         super(SSIMLoss, self).__init__()
         padding = window_size // 2
@@ -302,6 +327,7 @@ class ReconstructionLoss(nn.Module):
     with optional SSIM loss and minimum error selection from
     ' Unsupervised learning of depth and ego-motion from video'
     """
+
     # Attention, we use a camera model here, that is normalized by the image size, in order to be able to compute
     # reprojections for each possible size of the image
     # ref_img_width and ref_img_height denote the original image sizes without scalings
@@ -309,6 +335,7 @@ class ReconstructionLoss(nn.Module):
         super(ReconstructionLoss, self).__init__()
         self.num_scales = num_scales
         self.l1_loss_pixelwise = L1LossPixelwise()
+        self.semantic_l1_loss_pixelwise = SemanticL1LossPixelwise()
         self.ssim = SSIMLoss(ssim_kernel_size)
         self.image_warpers = {}
         self.scaling_modules = {}
@@ -322,17 +349,33 @@ class ReconstructionLoss(nn.Module):
             self.image_warpers[i] = ImageWarper(camera_model_, device)
             self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=s, stride=s)
 
-    # ToDo: Exclude "black" pixels as in selfsup and maybe use a mask for excluding pixels with depth supervision
-    #  The problem with black pixels might get solved by an appropriate interpolation method!! (Comp. MD2 with selfsup)
     def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
-                mask=None):
+                mask=None, semantic_logits=None):
+        """
+        :param semantic_logits: dictionary of semantic softmax predictions
+        :param batch_data: batch of data containing the rgb images
+        :param pred_depth: batch of predicted depths for the middle frames
+        :param poses: batch of predicted poses
+        :param rgb_frame_offsets: offsets of the rgb images to the middle frame
+        :param use_automasking: auto mask stationary pixels
+        :param use_ssim: if ssim compontent of loss should be used
+        :param alpha: weighting between both losses
+        :param mask:
+        :param batch_semantic_logits: batch of semantic softmax predictions
+        :return:
+        """
         assert rgb_frame_offsets[
-                   0] == 0  # This should always be zero to make sure that the first id corresponds to the current rgb image the depth is predicted for
+                   0] == 0  # This should always be zero to make sure that the first id corresponds
+        # to the current rgb image the depth is predicted for
 
         total_loss = 0.0
 
+        semantic_cosistency_losses = []  # init list here unlike other losses,
+        # since semantic only evaluated at largest scale
+
         # Scale down the depth image (scaling must be part of the optimization graph!)
         for s in range(self.num_scales):
+
             reconstruction_losses_s = []
             identity_losses_s = []
 
@@ -340,8 +383,25 @@ class ReconstructionLoss(nn.Module):
             scaled_tgt_img = self.scaling_modules[s](batch_data[("rgb", 0)])
 
             for frame_id in rgb_frame_offsets[1:]:
+
                 scaled_adjacent_img_ = self.match_sizes(batch_data[("rgb", frame_id)], scaled_depth.shape)
-                warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_, scaled_depth, poses[frame_id])
+
+                if s == 0 and semantic_logits is not None:
+                    # compare semantic predictions (if available) only on the original input resolution
+                    warped_scaled_adjacent_img_, warped_semantic_logits_frame = \
+                        self.image_warpers[s](scaled_adjacent_img_,
+                                              scaled_depth,
+                                              poses[frame_id],
+                                              semantic_logits[frame_id])
+
+                    semantic_cosistency_losses.append(self.semantic_l1_loss_pixelwise(
+                        semantic_logits[0],
+                        warped_semantic_logits_frame).mean(1, True))
+
+                else:
+                    warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_,
+                                                                        scaled_depth,
+                                                                        poses[frame_id])
 
                 rec_l1_loss = self.l1_loss_pixelwise(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
@@ -350,8 +410,6 @@ class ReconstructionLoss(nn.Module):
                 reconstruction_losses_s.append(
                     (1 - alpha) * rec_l1_loss + alpha * rec_ssim_loss if use_ssim else rec_l1_loss)
 
-                # ToDo: Actually, we shouldn't only take the minimum but exclude those pixels where the identity loss is smaller!!
-                #  CHANGE THIS! Md2 claims that this is right but I don't think so... Implement both and compare!
                 if use_automasking:
                     id_l1_loss = self.l1_loss_pixelwise(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                     id_ssim_loss = self.ssim(scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
@@ -377,7 +435,17 @@ class ReconstructionLoss(nn.Module):
             #  later. Do not forget to change this then
             total_loss += final_loss_s / (2 ** s)
 
-        return total_loss
+        if semantic_logits is None:
+            # no semantic consistency calculated
+            return total_loss
+        else:
+            # semantic_cosistency_loss_min = min over warpings of mean loss over classes per pixel
+            print(f'Semantic Losses length : {len(semantic_cosistency_losses)}')
+            semantic_cosistency_loss_min = torch.cat(semantic_cosistency_losses, 1)
+            semantic_cosistency_loss_min = torch.min(semantic_cosistency_loss_min, dim=1)[0].mean()
+            print(total_loss)
+
+            return total_loss, semantic_cosistency_loss_min
 
     def match_sizes(self, image, target_shape, mode='bilinear', align_corners=True):
         if len(target_shape) > 2:
