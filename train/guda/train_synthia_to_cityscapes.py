@@ -50,19 +50,19 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.source_num_pose_frames = 2 if self.cfg.model.pose_net.input == "pairs" else self.num_input_frames
 
         source_l_n_p = self.cfg.datasets.configs[0].losses.loss_names_and_parameters
-        print(source_l_n_p)
+        self.print_p_0(source_l_n_p)
         source_l_n_w = self.cfg.datasets.configs[0].losses.loss_names_and_weights
-        print(source_l_n_w)
+        self.print_p_0(source_l_n_w)
 
         # Specify whether to train in fully unsupervised manner or not
         if self.cfg.datasets.configs[0].dataset.use_sparse_depth:
-            print('Training supervised on source dataset using sparse depth!')
+            self.print_p_0('Training supervised on source dataset using sparse depth!')
         if self.cfg.datasets.configs[0].dataset.use_dense_depth:
-            print('Training supervised on source dataset using dense depth!')
+            self.print_p_0('Training supervised on source dataset using dense depth!')
         if self.cfg.datasets.configs[0].dataset.use_semantic_gt:
-            print('Training supervised on source dataset using semantic annotations!')
+            self.print_p_0('Training supervised on source dataset using semantic annotations!')
         if self.cfg.datasets.configs[0].dataset.use_self_supervised_depth:
-            print('Training unsupervised on source dataset using self supervised depth!')
+            self.print_p_0('Training unsupervised on source dataset using self supervised depth!')
 
         self.source_use_gt_scale_train = self.cfg.datasets.configs[0].eval.train.use_gt_scale and \
                                          self.cfg.datasets.configs[0].eval.train.gt_depth_available
@@ -70,16 +70,16 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                        self.cfg.datasets.configs[0].eval.val.gt_depth_available
 
         if self.source_use_gt_scale_train:
-            print("Source ground truth scale is used for computing depth errors while training.")
+            self.print_p_0("Source ground truth scale is used for computing depth errors while training.")
         if self.source_use_gt_scale_val:
-            print("Source ground truth scale is used for computing depth errors while validating.")
+            self.print_p_0("Source ground truth scale is used for computing depth errors while validating.")
 
         self.source_min_depth = self.cfg.datasets.configs[0].dataset.min_depth
         self.source_max_depth = self.cfg.datasets.configs[0].dataset.max_depth
 
         self.source_use_garg_crop = self.cfg.datasets.configs[0].eval.use_garg_crop
         if self.source_use_garg_crop:
-            print(f'Use Garg Crop for depth evaluation on source dataset!')
+            self.print_p_0(f'Use Garg Crop for depth evaluation on source dataset!')
 
         # Set up normalized camera model for source domain
         try:
@@ -105,13 +105,13 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         # Specify whether to train in fully unsupervised manner or not
         if self.cfg.datasets.configs[1].dataset.use_sparse_depth:
-            print('Training supervised on target dataset using sparse depth!')
+            self.print_p_0('Training supervised on target dataset using sparse depth!')
         if self.cfg.datasets.configs[1].dataset.use_dense_depth:
-            print('Training supervised on target dataset using dense depth!')
+            self.print_p_0('Training supervised on target dataset using dense depth!')
         if self.cfg.datasets.configs[1].dataset.use_semantic_gt:
-            print('Training supervised on target dataset using semantic annotations!')
+            self.print_p_0('Training supervised on target dataset using semantic annotations!')
         if self.cfg.datasets.configs[1].dataset.use_self_supervised_depth:
-            print('Training unsupervised on target dataset using self supervised depth!')
+            self.print_p_0('Training unsupervised on target dataset using self supervised depth!')
 
         self.target_use_gt_scale_train = self.cfg.datasets.configs[1].eval.train.use_gt_scale and \
                                          self.cfg.datasets.configs[1].eval.train.gt_depth_available
@@ -119,9 +119,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                        self.cfg.datasets.configs[1].eval.val.gt_depth_available
 
         if self.target_use_gt_scale_train:
-            print("Target ground truth scale is used for computing depth errors while training.")
+            self.print_p_0("Target ground truth scale is used for computing depth errors while training.")
         if self.target_use_gt_scale_val:
-            print("Target ground truth scale is used for computing depth errors while validating.")
+            self.print_p_0("Target ground truth scale is used for computing depth errors while validating.")
 
         self.target_min_depth = self.cfg.datasets.configs[1].dataset.min_depth
         self.target_max_depth = self.cfg.datasets.configs[1].dataset.max_depth
@@ -249,15 +249,15 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             for _, net in self.model.get_networks().items():
                 wandb.watch(net)
 
-        print("Training started...")
+        self.print_p_0("Training started...")
 
         for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
             self.train()
-            print('Validation')
+            self.print_p_0('Validation')
             if self.cfg.val.do_validation:
                 self.validate()
 
-        print("Training done.")
+        self.print_p_0("Training done.")
 
     def train(self):
         self.set_train()
@@ -265,7 +265,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # Main loop:
         for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
             if self.rank == 0:
-                print(f"Training epoch {self.epoch} | batch {batch_idx}")
+                self.print_p_0(f"Training epoch {self.epoch} | batch {batch_idx}")
             self.training_step(data, batch_idx)
 
         # Update the scheduler
@@ -281,7 +281,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # Main loop:
         for batch_idx, data in enumerate(self.target_val_loader):
             if self.rank == 0:
-                print(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
+                self.print_p_0(f"Evaluation epoch {self.epoch} | batch {batch_idx}")
 
             self.validation_step(data, batch_idx)
 
@@ -332,20 +332,19 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         pose_pred_t = prediction_t['poses']
 
-        depth_pred_t, raw_sigmoid_t = prediction_t['depth'][0], prediction_t['depth'][1]
+        depth_pred_t, raw_sigmoid_t = prediction_t['depth'][0], prediction_t['depth'][1][('disp', 0)]
 
         if self.target_predict_semantic_for_whole_sequence:
             semantic_sequence = {}
             for offset in prediction_t['semantic_sequence'].keys():
-                print(offset)
                 semantic_sequence[offset] = F.softmax(prediction_t['semantic_sequence'][offset], dim=1)
         else:
-            semantic_prediction = None
+            semantic_sequence = None
 
         loss_target, loss_target_dict = self.compute_losses_target(data[1],
                                                                    depth_pred_t,
                                                                    pose_pred_t,
-                                                                   raw_sigmoid_t[('disp', 0)],
+                                                                   raw_sigmoid_t,
                                                                    semantic_sequence)
 
         # -----------------------------------------------------------------------------------------------
@@ -354,7 +353,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         loss = self.source_loss_weight * loss_source + self.target_loss_weight * loss_target
 
-        print(loss)
+        self.print_p_0(loss)
 
         self.optimizer.zero_grad()
         loss.backward()

@@ -248,11 +248,9 @@ class Guda(SemanticDepthFromMotionModelBase):
         if self.predict_semantic_for_whole_sequence[dataset_id]:
             # predict semantic for the sequence if wanted and if dataset has sequences
             semantic_sequence = {0: results['semantic']}
-            print(results['semantic'])
             for offset in self.rgb_frame_offsets[dataset_id][1:]:
                 offset_img_features = self.latent_features(batch[("rgb", offset)])
                 semantic_sequence[offset] = self.predict_semantic(offset_img_features)
-                print(f'predicted semantic for offset {offset} and dataset {dataset_id}')
 
             results['semantic_sequence'] = semantic_sequence
 

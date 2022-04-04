@@ -21,7 +21,6 @@ class MIoU:
         if ignore_classes is not None:
             assert len(ignore_classes) == len(self.classes)
             self.classes = self.classes[ignore_classes]
-        print(len(self.classes))
 
     def update(self, mask_pred, mask_gt):
         """

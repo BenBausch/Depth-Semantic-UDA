@@ -100,7 +100,6 @@ class CoordinateWarper(nn.Module):
         image_as_pointcloud_homogeneous = torch.cat([image_as_pointcloud, ones], 1)
 
         # Transform the obtained pointcloud into the local coordinate system of the target camera pose (homogeneous)
-        print(f'T: {T}')
         transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
             batch_depth_map.size(0), 4, -1).double())
         transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
@@ -154,7 +153,6 @@ class ImageWarper(nn.Module):
         #fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
         #ax1.imshow(pixel_outside_of_image.squeeze(0).squeeze(0).cpu())
         pixel_outside_of_image = pixel_outside_of_image.repeat(1, batch_semantic.shape[1], 1, 1)
-        print(f'Padded pixel mask shape: {pixel_outside_of_image.shape}')
 
         #plt_img = warped_image[0] + torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2).cuda()
         #ax2.imshow(plt_img.detach().cpu().numpy().transpose(1, 2, 0))
