@@ -341,7 +341,7 @@ class SupervisedSemanticUnsupervisedDepthTrainer(TrainSourceTargetDatasetBase):
 
     def compute_losses_sequence(self, data, depth_pred, poses, raw_sigmoid):
         loss_dict = {}
-        reconsruction_loss, _ = self.sequence_reconstruction_weight * \
+        reconsruction_loss = self.sequence_reconstruction_weight * \
                                 self.sequence_reconstruction_loss(
                                     batch_data=data,
                                     pred_depth=depth_pred,
