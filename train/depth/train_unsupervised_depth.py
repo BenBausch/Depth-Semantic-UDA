@@ -23,6 +23,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
     """
     Used for training on datasets that consist of RGB Images, like Cityscapes Sequence dataset
     """
+
     def __init__(self, device_id, cfg, world_size=1):
         super(UnsupervisedDepthTrainer, self).__init__(device_id=device_id, cfg=cfg, world_size=world_size)
 
@@ -88,6 +89,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
                             os.path.join(self.cfg.datasets.configs[0].dataset.path, "calib", "calib.txt"))
 
         # -------------------------Source Losses------------------------------------------------------
+        self.edge_smoothness_loss = get_loss("edge_smooth")
         self.reconstruction_loss = get_loss('reconstruction',
                                             ref_img_width=self.img_width,
                                             ref_img_height=self.img_height,
@@ -97,6 +99,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         self.reconstruction_use_ssim = l_n_p[0]['reconstruction']['use_ssim']
         self.reconstruction_use_automasking = l_n_p[0]['reconstruction']['use_automasking']
         self.reconstruction_weight = l_n_w[0]['reconstruction']
+        self.edge_smoothness_weight = l_n_w[0]['edge_smooth']
 
         self.snr = get_loss('surface_normal_regularization',
                             ref_img_width=self.img_width,
@@ -185,9 +188,9 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
 
         pose_pred = prediction['poses']
 
-        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1]
+        depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1][('disp', 0)]
 
-        loss, loss_dict = self.compute_losses(data, depth_pred, pose_pred)
+        loss, loss_dict = self.compute_losses(data, depth_pred, pose_pred, raw_sigmoid)
 
         self.print_p_0(loss)
 
@@ -220,7 +223,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             wandb.log(
                 {f'images of epoch {self.epoch}': [rgb_img, depth_img, normal_img]})
 
-    def compute_losses(self, data, depth_pred, poses):
+    def compute_losses(self, data, depth_pred, poses, raw_sigmoid):
         loss_dict = {}
         reconsruction_loss = self.reconstruction_weight * \
                              self.reconstruction_loss(batch_data=data,
@@ -229,6 +232,13 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
                                                       rgb_frame_offsets=self.cfg.datasets.configs[
                                                           0].dataset.rgb_frame_offsets,
                                                       use_automasking=self.reconstruction_use_automasking,
-                                                      use_ssim=self.reconstruction_use_ssim)
+                                                      use_ssim=self.reconstruction_use_ssim)[0]
         loss_dict[f'reconstruction epoch {self.epoch}'] = reconsruction_loss
-        return reconsruction_loss, loss_dict
+
+        mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
+        norm_disp = raw_sigmoid / (mean_disp + 1e-7)
+        smoothness_loss = self.edge_smoothness_weight * \
+                          self.edge_smoothness_loss(norm_disp, data["rgb", 0])
+        loss_dict[f'Edge smoothess epoch {self.epoch}'] = smoothness_loss
+
+        return reconsruction_loss + smoothness_loss, loss_dict

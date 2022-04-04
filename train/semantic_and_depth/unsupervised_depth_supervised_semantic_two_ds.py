@@ -139,6 +139,7 @@ class SupervisedSemanticUnsupervisedDepthTrainer(TrainSourceTargetDatasetBase):
         self.semantic_loss_weight = self.cfg.datasets.loss_weights[0]
 
         # -------------------------sequence Losses------------------------------------------------------
+        self.sequence_edge_smoothness_loss = get_loss("edge_smooth")
         self.sequence_reconstruction_loss = get_loss('reconstruction',
                                                      ref_img_width=self.sequence_img_width,
                                                      ref_img_height=self.sequence_img_height,
@@ -148,6 +149,7 @@ class SupervisedSemanticUnsupervisedDepthTrainer(TrainSourceTargetDatasetBase):
         self.sequence_reconstruction_use_ssim = sequence_l_n_p[0]['reconstruction']['use_ssim']
         self.sequence_reconstruction_use_automasking = sequence_l_n_p[0]['reconstruction']['use_automasking']
         self.sequence_reconstruction_weight = sequence_l_n_w[0]['reconstruction']
+        self.sequence_edge_smoothness_weight = sequence_l_n_w[0]['edge_smooth']
 
         self.sequence_loss_weight = self.cfg.datasets.loss_weights[1]
 
@@ -261,9 +263,9 @@ class SupervisedSemanticUnsupervisedDepthTrainer(TrainSourceTargetDatasetBase):
 
         pose_pred = prediction_t['poses']
 
-        depth_pred = prediction_t['depth'][0]
+        depth_pred, raw_sigmoid = prediction_t['depth'][0], prediction_t['depth'][1][('disp', 0)]
 
-        loss_sequence, loss_sequence_dict = self.compute_losses_sequence(data[1], depth_pred, pose_pred)
+        loss_sequence, loss_sequence_dict = self.compute_losses_sequence(data[1], depth_pred, pose_pred, raw_sigmoid)
 
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------------Optimization-------------------------------------------
@@ -332,21 +334,28 @@ class SupervisedSemanticUnsupervisedDepthTrainer(TrainSourceTargetDatasetBase):
         # non-inverse depth map --> pixels far from the camera have a high value, close pixels have a small value
         soft_semantic_pred = F.softmax(semantic_pred, dim=1)
         bce_loss = self.semantic_bce_weigth * self.semantic_bce(prediction=soft_semantic_pred, target=semantic_gt,
-                                                            epoch=self.epoch)
+                                                                epoch=self.epoch)
         loss_dict[f'bce epoch {self.epoch}'] = bce_loss
 
         return bce_loss, loss_dict
 
-    def compute_losses_sequence(self, data, depth_pred, poses):
+    def compute_losses_sequence(self, data, depth_pred, poses, raw_sigmoid):
         loss_dict = {}
-        reconsruction_loss = self.sequence_reconstruction_weight * \
-                             self.sequence_reconstruction_loss(
-                                 batch_data=data,
-                                 pred_depth=depth_pred,
-                                 poses=poses,
-                                 rgb_frame_offsets=self.cfg.datasets.configs[
-                                     1].dataset.rgb_frame_offsets,
-                                 use_automasking=self.sequence_reconstruction_use_automasking,
-                                 use_ssim=self.sequence_reconstruction_use_ssim)
+        reconsruction_loss, _ = self.sequence_reconstruction_weight * \
+                                self.sequence_reconstruction_loss(
+                                    batch_data=data,
+                                    pred_depth=depth_pred,
+                                    poses=poses,
+                                    rgb_frame_offsets=self.cfg.datasets.configs[
+                                        1].dataset.rgb_frame_offsets,
+                                    use_automasking=self.sequence_reconstruction_use_automasking,
+                                    use_ssim=self.sequence_reconstruction_use_ssim)[0]
         loss_dict[f'reconstruction epoch {self.epoch}'] = reconsruction_loss
-        return reconsruction_loss, loss_dict
+
+        mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
+        norm_disp = raw_sigmoid / (mean_disp + 1e-7)
+        smoothness_loss = self.sequence_edge_smoothness_weight * \
+                          self.sequence_edge_smoothness_loss(norm_disp, data["rgb", 0])
+        loss_dict[f'Edge smoothess epoch {self.epoch}'] = smoothness_loss
+
+        return reconsruction_loss + smoothness_loss, loss_dict

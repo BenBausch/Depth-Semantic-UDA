@@ -14,15 +14,21 @@ dataset:
     max_depth : 100.0
     rgb_frame_offsets: [0, -1, +1]
     sequence_dataset: True
+    predict_semantic_for_each_img_in_sequence: True
 
 losses:
     loss_names_and_parameters:
         - reconstruction:
             'use_ssim' : True
             'use_automasking' : True
+            'use_temporal_semantic_consistency': True
+        - edge_smooth:
+            'parameters': None
 
     loss_names_and_weights:
+        - temporal_semantic_consistency: 0.01
         - reconstruction : 1
+        - edge_smooth: 0.001
 
 eval:
     train:

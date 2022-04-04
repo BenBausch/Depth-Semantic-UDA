@@ -20,9 +20,12 @@ losses:
         - reconstruction:
             'use_ssim' : True
             'use_automasking' : True
+        - edge_smooth:
+              'parameters': None
 
     loss_names_and_weights:
         - reconstruction : 1
+        - edge_smooth: 0.001
 
 eval:
     train:

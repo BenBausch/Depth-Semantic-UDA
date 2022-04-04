@@ -394,9 +394,12 @@ class ReconstructionLoss(nn.Module):
                                               poses[frame_id],
                                               semantic_logits[frame_id])
 
-                    semantic_cosistency_losses.append(self.semantic_l1_loss_pixelwise(
-                        semantic_logits[0],
-                        warped_semantic_logits_frame).mean(1, True))
+                    loss_sem = self.semantic_l1_loss_pixelwise(semantic_logits[0], warped_semantic_logits_frame)
+
+                    semantic_cosistency_losses.append(loss_sem.mean(1, True))
+
+                    #plt.imshow(loss_sem.mean(1, True)[0, 0, :, :].cpu().detach())
+                    #plt.show()
 
                 else:
                     warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_,
@@ -431,19 +434,15 @@ class ReconstructionLoss(nn.Module):
             final_loss_per_pixel_s, _ = torch.min(combined_losses_s, dim=1)
             final_loss_s = final_loss_per_pixel_s.mean()
 
-            # ToDo: This is used when downscaling is used, but you might use the upscaling of the depth map as in Md2
-            #  later. Do not forget to change this then
             total_loss += final_loss_s / (2 ** s)
 
         if semantic_logits is None:
             # no semantic consistency calculated
-            return total_loss
+            return total_loss, 0
         else:
             # semantic_cosistency_loss_min = min over warpings of mean loss over classes per pixel
-            print(f'Semantic Losses length : {len(semantic_cosistency_losses)}')
             semantic_cosistency_loss_min = torch.cat(semantic_cosistency_losses, 1)
             semantic_cosistency_loss_min = torch.min(semantic_cosistency_loss_min, dim=1)[0].mean()
-            print(total_loss)
 
             return total_loss, semantic_cosistency_loss_min
 
