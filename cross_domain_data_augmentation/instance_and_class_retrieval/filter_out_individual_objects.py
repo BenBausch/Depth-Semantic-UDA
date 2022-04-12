@@ -103,26 +103,26 @@ for batch_idx, data in enumerate(loader0):
         min_y = torch.min(mask.nonzero()[:, 0])
         max_y = torch.max(mask.nonzero()[:, 0])
 
-        fig, axs = plt.subplots(2, 4)
+        #fig, axs = plt.subplots(2, 4)
 
         # rgb images
         raw_rgb0 = data[('rgb', 0)][0].cpu() + torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
 
-        plt_rgb0 = raw_rgb0.numpy().transpose(1, 2, 0)
-        axs[0, 0].imshow(plt_rgb0)
+        #plt_rgb0 = raw_rgb0.numpy().transpose(1, 2, 0)
+        #axs[0, 0].imshow(plt_rgb0)
 
         # depth images
-        axs[0, 1].imshow(vdp(1 / data['depth_dense'][0]))
-        axs[0, 3].imshow(data['instance'][0].cpu().numpy())
-        axs[1, 3].imshow(border_mask.cpu())
+        #axs[0, 1].imshow(vdp(1 / data['depth_dense'][0]))
+        #axs[0, 3].imshow(data['instance'][0].cpu().numpy())
+        #axs[1, 3].imshow(border_mask.cpu())
 
         # -------------------------crop data---------------------------------
         # rgb
         raw_rgb0[:, ~mask] = 0.0
-        axs[0, 2].imshow(raw_rgb0.cpu().numpy().transpose(1, 2, 0))
+        #axs[0, 2].imshow(raw_rgb0.cpu().numpy().transpose(1, 2, 0))
 
         cropped_to_content_rgb = F.crop(raw_rgb0, top=min_y, left=min_x, width=max_x - min_x, height=max_y - min_y)
-        axs[1, 0].imshow(cropped_to_content_rgb.numpy().transpose(1, 2, 0))
+        #axs[1, 0].imshow(cropped_to_content_rgb.numpy().transpose(1, 2, 0))
 
         # semantic
         semantic_mask = (data['instance'][0] == inst).long()
@@ -131,13 +131,13 @@ for batch_idx, data in enumerate(loader0):
         semantic_mask[semantic_mask == 1] = semantic_class_id  # label asign label
         cropped_to_content_semantic = F.crop(semantic_mask, top=min_y, left=min_x, width=max_x - min_x,
                                              height=max_y - min_y)
-        axs[1, 1].imshow(semantic_mask.cpu().numpy())
+        #axs[1, 1].imshow(semantic_mask.cpu().numpy())
 
         # depth
         cropped_to_content_depth = F.crop(data['depth_dense'][0], top=min_y, left=min_x, width=max_x - min_x,
                                           height=max_y - min_y)
         cropped_to_content_depth = (cropped_to_content_depth * 100)
-        axs[1, 2].imshow(vdp(1 / cropped_to_content_depth))
+        #axs[1, 2].imshow(vdp(1 / cropped_to_content_depth))
 
         # rule 3
         # calculate avg depth outside mask for each instance/non-dynamic class except for road, sky, sidewalk pixels
@@ -179,6 +179,8 @@ for batch_idx, data in enumerate(loader0):
 
         inst_bbox_size = cropped_instance_mask.shape[0] * cropped_instance_mask.shape[1]
 
+        print('##############################################################################################')
+
         print(f'Depth of instance of interest: {avg_depth_inst}')
         
         reject_this_instance = False
@@ -190,14 +192,16 @@ for batch_idx, data in enumerate(loader0):
                 continue
 
             avg_depth_poi = torch.mean(cropped_to_content_depth[:, cropped_poi_mask])
+            print(f'Average deph of {poi} is {avg_depth_poi}')
 
-            if avg_depth_inst < avg_depth_poi:
+            if avg_depth_inst > avg_depth_poi:
+                print('Depth is smaller')
                 reject_this_instance = True
                 break
             print(f'Depth of poi instance {poi}: {avg_depth_poi}')
 
         if reject_this_instance:
-            plt.close(fig)
+            #plt.close(fig)
             continue
 
         for j, poc in enumerate(pos_occluding_classes):
@@ -207,17 +211,19 @@ for batch_idx, data in enumerate(loader0):
                 continue
 
             avg_depth_poc = torch.mean(cropped_to_content_depth[:, cropped_poc_mask])
+            print(f'Average deph of {poc} is {avg_depth_poc}')
 
-            if avg_depth_inst < avg_depth_poc:
+            if avg_depth_inst > avg_depth_poc:
+                print('Depth is smaller')
                 reject_this_instance = True
                 break
             print(f'Depth of poc instance {poc}: {avg_depth_poc}')
 
         if reject_this_instance:
-            plt.close(fig)
+            #plt.close(fig)
             continue
 
-        axs[1, 3].imshow(cropped_outside_instance_mask.cpu())
+        #axs[1, 3].imshow(cropped_outside_instance_mask.cpu())
 
         print(f'Instance with id {inst}')
         print(f'Consists of {size_of_instance} pixels!')
@@ -240,7 +246,7 @@ for batch_idx, data in enumerate(loader0):
 
         to_pil = transforms.ToPILImage()
 
-        plt.show()
+        #plt.show()
 
         if True:
             cropped_to_content_rgb = to_pil(cropped_to_content_rgb)
@@ -257,4 +263,4 @@ for batch_idx, data in enumerate(loader0):
 
         instance_counter += 1
 
-        plt.close(fig)
+        #plt.close(fig)

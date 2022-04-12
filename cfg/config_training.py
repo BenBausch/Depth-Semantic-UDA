@@ -115,7 +115,7 @@ def create_configuration(path_to_training_yaml):
     configuration = get_cfg_defaults()
     configuration.merge_from_file(path_to_training_yaml)
     if len(configuration.datasets.paths_to_configs) == 0:
-        raise ValueError('No dataset specified!')
+        raise Warning('No dataset specified!')
 
     # assure one loss weight per dataset
     assert len(configuration.datasets.loss_weights) == len(configuration.datasets.paths_to_configs)

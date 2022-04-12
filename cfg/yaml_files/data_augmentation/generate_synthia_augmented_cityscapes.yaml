@@ -1,0 +1,24 @@
+model:
+    type: 'guda'
+
+    encoder:
+        params:
+            nof_layers: 101
+            weights_init: 'pretrained'
+
+    pose_net:
+        input: 'pairs' # 'all'
+        params:
+            nof_layers: 18
+            weights_init: 'pretrained'
+
+datasets:
+    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\data_augmentation\synthia.yaml', #source
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\data_augmentation\cityscapes_sequence.yaml', # target
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\data_augmentation\cityscapes_semantic.yaml'] # validation dataset
+    loss_weights : [0, 0, 0]
+
+checkpoint:
+    use_checkpoint: False
+    path_base : 'D:\Depth-Semantic-UDA\experiments\guda'
+    filename : 'checkpoint_epoch_113.pth'

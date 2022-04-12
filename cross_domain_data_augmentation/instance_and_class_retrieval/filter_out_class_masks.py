@@ -114,37 +114,37 @@ for batch_idx, data in enumerate(loader0):
         max_y = torch.max(mask.nonzero()[:, 0])
         print(f'bottom: {max_y}')
 
-        fig, axs = plt.subplots(2, 4)
+        #fig, axs = plt.subplots(2, 4)
 
         # rgb images
         raw_rgb0 = data[('rgb', 0)][0].cpu() + torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
 
-        plt_rgb0 = raw_rgb0.numpy().transpose(1, 2, 0)
-        axs[0, 0].imshow(plt_rgb0)
+        #plt_rgb0 = raw_rgb0.numpy().transpose(1, 2, 0)
+        #axs[0, 0].imshow(plt_rgb0)
 
         # depth images
-        axs[0, 1].imshow(vdp(1 / data['depth_dense'][0]))
-        axs[0, 3].imshow(data['semantic'][0].cpu().numpy())
+        #axs[0, 1].imshow(vdp(1 / data['depth_dense'][0]))
+        #axs[0, 3].imshow(data['semantic'][0].cpu().numpy())
 
         # -------------------------crop data---------------------------------
         # assumes target image bigger than source image!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         raw_rgb0[:, ~mask] = 0.0
-        axs[0, 2].imshow(raw_rgb0.cpu().numpy().transpose(1, 2, 0))
+        #axs[0, 2].imshow(raw_rgb0.cpu().numpy().transpose(1, 2, 0))
 
         cropped_to_content_rgb = F.crop(raw_rgb0, top=min_y, left=min_x, width=max_x - min_x, height=max_y - min_y)
-        axs[1, 0].imshow(cropped_to_content_rgb.numpy().transpose(1, 2, 0))
+        #axs[1, 0].imshow(cropped_to_content_rgb.numpy().transpose(1, 2, 0))
 
         semantic_mask = (data['semantic'][0] == inst).long()
         semantic_mask[semantic_mask == 0] = IGNORE_INDEX_SEMANTIC
         semantic_mask[semantic_mask == 1] = inst
         cropped_to_content_semantic = F.crop(semantic_mask, top=min_y, left=min_x, width=max_x - min_x, height=max_y - min_y)
-        axs[1, 1].imshow(cropped_to_content_semantic.cpu().numpy())
+        #axs[1, 1].imshow(cropped_to_content_semantic.cpu().numpy())
 
-        data['depth_dense'][0][:, ~mask] = IGNORE_VALUE_DEPTH  # assign max depth to rest of image
-        axs[1, 2].imshow(data['depth_dense'][0].cpu().numpy().transpose(1, 2, 0))
+        #data['depth_dense'][0][:, ~mask] = IGNORE_VALUE_DEPTH  # assign max depth to rest of image
+        #axs[1, 2].imshow(data['depth_dense'][0].cpu().numpy().transpose(1, 2, 0))
         cropped_to_content_depth = F.crop(data['depth_dense'][0], top=min_y, left=min_x, width=max_x - min_x, height=max_y - min_y)
         cropped_to_content_depth = (cropped_to_content_depth * 100)
-        axs[1, 2].imshow(vdp(1 / cropped_to_content_depth))
+        #axs[1, 2].imshow(vdp(1 / cropped_to_content_depth))
 
         # --------------------- save the cropped semantic and all labels
         cityscapes_class_name = CITYSCAPES_ID_TO_NAME_16[data['semantic'][0][mask][0].item()]
@@ -160,7 +160,7 @@ for batch_idx, data in enumerate(loader0):
 
         to_pil = transforms.ToPILImage()
 
-        plt.show()
+        #plt.show()
 
         if True:
             cropped_to_content_rgb = to_pil(cropped_to_content_rgb)

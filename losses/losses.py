@@ -374,6 +374,8 @@ class ReconstructionLoss(nn.Module):
         # since semantic only evaluated at largest scale
 
         # Scale down the depth image (scaling must be part of the optimization graph!)
+
+        semantic_cosistency_loss_min = None
         for s in range(self.num_scales):
 
             reconstruction_losses_s = []
@@ -396,7 +398,7 @@ class ReconstructionLoss(nn.Module):
 
                     loss_sem = self.semantic_l1_loss_pixelwise(semantic_logits[0], warped_semantic_logits_frame)
 
-                    semantic_cosistency_losses.append(loss_sem.mean(1, True))
+                    semantic_cosistency_losses.append(loss_sem)
 
                     #plt.imshow(loss_sem.mean(1, True)[0, 0, :, :].cpu().detach())
                     #plt.show()
@@ -436,14 +438,23 @@ class ReconstructionLoss(nn.Module):
 
             total_loss += final_loss_s / (2 ** s)
 
+            # calculate the semantic consistency loss if semantic prediction is given
+            if s == 0 and semantic_logits is not None:
+                # the warped image index pixels that have minimum loss in photometric reconstruction
+                image_pixels_used = torch.argmin(reconstruction_losses_s,
+                                                 dim=1).repeat(1, semantic_cosistency_losses[0].shape[1], 1, 1)
+
+                # take the loss of the pixels which had minimum loss in photometric reconstruction
+                semantic_cosistency_loss_min = torch.zeros_like(semantic_cosistency_losses[0])
+                for i, loss_tensor in enumerate(semantic_cosistency_losses):
+                    semantic_cosistency_loss_min[image_pixels_used == i] = loss_tensor[image_pixels_used == i]
+
+                semantic_cosistency_loss_min = semantic_cosistency_loss_min.mean()
+
         if semantic_logits is None:
             # no semantic consistency calculated
             return total_loss, 0
         else:
-            # semantic_cosistency_loss_min = min over warpings of mean loss over classes per pixel
-            semantic_cosistency_loss_min = torch.cat(semantic_cosistency_losses, 1)
-            semantic_cosistency_loss_min = torch.min(semantic_cosistency_loss_min, dim=1)[0].mean()
-
             return total_loss, semantic_cosistency_loss_min
 
     def match_sizes(self, image, target_shape, mode='bilinear', align_corners=True):
