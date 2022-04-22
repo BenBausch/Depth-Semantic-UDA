@@ -62,6 +62,7 @@ cfg.model.pose_net.params = CN()
 cfg.model.pose_net.params.nof_layers = cfg.model.encoder.params.nof_layers  # default use same size resnet
 # for depth- and posenet
 cfg.model.pose_net.params.weights_init = 'pretrained'
+cfg.model.pose_net.params.predict_motion_map = False
 
 # ********************************************************************
 # /----- Datasets

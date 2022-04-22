@@ -11,13 +11,14 @@ model:
     pose_net:
         input: 'pairs' # 'all'
         params:
-            nof_layers: 18
+            nof_layers: 50
             weights_init: 'pretrained'
+            predict_motion_map: True
 
 datasets:
-    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\synthia.yaml', #source
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_sequence.yaml', # target
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_semantic.yaml'] # validation dataset
+    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda_with_motion\synthia.yaml', #source
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda_with_motion\cityscapes_sequence.yaml', # target
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda_with_motion\cityscapes_semantic.yaml'] # validation dataset
     loss_weights : [1, 1, 0]
 
 train:
@@ -35,12 +36,7 @@ train:
 
 val:
     batch_size: 1
-    nof_workers: 5
-
-checkpoint:
-    use_checkpoint: True
-    path_base : 'D:\Depth-Semantic-UDA\experiments\guda'
-    filename : 'checkpoint_epoch_0.pth'
+    nof_workers: 4
 
 device:
     multiple_gpus: False

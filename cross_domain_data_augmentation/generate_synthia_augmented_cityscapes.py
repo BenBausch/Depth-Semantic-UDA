@@ -144,17 +144,17 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
 
         raw_sigmoid = prediction['depth'][1][('disp', 0)].detach()
 
-        fig, axs = plt.subplots(2, 5)
+        #fig, axs = plt.subplots(2, 5)
         #fig_2, axs_2 = plt.subplots(1, 2)
 
         # rgb images
         rgb_cityscapes = data[('rgb', 0)][0].cpu()
         plt_rgb1 = rgb_cityscapes.numpy().transpose(1, 2, 0)
-        axs[1, 0].imshow(plt_rgb1)
+        #axs[1, 0].imshow(plt_rgb1)
         #axs_2[0].imshow(plt_rgb1)
 
         # depth images
-        axs[1, 1].imshow(vdp(1 / depth_cityscapes))
+        #axs[1, 1].imshow(vdp(1 / depth_cityscapes))
         average_bottom_depth = math.inf
 
         succesful_inserts = 0
@@ -200,12 +200,12 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
             # some plotting
             raw_rgb0 = instance_rgb.cpu()
             plt_rgb0 = raw_rgb0.numpy().transpose(1, 2, 0)
-            axs[0, 0].imshow(plt_rgb0)
-            axs[1, 1].imshow(raw_sigmoid.squeeze(0).squeeze(0).cpu())
-            axs[0, 4].imshow(depth_cityscapes.squeeze(0).squeeze(0).cpu())
-            axs[1, 2].imshow(depth_mask.cpu().numpy())
-            axs[0, 2].imshow(best_row_logits.cpu().numpy())
-            axs[0, 3].imshow(best_suited_depth.cpu())
+            #axs[0, 0].imshow(plt_rgb0)
+            #axs[1, 1].imshow(raw_sigmoid.squeeze(0).squeeze(0).cpu())
+            #axs[0, 4].imshow(depth_cityscapes.squeeze(0).squeeze(0).cpu())
+            #axs[1, 2].imshow(depth_mask.cpu().numpy())
+            #axs[0, 2].imshow(best_row_logits.cpu().numpy())
+            #axs[0, 3].imshow(best_suited_depth.cpu())
 
             # calculate padding values
             padding, padded_mask = get_padding_values(position, img_h_instance, img_w_instance, img_w1, img_h1,
@@ -236,13 +236,15 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
             # insert into image
             rgb_cityscapes[:, padded_mask] = raw_rgb0[:, instance_mask]
             depth_cityscapes[0, 0, padded_mask] = instance_depth[instance_mask].to('cuda:0')
-            axs[1, 3].imshow(rgb_cityscapes.cpu().numpy().transpose(1, 2, 0))
+            #axs[1, 3].imshow(rgb_cityscapes.cpu().numpy().transpose(1, 2, 0))
+            plt.imshow(rgb_cityscapes.cpu().numpy().transpose(1, 2, 0))
+            plt.savefig("figure")
             #axs_2[1].imshow(rgb_cityscapes.cpu().numpy().transpose(1, 2, 0))
-            axs[1, 4].imshow(vdp(1 / depth_cityscapes))
+            #axs[1, 4].imshow(vdp(1 / depth_cityscapes))
 
             succesful_inserts += 1
 
-        plt.show()
+        #plt.show()
 
 
 if __name__ == '__main__':

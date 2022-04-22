@@ -1,7 +1,7 @@
 dataset:
     name: 'cityscapes_semantic'
     path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit'
-    feed_img_size: [ 512, 256 ]
+    feed_img_size: [ 256, 128 ]
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: False

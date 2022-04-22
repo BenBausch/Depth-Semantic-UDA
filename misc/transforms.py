@@ -248,11 +248,10 @@ class ToInt64Array(object):
         return sample
 
 # ------------------------------------------GTA5------------------------------------------
-
-@deprecated
 class EncodeSegmentationGTA5(object):
     """Encodes the GTA5 semantic labels into Cityscapes traingin labels"""
 
+    @deprecated
     def __init__(self, void_classes, valid_classes, class_map, ignore_index):
         self.void_classes = void_classes
         self.valid_classes = valid_classes
@@ -277,8 +276,8 @@ class EncodeSegmentationGTA5(object):
 
 
 # ------------------------------------------Kitti-----------------------------------------
-@deprecated
 class TransformToDepthKitti(object):
+    @deprecated
     def __init__(self):
         pass
 
@@ -287,8 +286,8 @@ class TransformToDepthKitti(object):
 
 
 # ------------------------------------------Kalimu----------------------------------------
-@deprecated
 class TransformToDepthKalimu(object):
+    @deprecated
     def __init__(self):
         pass
 

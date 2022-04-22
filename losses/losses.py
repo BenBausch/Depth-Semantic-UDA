@@ -6,7 +6,7 @@ from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
 from helper_modules.image_warper import CoordinateWarper
 from utils.constans import IGNORE_INDEX_SEMANTIC
 
-
+# ----------------------------------------------Semantic Losses---------------------------------------------------------
 class WeightedCrossEntropy(nn.Module):
     """
     A simple wrapper for the cross entropy loss implemented in pytorch requiring weights
@@ -169,6 +169,59 @@ class SurfaceNormalRegularizationLoss(nn.Module):
         return self.cosine_similarity_guda(normals_pred=normals_prediction, normals_gt=normals_gt)
 
 
+class SemanticL1LossPixelwise(nn.Module):
+    """
+    Implements the absolute difference between prediction and target per pixel.
+    """
+
+    def __init__(self):
+        super(SemanticL1LossPixelwise, self).__init__()
+
+    def forward(self, nonwarped_img_semantic, warped_img_semantic):
+        mask = (warped_img_semantic == IGNORE_INDEX_SEMANTIC).detach()
+        assert nonwarped_img_semantic.dim() == warped_img_semantic.dim(), "Inconsistent dimensions in L1Loss between prediction and target"
+        loss = (nonwarped_img_semantic - warped_img_semantic).abs()
+        zeros = torch.zeros_like(loss).detach()
+        loss[mask] = zeros[mask]
+        return loss
+
+# ----------------------------------------------Motion Losses-----------------------------------------------------------
+
+
+class MotionGroupSmoothnessRegularizationLoss(nn.Module):
+    def __init__(self):
+        super(MotionGroupSmoothnessRegularizationLoss, self).__init__()
+
+    def forward(self, translation_map, warp_around=True):
+        """
+        :param translation_map: predicted dense translation map
+        :param warp_around: True if continuity of smoothness around object boundaries should be enforced (smooth across
+        left and right boundary pixels, as well as top and bottom)
+        :return: smooth translation tensor
+        """
+        tensor_dx = translation_map - torch.roll(translation_map, shifts=1, dims=3)
+        tensor_dy = translation_map - torch.roll(translation_map, shifts=1, dims=2)
+        if not warp_around:
+            tensor_dx = tensor_dx[:, :, 1:, 1:]
+            tensor_dy = tensor_dy[:, :, 1:, 1:]
+        return torch.mean(torch.sqrt(1e-24 + torch.square(tensor_dx) + torch.square(tensor_dy)))
+
+
+class MotionSparsityRegularizationLoss(nn.Module):
+    def __init__(self):
+        super(MotionSparsityRegularizationLoss, self).__init__()
+
+    def forward(self, translation_map):
+        """
+        :param translation_map: predicted dense translation map
+        :return: smooth translation tensor
+        """
+        abs_map = torch.abs(translation_map)
+        spatial_mean_motion = torch.mean(translation_map, dim=(2, 3), keepdim=True).detach()
+        return torch.mean(2 * spatial_mean_motion * torch.sqrt(abs_map/(spatial_mean_motion + 1e-24) + 1))
+# ----------------------------------------------Depth Losses------------------------------------------------------------
+
+
 class L1LossDepth(nn.Module):
     """
     Implements the average over pixel of absolute difference between prediction and target.
@@ -207,23 +260,6 @@ class SilogLossDepth(nn.Module):
         silog_wsme = self.weight * (log_diff.mean() ** 2)
 
         return silog_var - silog_wsme
-
-
-class SemanticL1LossPixelwise(nn.Module):
-    """
-    Implements the absolute difference between prediction and target per pixel.
-    """
-
-    def __init__(self):
-        super(SemanticL1LossPixelwise, self).__init__()
-
-    def forward(self, nonwarped_img_semantic, warped_img_semantic):
-        mask = (warped_img_semantic == IGNORE_INDEX_SEMANTIC).detach()
-        assert nonwarped_img_semantic.dim() == warped_img_semantic.dim(), "Inconsistent dimensions in L1Loss between prediction and target"
-        loss = (nonwarped_img_semantic - warped_img_semantic).abs()
-        zeros = torch.zeros_like(loss).detach()
-        loss[mask] = zeros[mask]
-        return loss
 
 
 class L1LossPixelwise(nn.Module):
@@ -350,7 +386,7 @@ class ReconstructionLoss(nn.Module):
             self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=s, stride=s)
 
     def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
-                mask=None, semantic_logits=None):
+                mask=None, semantic_logits=None, motion_map=None):
         """
         :param semantic_logits: dictionary of semantic softmax predictions
         :param batch_data: batch of data containing the rgb images
@@ -385,6 +421,10 @@ class ReconstructionLoss(nn.Module):
             scaled_tgt_img = self.scaling_modules[s](batch_data[("rgb", 0)])
 
             for frame_id in rgb_frame_offsets[1:]:
+                if motion_map is not None:
+                    scaled_motion_map = self.scaling_modules[s](motion_map[frame_id])
+                else:
+                    scaled_motion_map = None
 
                 scaled_adjacent_img_ = self.match_sizes(batch_data[("rgb", frame_id)], scaled_depth.shape)
 
@@ -394,7 +434,8 @@ class ReconstructionLoss(nn.Module):
                         self.image_warpers[s](scaled_adjacent_img_,
                                               scaled_depth,
                                               poses[frame_id],
-                                              semantic_logits[frame_id])
+                                              semantic_logits[frame_id],
+                                              scaled_motion_map)
 
                     loss_sem = self.semantic_l1_loss_pixelwise(semantic_logits[0], warped_semantic_logits_frame)
 
@@ -406,7 +447,9 @@ class ReconstructionLoss(nn.Module):
                 else:
                     warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_,
                                                                         scaled_depth,
-                                                                        poses[frame_id])
+                                                                        poses[frame_id],
+                                                                        None,
+                                                                        scaled_motion_map)
 
                 rec_l1_loss = self.l1_loss_pixelwise(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)

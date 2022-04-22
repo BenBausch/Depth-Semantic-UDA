@@ -203,5 +203,19 @@ class TestL1Loss(unittest.TestCase):
         self.assertAlmostEqual(mean_masked, 4.5)
 
 
+class TestMotionRegularizationLosses(unittest.TestCase):
+    def setUp(self):
+        self.motion_map = torch.arange(0, 36, out=torch.empty((2, 3, 2, 3)))
+        self.loss_smooth = MotionGroupSmoothnessRegularizationLoss()
+        self.loss_sparse = MotionSparsityRegularizationLoss()
+
+    def test_group_smoothness_loss(self):
+        assert round(self.loss_smooth(self.motion_map).item(), 9) == 3.310035706
+
+    def test_sparsity_loss(self):
+        assert round(self.loss_sparse(self.motion_map).item(), 9) == 49.465957642
+
+
+
 if "__main__" == __name__:
     unittest.main()

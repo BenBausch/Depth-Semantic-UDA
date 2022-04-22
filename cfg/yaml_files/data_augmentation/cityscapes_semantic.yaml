@@ -5,7 +5,7 @@ dataset:
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: False
-    use_semantic_gt: False
+    use_semantic_gt: True
     split: None
     camera: 'pinhole'
     shuffle: False

@@ -115,7 +115,10 @@ CITYSCAPES_ID_TO_COLOR_16 = {0: np.asarray([128, 64, 128]),
                              13: np.asarray([0, 60, 100]),
                              14: np.asarray([0, 0, 230]),
                              15: np.asarray([119, 11, 32]),
-                             250: np.asarray([0, 0, 0])}  # last class is the void class (Dont change order of insert!)
+                             250: np.asarray([0, 0, 0]),
+                             251: np.asarray([000, 187, 45]),
+                             252: np.asarray([211, 110, 112])
+                             }  # last class is the void class (Dont change order of insert!)
 
 CITYSCAPES_ID_TO_NAME_16 = {0: "road",
                             1: "sidewalk",
@@ -133,7 +136,9 @@ CITYSCAPES_ID_TO_NAME_16 = {0: "road",
                             13: "bus",
                             14: "motorcycle",
                             15: "bicycle",
-                            250: "ignore_index"}  # last class is the void class
+                            250: "ignore_index",
+                            251: "random_color_1",
+                            252: "random_color_2"}  # last class is the void class
 
 CITYSCAPES_COLOR_TO_NAME_16 = {(128, 64, 128): "road",
                                (244, 35, 232): "sidewalk",
@@ -151,10 +156,12 @@ CITYSCAPES_COLOR_TO_NAME_16 = {(128, 64, 128): "road",
                                (0, 60, 100): "bus",
                                (0, 0, 230): "motorcycle",
                                (119, 11, 32): "bicycle",
-                               (0, 0, 0): "ignore_index"}
+                               (0, 0, 0): "ignore_index",
+                               (000, 187, 45): "random_color_1",
+                               (211,110,112): "random_color_2"}
 
 # all cityscapes ids
-CITYSCAPES_TRAINING_IDS_16 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 250]
+CITYSCAPES_TRAINING_IDS_16 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 250, 251, 252]
 
 # ********************************************************************
 # /----- testing to assure well defined behaviour (in case values are changed by user)

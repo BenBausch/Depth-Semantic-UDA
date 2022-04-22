@@ -77,7 +77,7 @@ class CoordinateWarper(nn.Module):
         self.pointcloud_to_image = _PointcloudToImage(camera_model)
         self.img_width, self.img_height = camera_model.image_size()
 
-    def forward(self, batch_depth_map, T):
+    def forward(self, batch_depth_map, T, motion_map=None):
         """
         :param pointcloud: batch of pointclouds
         :param T: Transformation matrix
@@ -93,6 +93,8 @@ class CoordinateWarper(nn.Module):
 
         # Reproject all image pixel coordinates into the 3d world (pointcloud)
         image_as_pointcloud = self.image_to_pointcloud(batch_depth_map)
+        if motion_map is not None:
+            image_as_pointcloud += motion_map
 
         # Transform the pointcloud to homogeneous coordinates
         ones = nn.Parameter(torch.ones(batch_depth_map.size(0), 1, self.img_height, self.img_width, device=self.device),
@@ -122,7 +124,7 @@ class ImageWarper(nn.Module):
         super(ImageWarper, self).__init__()
         self.coordinate_warper = CoordinateWarper(camera_model, device)
 
-    def forward(self, batch_src_img, batch_depth_map, T, batch_semantic=None):
+    def forward(self, batch_src_img, batch_depth_map, T, batch_semantic=None, motion_map=None):
         """
         :param batch_semantics: batch of semantic logits
         :param pointcloud: batch of pointclouds
@@ -137,7 +139,7 @@ class ImageWarper(nn.Module):
         assert batch_src_img.size(1) == 3, 'The input batch of source images has {} channels which is != 3'.format(
             batch_src_img.size(1))
 
-        pixel_coordinates = self.coordinate_warper(batch_depth_map, T)
+        pixel_coordinates = self.coordinate_warper(batch_depth_map, T, motion_map)
 
         warped_image = F.grid_sample(batch_src_img, pixel_coordinates, padding_mode="border")
 

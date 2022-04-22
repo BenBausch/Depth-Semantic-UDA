@@ -1,4 +1,4 @@
-experiment_name: 'testing_guda_update'
+experiment_name: 'testing_guda_update_tscl'
 
 model:
     type: 'guda'
@@ -15,15 +15,14 @@ model:
             weights_init: 'pretrained'
 
 datasets:
-    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\synthia.yaml', #source
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_sequence.yaml', # target
-                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda\cityscapes_semantic.yaml'] # validation dataset
+    paths_to_configs : ['C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda_with_tscl\synthia.yaml', #source
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda_with_tscl\cityscapes_sequence.yaml', # target
+                        'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\cfg\yaml_files\train\guda_with_tscl\cityscapes_semantic.yaml'] # validation dataset
     loss_weights : [1, 1, 0]
 
 train:
     nof_epochs: 40
     batch_size: 1
-    nof_workers: 5
 
     optimizer:
         type: 'Adam'
@@ -35,12 +34,12 @@ train:
 
 val:
     batch_size: 1
-    nof_workers: 5
+    nof_workers: 4
 
 checkpoint:
     use_checkpoint: True
-    path_base : 'D:\Depth-Semantic-UDA\experiments\guda'
-    filename : 'checkpoint_epoch_0.pth'
+    path_base: 'D:\Depth-Semantic-UDA\experiments\guda'
+    filename: 'checkpoint_epoch_0.pth'
 
 device:
     multiple_gpus: False
