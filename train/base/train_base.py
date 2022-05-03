@@ -326,7 +326,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[1],
                                 sample_completely_random=True,
-                                num_samples=int(2975/torch.cuda.device_count()))
+                                num_samples=int(9400/torch.cuda.device_count()))
         print(f'Length Target Train Loader: {len(self.target_train_loader)}')
 
         self.target_val_loader, self.target_num_val_files = \
@@ -346,7 +346,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[0],
                                 sample_completely_random=True,
-                                num_samples=int(2975/torch.cuda.device_count()))
+                                num_samples=int(9400/torch.cuda.device_count()))
         print(f'Length Source Train Loader: {len(self.source_train_loader)}')
         # Get number of total steps to compute remaining training time later
         # calculate time using target dataset length

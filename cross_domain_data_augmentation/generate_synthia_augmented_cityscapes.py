@@ -20,6 +20,8 @@ from cfg.config_training import create_configuration
 from dataloaders.synthia.dataset_single_instances_and_class_groups_synthia import SynthiaInstancesDataset
 from io_utils import io_utils
 from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
+from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s2rgb
+from utils.constans import IGNORE_INDEX_SEMANTIC
 from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME_16
 from torchvision import transforms
 
@@ -129,7 +131,7 @@ def get_padding_values(position, img_h_instance, img_w_instance, img_w1, img_h1,
     return padding, padded_mask
 
 
-def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, model, img_h1, img_w1):
+def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, model, img_h1, img_w1, base_path):
     number_instances_to_insert = 20
     depth_between_instances = 0.2
 
@@ -145,11 +147,11 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
         raw_sigmoid = prediction['depth'][1][('disp', 0)].detach()
 
         #fig, axs = plt.subplots(2, 5)
-        #fig_2, axs_2 = plt.subplots(1, 2)
+        #fig_2, axs_2 = plt.subplots(1, 3)
 
         # rgb images
         rgb_cityscapes = data[('rgb', 0)][0].cpu()
-        plt_rgb1 = rgb_cityscapes.numpy().transpose(1, 2, 0)
+        #plt_rgb1 = rgb_cityscapes.numpy().transpose(1, 2, 0)
         #axs[1, 0].imshow(plt_rgb1)
         #axs_2[0].imshow(plt_rgb1)
 
@@ -160,6 +162,8 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
         succesful_inserts = 0
 
         joined_instance_masks = torch.zeros((rgb_cityscapes.shape[1], rgb_cityscapes.shape[2])).bool()
+
+        new_semantic_mask = torch.zeros((img_h1, img_w1)) + IGNORE_INDEX_SEMANTIC
         # -------------------------augment target image---------------------------------
         for instance_idx, inst in enumerate(synthia_loader):
 
@@ -174,6 +178,7 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
             instance_mask = torch.clone(instance_semantic)
             instance_mask[instance_mask == 250] = 0
             instance_mask = instance_mask.bool()
+            semantic_label = instance_semantic[instance_mask][0].item()
 
             class_id = instance_semantic[instance_mask][0].item()
             print(f'Object of class {CITYSCAPES_ID_TO_NAME_16[class_id]}')
@@ -199,7 +204,7 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
 
             # some plotting
             raw_rgb0 = instance_rgb.cpu()
-            plt_rgb0 = raw_rgb0.numpy().transpose(1, 2, 0)
+            #plt_rgb0 = raw_rgb0.numpy().transpose(1, 2, 0)
             #axs[0, 0].imshow(plt_rgb0)
             #axs[1, 1].imshow(raw_sigmoid.squeeze(0).squeeze(0).cpu())
             #axs[0, 4].imshow(depth_cityscapes.squeeze(0).squeeze(0).cpu())
@@ -237,12 +242,22 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
             rgb_cityscapes[:, padded_mask] = raw_rgb0[:, instance_mask]
             depth_cityscapes[0, 0, padded_mask] = instance_depth[instance_mask].to('cuda:0')
             #axs[1, 3].imshow(rgb_cityscapes.cpu().numpy().transpose(1, 2, 0))
-            plt.imshow(rgb_cityscapes.cpu().numpy().transpose(1, 2, 0))
-            plt.savefig("figure")
             #axs_2[1].imshow(rgb_cityscapes.cpu().numpy().transpose(1, 2, 0))
             #axs[1, 4].imshow(vdp(1 / depth_cityscapes))
 
-            succesful_inserts += 1
+            # create semantic mask
+            new_semantic_mask[padded_mask] = semantic_label
+            #axs_2[2].imshow(s2rgb(new_semantic_mask.unsqueeze(0), 16))
+
+        to_pil = transforms.ToPILImage()
+
+        if True:
+            rgb_cityscapes = to_pil(rgb_cityscapes)
+            rgb_cityscapes.save(os.path.join(base_path, 'RGB', f'{str(batch_idx)}.png'))
+
+            cv2.imwrite(os.path.join(base_path, 'LABELS', f'{str(batch_idx)}.png'),
+                        new_semantic_mask.cpu().numpy().astype(np.int64),
+                        [cv2.IMREAD_ANYDEPTH])
 
         #plt.show()
 
@@ -257,4 +272,5 @@ if __name__ == '__main__':
 
     cityscapes_loader, synthia_loader = create_dataloaders(cfg_cityscapes, cfg_synthia)
 
-    generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, model, img_h1, img_w1)
+    path_to_save = r'C:\Users\benba\Documents\University\Masterarbeit\data\Synthia_aug_Cityscapes'
+    generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, model, img_h1, img_w1, path_to_save)

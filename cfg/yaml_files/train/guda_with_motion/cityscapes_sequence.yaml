@@ -23,10 +23,14 @@ losses:
             'use_automasking' : True
         - edge_smooth:
               'parameters': None
+        - motion_group_smoothness: True
+        - motion_sparsity: True
 
     loss_names_and_weights:
         - reconstruction : 1
         - edge_smooth: 0.001
+        - motion_group_smoothness: 1.0
+        - motion_sparsity: 0.2
 
 eval:
     train:

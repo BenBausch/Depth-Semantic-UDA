@@ -100,6 +100,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         assert self.target_img_height % 32 == 0, 'The image height must be a multiple of 32'
         assert self.target_img_width % 32 == 0, 'The image width must be a multiple of 32'
 
+        self.target_rgb_frame_offsets = self.cfg.datasets.configs[1].dataset.rgb_frame_offsets
         target_l_n_p = self.cfg.datasets.configs[1].losses.loss_names_and_parameters
         target_l_n_w = self.cfg.datasets.configs[1].losses.loss_names_and_weights
 
@@ -187,6 +188,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                    device=self.device)
         self.target_reconstruction_use_ssim = target_l_n_p[0]['reconstruction']['use_ssim']
         self.target_reconstruction_use_automasking = target_l_n_p[0]['reconstruction']['use_automasking']
+
+        # if using tscl then also need to predict semantics for all frames.
         if 'temporal_semantic_consistency' in target_l_n_w[0].keys():
             self.target_temporal_semantic_consistency_weigth = target_l_n_w[0]['temporal_semantic_consistency']
             assert target_l_n_p[0]['reconstruction']['use_temporal_semantic_consistency'] == \
@@ -196,6 +199,15 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             self.target_use_tsc = True
         else:
             self.target_use_tsc = False
+
+        # either use both motion regularization losses or none
+        assert ('motion_group_smoothness' in target_l_n_w[0].keys()) == ('motion_sparsity' in target_l_n_w[0].keys())
+        if 'motion_group_smoothness' in target_l_n_w[0].keys():
+            self.target_motion_group_smoothness_loss = get_loss("motion_group_smoothness")
+            self.target_motion_sparsity_loss = get_loss("motion_sparsity")
+            self.target_motion_group_smoothness_weight = target_l_n_w[0]['motion_group_smoothness']
+            self.target_motion_sparsity_weight = target_l_n_w[0]['motion_sparsity']
+
         self.target_reconstruction_weight = target_l_n_w[0]['reconstruction']
         self.target_edge_smoothness_weight = target_l_n_w[0]['edge_smooth']
 
@@ -470,6 +482,20 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                            self.target_temporal_semantic_consistency_weigth
             sum += semantic_consistency_loss
             loss_dict[f'Temporal Semantic Consistency epoch {self.epoch}'] = semantic_consistency_loss
+
+        if motion_map is not None:
+            motion_sum = []
+            print('Using Motion Regularization!')
+            for offset in self.target_rgb_frame_offsets[1:]:
+                motion_regularization = self.target_motion_group_smoothness_loss(motion_map[offset]) * \
+                                        self.target_motion_group_smoothness_weight
+                print(motion_regularization)
+                motion_regularization += self.target_motion_sparsity_loss(motion_map[offset]) * \
+                                         self.target_motion_sparsity_weight
+                print(motion_regularization)
+                motion_sum.append(motion_regularization)
+            sum += torch.sum(motion_regularization)
+            loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_regularization
 
         mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
         norm_disp = raw_sigmoid / (mean_disp + 1e-7)

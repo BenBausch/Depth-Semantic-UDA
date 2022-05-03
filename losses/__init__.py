@@ -29,5 +29,7 @@ loss_dict = {
     'cross_entropy': nn.CrossEntropyLoss,
     'weighted_cross_entropy': WeightedCrossEntropy,
     'bootstrapped_cross_entropy': BootstrappedCrossEntropy,
-    'surface_normal_regularization': SurfaceNormalRegularizationLoss
+    'surface_normal_regularization': SurfaceNormalRegularizationLoss,
+    'motion_group_smoothness': MotionGroupSmoothnessRegularizationLoss,
+    'motion_sparsity': MotionSparsityRegularizationLoss
 }

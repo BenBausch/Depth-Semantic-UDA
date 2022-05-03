@@ -217,7 +217,8 @@ class MotionSparsityRegularizationLoss(nn.Module):
         :return: smooth translation tensor
         """
         abs_map = torch.abs(translation_map)
-        spatial_mean_motion = torch.mean(translation_map, dim=(2, 3), keepdim=True).detach()
+        spatial_mean_motion = torch.mean(abs_map, dim=(2, 3), keepdim=True).detach()
+        print(spatial_mean_motion)
         return torch.mean(2 * spatial_mean_motion * torch.sqrt(abs_map/(spatial_mean_motion + 1e-24) + 1))
 # ----------------------------------------------Depth Losses------------------------------------------------------------
 
