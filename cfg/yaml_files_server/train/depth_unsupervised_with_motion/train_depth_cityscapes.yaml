@@ -44,4 +44,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/cityscapes_monodepth2'
+    path_save: '/work/dlclarge1/bauschb-data/models/cityscapes_monodepth2_with_motion'
