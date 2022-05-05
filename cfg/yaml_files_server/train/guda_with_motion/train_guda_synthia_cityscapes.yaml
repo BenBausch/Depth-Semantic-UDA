@@ -11,13 +11,14 @@ model:
     pose_net:
         input: 'pairs'
         params:
-            nof_layers: 18
+            nof_layers: 50
             weights_init: 'pretrained'
+            predict_motion_map: True
 
 datasets:
-    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/synthia.yaml', #source
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_sequence.yaml', # target
-                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda/cityscapes_semantic.yaml'] # validation dataset
+    paths_to_configs : ['/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda_with_motion/synthia.yaml', #source
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda_with_motion/cityscapes_sequence.yaml', # target
+                        '/home/bauschb/Masterthesis/Depth-Semantic-UDA/cfg/yaml_files_server/train/guda_with_motion/cityscapes_semantic.yaml'] # validation dataset
     loss_weights : [1, 1, 0]
 
 train:
