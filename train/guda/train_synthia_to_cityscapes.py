@@ -267,9 +267,10 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.print_p_0("Training started...")
 
         for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
+            self.print_p_0('Training')
             self.train()
-            self.print_p_0('Validation')
             if self.cfg.val.do_validation:
+                self.print_p_0('Validation')
                 self.validate()
 
         self.print_p_0("Training done.")
@@ -489,10 +490,8 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             for offset in self.target_rgb_frame_offsets[1:]:
                 motion_regularization = self.target_motion_group_smoothness_loss(motion_map[offset]) * \
                                         self.target_motion_group_smoothness_weight
-                print(motion_regularization)
                 motion_regularization += self.target_motion_sparsity_loss(motion_map[offset]) * \
                                          self.target_motion_sparsity_weight
-                print(motion_regularization)
                 motion_sum.append(motion_regularization)
             sum += torch.sum(motion_regularization)
             loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_regularization

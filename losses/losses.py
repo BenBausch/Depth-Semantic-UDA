@@ -218,7 +218,6 @@ class MotionSparsityRegularizationLoss(nn.Module):
         """
         abs_map = torch.abs(translation_map)
         spatial_mean_motion = torch.mean(abs_map, dim=(2, 3), keepdim=True).detach()
-        print(spatial_mean_motion)
         return torch.mean(2 * spatial_mean_motion * torch.sqrt(abs_map/(spatial_mean_motion + 1e-24) + 1))
 # ----------------------------------------------Depth Losses------------------------------------------------------------
 
@@ -387,8 +386,9 @@ class ReconstructionLoss(nn.Module):
             self.scaling_modules[i] = torch.nn.AvgPool2d(kernel_size=s, stride=s)
 
     def forward(self, batch_data, pred_depth, poses, rgb_frame_offsets, use_automasking, use_ssim, alpha=0.85,
-                mask=None, semantic_logits=None, motion_map=None):
+                mask=None, semantic_logits=None, motion_map=None, return_warped_images=False):
         """
+        :param return_warped_images: Returns the warped offset iamges, useful for plotting
         :param semantic_logits: dictionary of semantic softmax predictions
         :param batch_data: batch of data containing the rgb images
         :param pred_depth: batch of predicted depths for the middle frames
@@ -409,6 +409,8 @@ class ReconstructionLoss(nn.Module):
 
         semantic_cosistency_losses = []  # init list here unlike other losses,
         # since semantic only evaluated at largest scale
+
+        warped_images_at_biggest_scale = {}
 
         # Scale down the depth image (scaling must be part of the optimization graph!)
 
@@ -442,15 +444,16 @@ class ReconstructionLoss(nn.Module):
 
                     semantic_cosistency_losses.append(loss_sem)
 
-                    #plt.imshow(loss_sem.mean(1, True)[0, 0, :, :].cpu().detach())
-                    #plt.show()
-
                 else:
                     warped_scaled_adjacent_img_ = self.image_warpers[s](scaled_adjacent_img_,
                                                                         scaled_depth,
                                                                         poses[frame_id],
                                                                         None,
                                                                         scaled_motion_map)
+
+                    if s == 0 and return_warped_images:
+                        # return first in batch warped image just for plotting --> detach
+                        warped_images_at_biggest_scale[frame_id] = warped_scaled_adjacent_img_.detach()[0]
 
                 rec_l1_loss = self.l1_loss_pixelwise(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
@@ -495,11 +498,15 @@ class ReconstructionLoss(nn.Module):
 
                 semantic_cosistency_loss_min = semantic_cosistency_loss_min.mean()
 
+        if not return_warped_images:
+            warped_images_at_biggest_scale = None
+
         if semantic_logits is None:
             # no semantic consistency calculated
-            return total_loss, 0
+            return total_loss, 0, warped_images_at_biggest_scale
         else:
-            return total_loss, semantic_cosistency_loss_min
+            return total_loss, semantic_cosistency_loss_min, warped_images_at_biggest_scale
+
 
     def match_sizes(self, image, target_shape, mode='bilinear', align_corners=True):
         if len(target_shape) > 2:

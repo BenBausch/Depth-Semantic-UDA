@@ -5,6 +5,7 @@ from models.base.model_base import DepthFromMotionEncoderDecoderModelBase
 from models.helper_models.resnet_encoder import ResnetEncoder
 from models.helper_models.depth_decoder import DepthDecoderMONODEPTH2
 from models.helper_models.pose_decoder import PoseDecoder
+from models.helper_models.motion_decoder import MotionDecoder
 from models.helper_models.layers import *
 
 
@@ -30,6 +31,7 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         self.num_layers_pose = cfg.model.pose_net.params.nof_layers
         self.weights_init_encoder = cfg.model.encoder.params.weights_init
         self.weights_init_pose_net_encoder = cfg.model.pose_net.params.weights_init
+        self.predict_motion_map = cfg.model.pose_net.params.predict_motion_map
         self.num_scales = cfg.model.depth_net.nof_scales
         self.no_cuda = cfg.device.no_cuda
         self.multiple_gpus = cfg.device.multiple_gpus
@@ -64,9 +66,9 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
 
         # depending on the dataset one might only want to predict semantic masks or depth or depth with pose
         self.dataset_predict_depth = []
-        self.dataset_predict_semantic = []
         self.dataset_predict_pose = []
         self.dataset_min_max_depth = []
+        self.predict_depth_for_whole_sequence = []
 
         # all datasets should have the same number of classes because they use the same semantic head
         self.num_classes = self.cfg.datasets.configs[0].dataset.num_classes
@@ -74,6 +76,9 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         # collect the parameters from all the datasets
         for i, dcfg in enumerate(self.cfg.datasets.configs):
             self.rgb_frame_offsets.append(dcfg.dataset.rgb_frame_offsets)
+
+            # predict for the whole sequence
+            self.predict_depth_for_whole_sequence.append(dcfg.dataset.predict_depth_for_each_img_in_sequence)
 
             # get the depth ranges for each dataset
             self.dataset_min_max_depth.append([dcfg.dataset.min_depth, dcfg.dataset.max_depth])
@@ -84,14 +89,12 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
             # pose prediction is only needed in context of self-supervised monocular depth
             self.dataset_predict_pose.append(dcfg.dataset.use_self_supervised_depth)
 
-            self.dataset_predict_semantic.append(False)
-
             if self.num_classes != dcfg.dataset.num_classes:
                 raise ValueError('All datasets need to have same number of classes!')
         print(f'Frame offsets for all datasets: {self.rgb_frame_offsets}')
         print(f'Predict depth per dataset: {self.dataset_predict_depth}')
         print(f'Predict pose per dataset: {self.dataset_predict_pose}')
-        print(f'Predict semantic mask per dataset: {self.dataset_predict_semantic}')
+        print(f'Predict depth for each frame in sequence: {self.predict_depth_for_whole_sequence}')
         print(f'Number classes: {self.num_classes}')
 
     def create_Encoder(self):
@@ -107,21 +110,35 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         self.parameters_to_train += list(self.networks["depth_decoder"].parameters())
 
     def create_PoseNet(self):
+
+        if self.predict_motion_map:
+            num_channels_input = 4  # rgbd
+        else:
+            num_channels_input = 3  # rgb
+
         # Specify pose encoder and decoder
         self.networks["pose_encoder"] = ResnetEncoder(
             self.num_layers_pose,
             self.weights_init_pose_net_encoder == "pretrained",
             num_input_images=self.num_pose_frames,
-            wanted_scales=[1, 2, 3]).double()
+            wanted_scales=[1, 2, 3],
+            num_channels_input=num_channels_input).double()
 
         self.networks["pose_decoder"] = PoseDecoder(
             self.networks["pose_encoder"].get_channels_of_forward_features(),
             num_input_features=1,
             num_frames_to_predict_for=self.num_pose_frames).double()
 
+        if self.predict_motion_map:
+            self.networks["motion_decoder"] = MotionDecoder(
+                self.networks["pose_encoder"].get_channels_of_forward_features()).double()
+            print('Using PoseNet and MotionNet to predict Ego-motion and Scene Flow')
+
         # Specify parameters to be trained
         self.parameters_to_train += list(self.networks["pose_encoder"].parameters())
         self.parameters_to_train += list(self.networks["pose_decoder"].parameters())
+        if self.predict_motion_map:
+            self.parameters_to_train += list(self.networks["motion_decoder"].parameters())
 
     # --------------------------------------------------------------------------
     # ---------------------------Prediction-Methods-----------------------------
@@ -150,13 +167,15 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
 
         return depths, raw_sigmoid
 
-    def predict_poses(self, inputs, dataset_id):
+    def predict_poses(self, inputs, dataset_id, depth=None):
         """
         Adapted from: https://github.com/nianticlabs/monodepth2/blob/master/trainer.py
         Predict poses between input frames for monocular sequences.
         Slightly modified by Ben Bausch
         """
         poses = {}
+        translation_maps = {}
+
         if self.num_pose_frames == 2:
             # In this setting, we compute the pose to each source frame via a
             # separate forward pass through the pose network.
@@ -165,22 +184,38 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
             for f_i in self.rgb_frame_offsets[dataset_id][1:]:
                 # To maintain ordering we always pass frames in temporal order
                 if f_i < 0:
-                    pose_inputs = [pose_feats[f_i], pose_feats[0]]
+                    if self.predict_motion_map:
+                        pose_inputs = [pose_feats[f_i], depth[f_i], pose_feats[0], depth[0]]
+                    else:
+                        pose_inputs = [pose_feats[f_i], pose_feats[0]]
                 else:
-                    pose_inputs = [pose_feats[0], pose_feats[f_i]]
+                    if self.predict_motion_map:
+                        pose_inputs = [pose_feats[0], depth[0], pose_feats[f_i], depth[f_i]]
+                    else:
+                        pose_inputs = [pose_feats[0], pose_feats[f_i]]
 
-                axisangle, translation = self.networks["pose_decoder"](
-                    [self.networks["pose_encoder"](torch.cat(pose_inputs, 1))])
+                encoded_poses = self.networks["pose_encoder"](torch.cat(pose_inputs, 1))
+
+                axisangle, translation = self.networks["pose_decoder"]([encoded_poses])
 
                 # Invert the matrix if the frame id is negative
-
                 poses[f_i] = transformation_from_parameters(
                     axisangle[:, 0], translation[:, 0], invert=(f_i < 0))
 
+                if self.predict_motion_map:
+                    # convert motion map to object motion map
+                    t_map = self.networks["motion_decoder"](encoded_poses)
+                    if f_i < 0:
+                        t_map = -t_map
+                    translation_maps[f_i] = t_map
+
+            if self.predict_motion_map:
+                return poses, translation_maps
+            else:
+                return poses
+
         else:
             raise Exception('The Input to the GUDA PoseNet model are exactly 2 frames!')
-
-        return poses
 
     def forward(self, data, predict_depth=False, dataset_id=3, train=True):
         """
@@ -209,6 +244,11 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         """
         latent_features_batch = self.latent_features(batch[("rgb", 0)])
 
+        offset_img_features = {}
+        if self.predict_depth_for_whole_sequence[dataset_id]:
+            for offset in self.rgb_frame_offsets[dataset_id][1:]:
+                offset_img_features[offset] = self.latent_features(batch[("rgb", offset)])
+
         results = {}
 
         if self.dataset_predict_depth[dataset_id] or predict_depth:
@@ -216,10 +256,24 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         else:
             results['depth'] = None
 
+        depth_sequence = {}
+        if self.predict_depth_for_whole_sequence[dataset_id]:
+            # predict semantic for the sequence if wanted and if dataset has sequences
+            depth_sequence[0] = results['depth'][0][('depth', 0)].detach()
+            for offset in self.rgb_frame_offsets[dataset_id][1:]:
+                depth_sequence[offset] = \
+                    self.predict_depth(offset_img_features[offset], dataset_id)[0][('depth', 0)].detach()
+
         if self.dataset_predict_pose[dataset_id]:
-            results['poses'] = self.predict_poses(batch, dataset_id=dataset_id)
+            if self.predict_motion_map:
+                results['poses'], results['motion'] = \
+                    self.predict_poses(batch, dataset_id=dataset_id, depth=depth_sequence)
+            else:
+                results['poses'] = self.predict_poses(batch, dataset_id=dataset_id)
+                results['motion'] = None
         else:
             results['poses'] = None
+
         return results
 
     # --------------------------------------------------------------------------
@@ -242,7 +296,10 @@ class Monodepth2(DepthFromMotionEncoderDecoderModelBase):
         """
         Get dictionary of all the networks used for predicting the poses.
         """
-        return {k: self.networks[k] for k in ["pose_encoder", "pose_decoder"]}
+        if self.predict_motion_map:
+            return {k: self.networks[k] for k in ["pose_encoder", "pose_decoder", "motion_decoder"]}
+        else:
+            return {k: self.networks[k] for k in ["pose_encoder", "pose_decoder"]}
 
     def get_networks(self):
         """

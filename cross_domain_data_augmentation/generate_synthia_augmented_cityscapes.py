@@ -251,13 +251,12 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
 
         to_pil = transforms.ToPILImage()
 
-        if True:
-            rgb_cityscapes = to_pil(rgb_cityscapes)
-            rgb_cityscapes.save(os.path.join(base_path, 'RGB', f'{str(batch_idx)}.png'))
+        rgb_cityscapes = to_pil(rgb_cityscapes)
+        rgb_cityscapes.save(os.path.join(base_path, 'RGB', f'{str(batch_idx)}.png'))
 
-            cv2.imwrite(os.path.join(base_path, 'LABELS', f'{str(batch_idx)}.png'),
-                        new_semantic_mask.cpu().numpy().astype(np.int64),
-                        [cv2.IMREAD_ANYDEPTH])
+        cv2.imwrite(os.path.join(base_path, 'LABELS', f'{str(batch_idx)}.png'),
+                    new_semantic_mask.cpu().numpy().astype(np.int64),
+                    [cv2.IMREAD_ANYDEPTH])
 
         #plt.show()
 

@@ -149,7 +149,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         if self.predict_motion_map:
             self.networks["motion_decoder"] = MotionDecoder(
                 self.networks["pose_encoder"].get_channels_of_forward_features()).double()
-            print('Using MotionNet instead of Posenet to predict Ego-motion and Scene Flow')
+            print('Using PoseNet and MotionNet to predict Ego-motion and Scene Flow')
 
         # Specify parameters to be trained
         self.parameters_to_train += list(self.networks["pose_encoder"].parameters())
@@ -336,7 +336,10 @@ class Guda(SemanticDepthFromMotionModelBase):
         """
         Get dictionary of all the networks used for predicting the poses.
         """
-        return {k: self.networks[k] for k in ["pose_encoder", "pose_decoder"]}
+        if self.predict_motion_map:
+            return {k: self.networks[k] for k in ["pose_encoder", "pose_decoder", "motion_decoder"]}
+        else:
+            return {k: self.networks[k] for k in ["pose_encoder", "pose_decoder"]}
 
     def get_networks(self):
         """

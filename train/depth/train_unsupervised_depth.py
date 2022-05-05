@@ -37,9 +37,9 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         elif self.num_classes == 16:
             self.c_id_to_name = CITYSCAPES_ID_TO_NAME_16
         else:
-            raise ValueError("GUDA training not defined for {self.num_classes} classes!")
+            raise ValueError(f"GUDA training not defined for {self.num_classes} classes!")
 
-        # -------------------------Source dataset parameters------------------------------------------
+        # -------------------------dataset parameters-------------------------------------------------
         assert self.cfg.datasets.configs[0].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
 
         self.img_width = self.cfg.datasets.configs[0].dataset.feed_img_size[0]
@@ -48,9 +48,6 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         assert self.img_width % 32 == 0, 'The image width must be a multiple of 32'
 
         self.rgb_frame_offsets = self.cfg.datasets.configs[0].dataset.rgb_frame_offsets
-        self.num_input_frames = len(self.cfg.datasets.configs[0].dataset.rgb_frame_offsets)
-        self.num_pose_frames = 2 if self.cfg.model.pose_net.input == "pairs" else self.num_input_frames
-
         l_n_p = self.cfg.datasets.configs[0].losses.loss_names_and_parameters
         l_n_w = self.cfg.datasets.configs[0].losses.loss_names_and_weights
 
@@ -88,7 +85,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             raise Exception("No Camera calibration file found! Create Camera calibration file under: " +
                             os.path.join(self.cfg.datasets.configs[0].dataset.path, "calib", "calib.txt"))
 
-        # -------------------------Source Losses------------------------------------------------------
+        # --------------------------------Losses------------------------------------------------------
         self.edge_smoothness_loss = get_loss("edge_smooth")
         self.reconstruction_loss = get_loss('reconstruction',
                                             ref_img_width=self.img_width,
@@ -100,6 +97,14 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         self.reconstruction_use_automasking = l_n_p[0]['reconstruction']['use_automasking']
         self.reconstruction_weight = l_n_w[0]['reconstruction']
         self.edge_smoothness_weight = l_n_w[0]['edge_smooth']
+
+        # either use both motion regularization losses or none
+        assert ('motion_group_smoothness' in l_n_w[0].keys()) == ('motion_sparsity' in l_n_w[0].keys())
+        if 'motion_group_smoothness' in l_n_w[0].keys():
+            self.motion_group_smoothness_loss = get_loss("motion_group_smoothness")
+            self.motion_sparsity_loss = get_loss("motion_sparsity")
+            self.motion_group_smoothness_weight = l_n_w[0]['motion_group_smoothness']
+            self.motion_sparsity_weight = l_n_w[0]['motion_sparsity']
 
         self.snr = get_loss('surface_normal_regularization',
                             ref_img_width=self.img_width,
@@ -131,7 +136,6 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
 
         self.epoch = 0  # current epoch
         self.start_time = None  # time of starting training
-        torch.autograd.set_detect_anomaly(True)
 
     def run(self):
         # if lading from checkpoint set the epoch
@@ -139,17 +143,18 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             self.set_from_checkpoint()
         self.print_p_0(f'Initial epoch {self.epoch}')
 
-        initial_epoch = self.epoch - 1
-
         if self.rank == 0:
             for _, net in self.model.get_networks().items():
                 wandb.watch(net)
 
+        self.print_p_0("Training started...")
+
         for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
             self.print_p_0('Training')
             self.train()
-            self.print_p_0('Validation')
-            self.validate()
+            if self.cfg.val.do_validation:
+                self.print_p_0('Validation')
+                self.validate()
 
         self.print_p_0("Training done.")
 
@@ -190,7 +195,9 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
 
         depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1][('disp', 0)]
 
-        loss, loss_dict = self.compute_losses(data, depth_pred, pose_pred, raw_sigmoid)
+        motion_map = prediction['motion']
+
+        loss, loss_dict, warped_imgs = self.compute_losses(data, depth_pred, pose_pred, raw_sigmoid, motion_map)
 
         self.print_p_0(loss)
 
@@ -199,12 +206,28 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         self.optimizer.step()
 
         # log samples
-        if batch_idx % int(5 / torch.cuda.device_count()) == 0 and self.rank == 0:
-            rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="Virtual RGB")
+        if batch_idx % int(500 / torch.cuda.device_count()) == 0 and self.rank == 0:
+            rgb = wandb.Image(data[('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0), caption="RGB 0")
             depth_img = self.get_wandb_depth_image(depth_pred[('depth', 0)][0].detach(),
                                                    batch_idx)
             normal_img = self.get_wandb_normal_image(depth_pred[('depth', 0)].detach(), self.snr, 'Predicted')
-            wandb.log({f'Source images {self.epoch}': [rgb, depth_img, normal_img]})
+            prev_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB -1")
+            succ_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB +1")
+            if motion_map is not None:
+                prev_motion = wandb.Image(motion_map[-1][0], caption='frame -1 to frame 0 motion')
+                succ_motion = wandb.Image(motion_map[1][0], caption='frame 0 to frame 1 motion')
+                wandb.log({f'Source images {self.epoch}': [rgb, depth_img,
+                                                           normal_img,
+                                                           prev_warped_img,
+                                                           prev_motion,
+                                                           succ_warped_img,
+                                                           succ_motion]})
+            else:
+                wandb.log({f'Source images {self.epoch}': [rgb,
+                                                           depth_img,
+                                                           normal_img,
+                                                           prev_warped_img,
+                                                           succ_warped_img]})
         if self.rank == 0:
             wandb.log({f"total loss epoch {self.epoch}": loss})
             wandb.log(loss_dict)
@@ -223,22 +246,40 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             wandb.log(
                 {f'images of epoch {self.epoch}': [rgb_img, depth_img, normal_img]})
 
-    def compute_losses(self, data, depth_pred, poses, raw_sigmoid):
+    def compute_losses(self, data, depth_pred, poses, raw_sigmoid, motion_map):
         loss_dict = {}
-        reconsruction_loss = self.reconstruction_weight * \
-                             self.reconstruction_loss(batch_data=data,
+        reconsruction_loss, _, warped_imgs = self.reconstruction_loss(batch_data=data,
                                                       pred_depth=depth_pred,
                                                       poses=poses,
                                                       rgb_frame_offsets=self.cfg.datasets.configs[
                                                           0].dataset.rgb_frame_offsets,
                                                       use_automasking=self.reconstruction_use_automasking,
-                                                      use_ssim=self.reconstruction_use_ssim)[0]
+                                                      use_ssim=self.reconstruction_use_ssim,
+                                                      motion_map=motion_map,
+                                                      return_warped_images=True)
+        reconsruction_loss = self.reconstruction_weight * reconsruction_loss
         loss_dict[f'reconstruction epoch {self.epoch}'] = reconsruction_loss
+
+        sum = reconsruction_loss
+
+        if motion_map is not None:
+            motion_sum = []
+            print('Using Motion Regularization!')
+            for offset in self.rgb_frame_offsets[1:]:
+                motion_regularization = self.motion_group_smoothness_loss(motion_map[offset]) * \
+                                        self.motion_group_smoothness_weight
+                motion_regularization += self.motion_sparsity_loss(motion_map[offset]) * \
+                                         self.motion_sparsity_weight
+                motion_sum.append(motion_regularization)
+            sum += torch.sum(motion_regularization)
+            loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_regularization
+
 
         mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
         norm_disp = raw_sigmoid / (mean_disp + 1e-7)
         smoothness_loss = self.edge_smoothness_weight * \
                           self.edge_smoothness_loss(norm_disp, data["rgb", 0])
         loss_dict[f'Edge smoothess epoch {self.epoch}'] = smoothness_loss
+        sum += smoothness_loss
 
-        return reconsruction_loss + smoothness_loss, loss_dict
+        return sum, loss_dict, warped_imgs

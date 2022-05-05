@@ -1,6 +1,6 @@
 dataset:
-    name: 'cityscapes_semantic'
-    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Cityscapes_datasets\leftImg8bit'
+    name: 'synthia_aug_cityscapes'
+    path: 'C:\Users\benba\Documents\University\Masterarbeit\data\Synthia_aug_Cityscapes'
     feed_img_size: [ 512, 256 ]
     use_sparse_depth: False
     use_dense_depth: False
@@ -8,7 +8,7 @@ dataset:
     use_semantic_gt: True
     split: None
     camera: 'pinhole'
-    shuffle: False
+    shuffle: True
     num_classes: 16
     min_depth : 0.01
     max_depth : 655.35
@@ -17,14 +17,14 @@ dataset:
 
 eval:
     train:
-        use_gt_scale: False
+        use_gt_scale: True
         gt_depth_available: False
         gt_semantic_available: True
     val:
-        use_gt_scale: False
+        use_gt_scale: True
         gt_depth_available: False
         gt_semantic_available: True
     test:
-        use_gt_scale: False
+        use_gt_scale: True
         gt_depth_available: False
         gt_semantic_available: True
