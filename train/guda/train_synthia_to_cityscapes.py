@@ -434,12 +434,12 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             depth_img = self.get_wandb_depth_image(depth, batch_idx)
             semantic_img_13 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
                                                             f'Semantic Map image with 16 classes')
-            semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 2,
+            semantic_img_2nd = self.get_wandb_semantic_image(soft_pred_16[0], True, 2,
                                                             f'Second Highest Predictions')
             semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                         f'Semantic GT with id {batch_idx}')
             wandb.log(
-                {f'images of epoch {self.epoch}': [rgb_img, depth_img, semantic_img_13, semantic_img_16, semantic_gt]})
+                {f'images of epoch {self.epoch}': [rgb_img, depth_img, semantic_img_13, semantic_img_2nd, semantic_gt]})
 
     def compute_losses_source(self, depth_target, depth_pred, raw_sigmoid, semantic_pred, semantic_gt):
         loss_dict = {}

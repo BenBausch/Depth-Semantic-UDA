@@ -38,7 +38,7 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
         elif self.num_classes == 16:
             self.c_id_to_name = CITYSCAPES_ID_TO_NAME_16
         else:
-            raise ValueError("GUDA training not defined for {self.num_classes} classes!")
+            raise ValueError(f"GUDA training not defined for {self.num_classes} classes!")
 
         # -------------------------Source dataset parameters------------------------------------------
         self.img_width = self.cfg.datasets.configs[0].dataset.feed_img_size[0]
@@ -99,11 +99,14 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
             for _, net in self.model.get_networks().items():
                 wandb.watch(net)
 
+        self.print_p_0("Training started...")
+
         for self.epoch in range(self.epoch, self.cfg.train.nof_epochs):
             self.print_p_0('Training')
             self.train()
-            self.print_p_0('Validation')
-            self.validate()
+            if self.cfg.val.do_validation:
+                self.print_p_0('Validation')
+                self.validate()
 
         self.print_p_0("Training done.")
 
@@ -198,12 +201,10 @@ class SupervisedSemanticTrainer(TrainSingleDatasetBase):
                                   caption=f'Rgb {batch_idx}')
             semantic_img_13 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
                                                             f'Semantic Map image with 16 classes')
-            semantic_img_16 = self.get_wandb_semantic_image(soft_pred_16[0], True, 2,
-                                                            f'Semantic Map image with 16 classes')
             semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                         f'Semantic GT with id {batch_idx}')
             wandb.log(
-                {f'images of epoch {self.epoch}': [rgb_img, semantic_img_13, semantic_img_16, semantic_gt]})
+                {f'images of epoch {self.epoch}': [rgb_img, semantic_img_13, semantic_gt]})
 
     def compute_losses_source(self, semantic_pred, semantic_gt):
         loss_dict = {}

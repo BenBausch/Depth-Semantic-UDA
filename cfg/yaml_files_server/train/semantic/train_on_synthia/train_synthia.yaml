@@ -20,7 +20,7 @@ datasets:
     loss_weights : [1, 0]
 
 train:
-    nof_epochs: 40
+    nof_epochs: 120
     batch_size: 1
 
     optimizer:
@@ -29,7 +29,7 @@ train:
     scheduler:
         type: 'MultiStepLR'
         gamma: 0.5
-        milestones: [50] # half the learning rate for the last 10 epochs
+        milestones: [200] # half the learning rate for the last 10 epochs
 
 val:
     batch_size: 1
@@ -42,4 +42,4 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/semantic_trained_on_synthia_101'
+    path_save: '/work/dlclarge1/bauschb-data/models/trained_on_cityscapes_only'
