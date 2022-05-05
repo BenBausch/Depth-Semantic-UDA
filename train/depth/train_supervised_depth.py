@@ -124,7 +124,6 @@ class SupervisedDepthTrainer(TrainSingleDatasetBase):
 
         self.epoch = 0  # current epoch
         self.start_time = None  # time of starting training
-        torch.autograd.set_detect_anomaly(True)
 
     def run(self):
         # if lading from checkpoint set the epoch
