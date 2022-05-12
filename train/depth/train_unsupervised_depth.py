@@ -198,6 +198,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
         motion_map = prediction['motion']
 
         loss, loss_dict, warped_imgs = self.compute_losses(data, depth_pred, pose_pred, raw_sigmoid, motion_map)
+        warped_imgs = warped_imgs["rgb"]
 
         self.print_p_0(loss)
 
@@ -212,7 +213,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
                                                    batch_idx)
             normal_img = self.get_wandb_normal_image(depth_pred[('depth', 0)].detach(), self.snr, 'Predicted')
             prev_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB -1")
-            succ_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB +1")
+            succ_warped_img = wandb.Image(warped_imgs[+1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB +1")
             if motion_map is not None:
                 prev_motion = wandb.Image(motion_map[-1][0], caption='frame -1 to frame 0 motion')
                 succ_motion = wandb.Image(motion_map[1][0], caption='frame 0 to frame 1 motion')

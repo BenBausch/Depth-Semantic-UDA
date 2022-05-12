@@ -34,6 +34,11 @@ class _PathsSynthiaAugCityscapes(PathsHandlerSemantic):
 
         super(_PathsSynthiaAugCityscapes, self).__init__(mode, None, cfg)
 
+        self.paths_unaugmented_rgb = self.get_unaugmented_rgb_image_paths(mode, split=None)
+
+        if len(self.paths_unaugmented_rgb) == 0:
+            assert False, "No Unaugmented RGB images could be found!"
+
     def get_rgb_image_paths(self, mode, frame_ids='*', file_format=".png", split=None):
         """
         Gets all the RGB image paths.
@@ -45,6 +50,20 @@ class _PathsSynthiaAugCityscapes(PathsHandlerSemantic):
         return sorted(
             glob.glob(
                 self.get_rgb_image_path(self.path_base, frame_ids, file_format)
+            )
+        )
+
+    def get_unaugmented_rgb_image_paths(self, mode, frame_ids='*', file_format=".png", split=None):
+        """
+        Gets all the RGB image paths.
+        :param mode: mode of usage: 'train', 'val', 'test'
+        :param frame_ids: ids of frames to be selected, * = all images
+        :param file_format: format of the files
+        :param split: split name of the data
+        """
+        return sorted(
+            glob.glob(
+                self.get_unaugmented_rgb_image_path(self.path_base, frame_ids, file_format)
             )
         )
 
@@ -81,6 +100,24 @@ class _PathsSynthiaAugCityscapes(PathsHandlerSemantic):
             return None
 
     @staticmethod
+    def get_unaugmented_rgb_image_path(path_base, frame_ids, file_format):
+        """
+            Builds path to an rgb image.
+            Default path: path_base/RGB/*.png
+            Specific path: path_base/RGB/0000001.png
+            :param path_base: path to directory containing images and labels
+            :param frame_ids: 7-digit string id or '*'
+            :param file_format: extensions of files '.png'
+            :return: single path string
+        """
+        path = os.path.join(path_base, 'RGB_UNAUG', frame_ids + file_format)
+        if os.path.exists(path) or not frame_ids.isnumeric():
+            # Apply path exists check only if exact id is provided, no regex like '*'
+            return path
+        else:
+            return None
+
+    @staticmethod
     def get_semantic_label_path(path_base, frame_ids, file_format):
         """
             Builds path to an semantic label image.
@@ -97,6 +134,9 @@ class _PathsSynthiaAugCityscapes(PathsHandlerSemantic):
             return path
         else:
             return None
+
+    def paths_unaugmented_rgb(self):
+        return self.paths_unaugmented_rgb
 
 
 class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
@@ -172,8 +212,11 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
 
         rgb_imgs[0] = self.get_rgb(self.paths.paths_rgb[index], 0)  # not a sequence dataset therefor only offset 0
 
+        unaug_rgb_imgs = {}  # unaugmented rgb images
+        unaug_rgb_imgs[0] = self.get_unaug_rgb(self.paths.paths_unaugmented_rgb[index], 0)
+
         if self.mode == 'train':
-            rgb_imgs, gt_semantic = self.transform_train(rgb_imgs, gt_semantic)
+            rgb_imgs, gt_semantic, unaug_rgb_imgs = self.transform_train(rgb_imgs, gt_semantic, unaug_rgb_imgs)
         elif self.mode == 'val' or self.mode == 'test':
             raise ValueError("Synthia only available for training")
         else:
@@ -189,8 +232,10 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
         if self.do_normalization:
             rgb_imgs[0][:, data["semantic"] != 250] -= self.synthia_mean
             rgb_imgs[0][:, data["semantic"] == 250] -= self.cityscapes_mean
+            unaug_rgb_imgs[0] -= self.cityscapes_mean.unsqueeze(1)
 
         data[("rgb", 0)] = rgb_imgs[0]
+        data[("unaug_rgb", 0)] = unaug_rgb_imgs[0]
 
         return data
 
@@ -205,9 +250,10 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
             description += f'{class_id}: {self.class_names[class_id]} \n'
         return description
 
-    def transform_train(self, rgb_dict, gt_semantic):
+    def transform_train(self, rgb_dict, gt_semantic, unaug_rgb_dict):
         """
             Transforms the rgb images and the semantic ground truth for training.
+            :param unaug_rgb_dict: unaugmented rgb images (without synthia objects)
             :param gt_depth_dense: depth ground truth of image with offset = 0
             :param rgb_dict: dict of rgb images of a sequence.
             :param gt_semantic: semantic ground truth of the image with offset = 0
@@ -234,11 +280,29 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
         rgb_dict_tf = {}
         rgb_dict_tf[0] = tf_rgb_train(rgb_dict[0])  # not sequence dataset therefor only offset 0
 
+        unaug_rgb_dict_tf = {}
+
+        unaug_rgb_dict_tf[0] = tf_rgb_train(unaug_rgb_dict[0])  # not sequence dataset therefor only offset 0
+
         gt_semantic = tf_semantic_train(gt_semantic) if gt_semantic is not None else None
 
-        return rgb_dict_tf, gt_semantic
+        return rgb_dict_tf, gt_semantic, unaug_rgb_dict_tf
 
     def get_rgb(self, path_file, *args):
+        """
+        Loads the PIL Image form the path_file.
+
+        :param path_file: path to the image
+        :return: PIL RGB Images.
+        """
+        if path_file is None:
+            return None
+        else:
+            assert os.path.exists(path_file), "The file {} does not exist!".format(path_file)
+            img = pil.open(path_file).convert('RGB')
+            return img
+
+    def get_unaug_rgb(self, path_file, *args):
         """
         Loads the PIL Image form the path_file.
 
@@ -307,7 +371,8 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
             [
                 tf_prep.CV2Resize(tgt_size, interpolation=cv2.INTER_NEAREST),
                 tf_prep.CV2HorizontalFlip(do_flip=do_flip),
-                tf_prep.ToInt64Array()
+                tf_prep.ToInt64Array(),
+                tf_prep.ToTorchLong()
             ]
         )
 
@@ -334,8 +399,10 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
 
 
 if __name__ == "__main__":
+    torch.set_printoptions(precision=9)
     from cfg.config_dataset import get_cfg_dataset_defaults
     from torch.utils.data import DataLoader
+    from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s2rgb
 
     cfg = get_cfg_dataset_defaults()
     cfg.merge_from_file(
@@ -353,11 +420,16 @@ if __name__ == "__main__":
     for idx, data in enumerate(loader):
         semantic = data["semantic"].squeeze(0)
         rgb = data[("rgb", 0)].squeeze(0)
-        #rgb[:, semantic == 250] += dataset.cityscapes_mean
-        #rgb[:, semantic != 250] += dataset.synthia_mean
-        print(torch.min(rgb))
-        print(torch.max(rgb))
-        plt.imshow(rgb.numpy().transpose(1, 2, 0))
+        unaug_rgb = data[("unaug_rgb", 0)].squeeze(0)
+        rgb[:, semantic == 250] += dataset.cityscapes_mean
+        rgb[:, semantic != 250] += dataset.synthia_mean
+        unaug_rgb += dataset.cityscapes_mean.unsqueeze(1)
+        print(torch.min(unaug_rgb))
+        print(torch.max(unaug_rgb))
+        fig, axs = plt.subplots(1, 3)
+        axs[0].imshow(unaug_rgb.numpy().transpose(1, 2, 0))
+        axs[1].imshow(rgb.numpy().transpose(1, 2, 0))
+        axs[2].imshow(s2rgb(semantic.unsqueeze(0), num_classes=16))
         plt.show()
 
     print(dataset)

@@ -317,6 +317,9 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
     """Used for training on two datasets (each sample gets an equal length) and validation on a second dataset."""
     def __init__(self, device_id, cfg, world_size=1):
         super(TrainSourceTargetDatasetBase, self).__init__(cfg=cfg, device_id=device_id, world_size=world_size)
+
+        num_files_per_epoch = 9400
+
         # Get training and validation datasets for source and target
         self.target_train_loader, self.target_num_train_files = \
             self.get_dataloader(mode="train",
@@ -326,7 +329,7 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[1],
                                 sample_completely_random=True,
-                                num_samples=int(9400/torch.cuda.device_count()))
+                                num_samples=int(num_files_per_epoch/torch.cuda.device_count()))
         print(f'Length Target Train Loader: {len(self.target_train_loader)}')
 
         self.target_val_loader, self.target_num_val_files = \
@@ -346,8 +349,24 @@ class TrainSourceTargetDatasetBase(TrainBase, ABC):
                                 num_workers=self.cfg.train.nof_workers,
                                 cfg=self.cfg.datasets.configs[0],
                                 sample_completely_random=True,
-                                num_samples=int(9400/torch.cuda.device_count()))
+                                num_samples=int(num_files_per_epoch/torch.cuda.device_count()))
         print(f'Length Source Train Loader: {len(self.source_train_loader)}')
+
+        # 4th dataset considered the Augmented dataset being trained with gt and pseudo_labels
+        self.use_mixed_dataset = False
+        if len(self.cfg.datasets.configs) == 4:
+            self.use_mixed_dataset = True
+            print(f'Using 4 datasets, the last dataset is the augmented dataset!')
+            self.mixed_train_loader, self.mixed_num_train_files = \
+                self.get_dataloader(mode="train",
+                                    name=self.cfg.datasets.configs[3].dataset.name,
+                                    split=self.cfg.datasets.configs[3].dataset.split,
+                                    bs=self.cfg.train.batch_size,
+                                    num_workers=self.cfg.train.nof_workers,
+                                    cfg=self.cfg.datasets.configs[3],
+                                    sample_completely_random=True,
+                                    num_samples=int(num_files_per_epoch/torch.cuda.device_count()))
+
         # Get number of total steps to compute remaining training time later
         # calculate time using target dataset length
         self.num_total_steps = self.target_num_train_files // self.cfg.train.batch_size * self.cfg.train.nof_epochs

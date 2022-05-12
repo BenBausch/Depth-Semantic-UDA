@@ -15,6 +15,7 @@ import camera_models
 import wandb
 import torch.nn.functional as F
 from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
+from helper_modules.pseudo_label_fusion import fuse_pseudo_labels_with_gorund_truth
 
 
 class GUDATrainer(TrainSourceTargetDatasetBase):
@@ -143,6 +144,25 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             raise Exception("No Camera calibration file found! Create Camera calibration file under: " +
                             os.path.join(cfg.datasets.configs[1].dataset.path, "calib", "calib.txt"))
 
+        # -------------------------Mixed Dataset------------------------------------------------------
+        if self.use_mixed_dataset:
+            assert self.cfg.datasets.configs[3].dataset.rgb_frame_offsets[0] == 0, 'RGB offsets must start with 0'
+
+            self.mixed_img_width = self.cfg.datasets.configs[3].dataset.feed_img_size[0]
+            self.mixed_img_height = self.cfg.datasets.configs[3].dataset.feed_img_size[1]
+            assert self.mixed_img_height % 32 == 0, 'The image height must be a multiple of 32'
+            assert self.mixed_img_width % 32 == 0, 'The image width must be a multiple of 32'
+
+            self.mixed_rgb_frame_offsets = self.cfg.datasets.configs[3].dataset.rgb_frame_offsets
+            mixed_l_n_p = self.cfg.datasets.configs[3].losses.loss_names_and_parameters
+            mixed_l_n_w = self.cfg.datasets.configs[3].losses.loss_names_and_weights
+
+            self.correct_dataset_id_mapping = {0: 0, 1: 1,
+                                               2: 3}  # used to get the correct configuration when predicting
+            # in guda, the validation configuration should be skipped during training
+        else:
+            self.correct_dataset_id_mapping = None
+
         # -------------------------Source Losses------------------------------------------------------
         self.source_silog_depth = get_loss('silog_depth',
                                            weight=source_l_n_p[0]['silog_depth']['weight'],
@@ -213,6 +233,14 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.target_loss_weight = self.cfg.datasets.loss_weights[1]
 
+        # -------------------------Mixed Dataset Losses-----------------------------------------------
+        if self.use_mixed_dataset:
+            self.mixed_cross_entopy_loss = get_loss("cross_entropy",
+                                                    ignore_index=IGNORE_INDEX_SEMANTIC,
+                                                    reduction='mean')
+            self.mixed_cross_entopy_weight = mixed_l_n_w[0]['cross_entropy']
+            self.mixed_pseudo_label_threshold = mixed_l_n_w[0]['pseudo_label_threshold']
+
         # -------------------------Metrics-for-Validation---------------------------------------------
         assert self.num_classes == 16  # if training on more or less classes please change eval setting for miou
 
@@ -278,8 +306,12 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
     def train(self):
         self.set_train()
 
+        if self.use_mixed_dataset:
+            loaders_zip = zip(self.source_train_loader, self.target_train_loader, self.mixed_train_loader)
+        else:
+            _zip = zip(self.source_train_loader, self.target_train_loader)
         # Main loop:
-        for batch_idx, data in enumerate(zip(self.source_train_loader, self.target_train_loader)):
+        for batch_idx, data in enumerate(loaders_zip):
             if self.rank == 0:
                 self.print_p_0(f"Training epoch {self.epoch} | batch {batch_idx}")
             self.training_step(data, batch_idx)
@@ -325,10 +357,13 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             data[0][key] = val.to(self.device)
         for key, val in data[1].items():
             data[1][key] = val.to(self.device)
+        if self.use_mixed_dataset:
+            for key, val in data[2].items():
+                data[2][key] = val.to(self.device)
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------Virtual Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
-        prediction = self.model.forward(data)
+        prediction = self.model.forward(data, correct_dataset_id_mapping=self.correct_dataset_id_mapping)
 
         prediction_s = prediction[0]
 
@@ -359,18 +394,36 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         else:
             semantic_sequence = None
 
-        loss_target, loss_target_dict = self.compute_losses_target(data[1],
-                                                                   depth_pred_t,
-                                                                   pose_pred_t,
-                                                                   raw_sigmoid_t,
-                                                                   semantic_sequence,
-                                                                   motion_map)
+        loss_target, loss_target_dict, warped_imgs = self.compute_losses_target(data[1],
+                                                                                depth_pred_t,
+                                                                                pose_pred_t,
+                                                                                raw_sigmoid_t,
+                                                                                semantic_sequence,
+                                                                                motion_map)
+        warped_imgs = warped_imgs["rgb"]
 
+        loss = self.source_loss_weight * loss_source + self.target_loss_weight * loss_target
+
+        # -----------------------------------------------------------------------------------------------
+        # --------------------------------Augmented Sample Processing------------------------------------
+        # -----------------------------------------------------------------------------------------------
+        if self.use_mixed_dataset:
+            pseudo_labels_m = prediction[2]['pseudo_labels']
+            semantic_pred_m = F.softmax(prediction[2]['semantic'], dim=1)
+
+            labels_m = fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction=pseudo_labels_m,
+                                                            ground_turth_labels=data[2]["semantic"],
+                                                            probability_threshold=self.mixed_pseudo_label_threshold)
+
+            mixed_loss = self.mixed_cross_entopy_weight * self.mixed_cross_entopy_loss(input=semantic_pred_m,
+                                                                                       target=labels_m)
+            loss_target_dict[
+                "mixed_cross_entropy_loss"] = mixed_loss  # hacky to include in the target_loss_dict, but no
+            # problem since just for plotting
+            loss += mixed_loss
         # -----------------------------------------------------------------------------------------------
         # ----------------------------------------Optimization-------------------------------------------
         # -----------------------------------------------------------------------------------------------
-
-        loss = self.source_loss_weight * loss_source + self.target_loss_weight * loss_target
 
         self.print_p_0(loss)
 
@@ -400,12 +453,26 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             depth_img_1 = self.get_wandb_depth_image(depth_pred_t[('depth', 0)][0], batch_idx)
             normal_img_1 = self.get_wandb_normal_image(depth_pred_t[('depth', 0)].detach(), self.snr_validation,
                                                        'Predicted')
+
+            prev_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB -1")
+            succ_warped_img = wandb.Image(warped_imgs[+1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB +1")
+
             if motion_map is not None:
                 prev_motion = wandb.Image(motion_map[-1][0], caption='frame -1 to frame 0 motion')
                 succ_motion = wandb.Image(motion_map[1][0], caption='frame 0 to frame 1 motion')
-                wandb.log({f'Target Images {self.epoch}': [rgb_1, depth_img_1, normal_img_1, prev_motion, succ_motion]})
+                wandb.log({f'Target Images {self.epoch}': [rgb_1, depth_img_1, normal_img_1, prev_motion,
+                                                           prev_warped_img, succ_warped_img, succ_motion]})
             else:
-                wandb.log({f'Target Images {self.epoch}': [rgb_1, depth_img_1, normal_img_1]})
+                wandb.log({f'Target Images {self.epoch}': [rgb_1, depth_img_1, normal_img_1, prev_warped_img,
+                                                           succ_warped_img]})
+
+            # mixed dataset plotting
+            if self.use_mixed_dataset:
+                rgb_2 = wandb.Image(data[2][('rgb', 0)][0].detach().cpu().numpy().transpose(1, 2, 0),
+                                    caption="Source RGB")
+                sem_img_2 = self.get_wandb_semantic_image(semantic_pred_m[0], True, 1, f'Semantic Map')
+                semantic_gt_2 = self.get_wandb_semantic_image(labels_m[0], False, 1, f'Semantic GT {batch_idx}')
+                wandb.log({f'Mixed Dataset Images {self.epoch}': [rgb_2, sem_img_2, semantic_gt_2]})
 
         if self.rank == 0:
             wandb.log({f"total loss epoch {self.epoch}": loss})
@@ -435,7 +502,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             semantic_img_13 = self.get_wandb_semantic_image(soft_pred_16[0], True, 1,
                                                             f'Semantic Map image with 16 classes')
             semantic_img_2nd = self.get_wandb_semantic_image(soft_pred_16[0], True, 2,
-                                                            f'Second Highest Predictions')
+                                                             f'Second Highest Predictions')
             semantic_gt = self.get_wandb_semantic_image(data['semantic'][0], False, 1,
                                                         f'Semantic GT with id {batch_idx}')
             wandb.log(
@@ -462,17 +529,18 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
     def compute_losses_target(self, data, depth_pred, poses, raw_sigmoid, semantic_sequence, motion_map):
         loss_dict = {}
-        reconsruction_loss, semantic_consistency_loss = self.target_reconstruction_loss(
-                                                               batch_data=data,
-                                                               pred_depth=depth_pred,
-                                                               poses=poses,
-                                                               rgb_frame_offsets=
-                                                               self.cfg.datasets.configs[
-                                                                   1].dataset.rgb_frame_offsets,
-                                                               use_automasking=self.target_reconstruction_use_automasking,
-                                                               use_ssim=self.target_reconstruction_use_ssim,
-                                                               semantic_logits=semantic_sequence,
-                                                               motion_map=motion_map)
+        reconsruction_loss, semantic_consistency_loss, warped_imgs = self.target_reconstruction_loss(
+            batch_data=data,
+            pred_depth=depth_pred,
+            poses=poses,
+            rgb_frame_offsets=
+            self.cfg.datasets.configs[
+                1].dataset.rgb_frame_offsets,
+            use_automasking=self.target_reconstruction_use_automasking,
+            use_ssim=self.target_reconstruction_use_ssim,
+            semantic_logits=semantic_sequence,
+            motion_map=motion_map,
+            return_warped_images=True)
         reconsruction_loss = reconsruction_loss * self.target_reconstruction_weight
         loss_dict[f'Reconstruction epoch {self.epoch}'] = reconsruction_loss
 
@@ -480,7 +548,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         if self.target_use_tsc:
             semantic_consistency_loss = semantic_consistency_loss * \
-                                           self.target_temporal_semantic_consistency_weigth
+                                        self.target_temporal_semantic_consistency_weigth
             sum += semantic_consistency_loss
             loss_dict[f'Temporal Semantic Consistency epoch {self.epoch}'] = semantic_consistency_loss
 
@@ -503,4 +571,4 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         loss_dict[f'Edge Smoothess epoch {self.epoch}'] = smoothness_loss
         sum += smoothness_loss
 
-        return sum, loss_dict
+        return sum, loss_dict, warped_imgs

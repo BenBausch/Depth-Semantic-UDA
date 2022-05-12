@@ -500,12 +500,14 @@ class ReconstructionLoss(nn.Module):
 
         if not return_warped_images:
             warped_images_at_biggest_scale = None
+        else:
+            warped_imgs = {"rgb": warped_images_at_biggest_scale}
 
         if semantic_logits is None:
             # no semantic consistency calculated
-            return total_loss, 0, warped_images_at_biggest_scale
+            return total_loss, 0, warped_imgs
         else:
-            return total_loss, semantic_cosistency_loss_min, warped_images_at_biggest_scale
+            return total_loss, semantic_cosistency_loss_min, warped_imgs
 
 
     def match_sizes(self, image, target_shape, mode='bilinear', align_corners=True):

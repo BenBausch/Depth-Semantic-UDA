@@ -74,12 +74,15 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.dataset_min_max_depth = []
         self.predict_semantic_for_whole_sequence = []
         self.predict_depth_for_whole_sequence = []
+        self.predict_pseudo_labels = [] # true for datasets containing target image and same image with mixed with
+        # source instances, labels on unaugmented image used as pseudo_labels + gt labels from source instance
 
         # all datasets should have the same number of classes because they use the same semantic head
         self.num_classes = self.cfg.datasets.configs[0].dataset.num_classes
 
         # collect the parameters from all the datasets
         for i, dcfg in enumerate(self.cfg.datasets.configs):
+            self.predict_pseudo_labels.append(dcfg.dataset.predict_pseudo_labels)
             self.predict_semantic_for_whole_sequence.append(dcfg.dataset.predict_semantic_for_each_img_in_sequence)
             self.predict_depth_for_whole_sequence.append(dcfg.dataset.predict_depth_for_each_img_in_sequence)
             self.rgb_frame_offsets.append(dcfg.dataset.rgb_frame_offsets)
@@ -106,6 +109,8 @@ class Guda(SemanticDepthFromMotionModelBase):
         print(f'Predict semantic mask per dataset: {self.dataset_predict_semantic}')
         print(f'Predict semantic for each frame in sequence: {self.predict_semantic_for_whole_sequence}')
         print(f'Predict depth for each frame in sequence: {self.predict_depth_for_whole_sequence}')
+        print(f'Predict pseudo labels on un-augmented image and semantic prediction on augmented image: '
+              f'{self.predict_pseudo_labels}')
         print(f'Number classes: {self.num_classes}')
 
     def create_Encoder(self):
@@ -237,7 +242,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         a = self.networks["semantic_decoder"](features)
         return a
 
-    def forward(self, data, predict_depth=False, dataset_id=3, train=True):
+    def forward(self, data, predict_depth=False, dataset_id=3, train=True, correct_dataset_id_mapping=None):
         """
         Performs multiple forward passes, one for each dataset. This is need because of the distributed data parallel
         training, where a model is allowed to perform only a single forward pass before backward pass in order to keep
@@ -247,6 +252,16 @@ class Guda(SemanticDepthFromMotionModelBase):
         all_results = []
         if train:
             for dataset_id, batch in enumerate(data):
+                if correct_dataset_id_mapping is not None:
+                    # This needs to be used in case of training with augmented dataset
+                    # E.g. When training guda with augmented datset if will have the correct id = 3 and the
+                    # validation dataset will have id = 2 due to the configuration (list of dataset paths) definitions
+                    # The validation dataset set should be skiped, therefore the corrected id of the augmented dataset
+                    # should be 3 instead of 2 (2 because of cycling trough the data, validation data not
+                    # present at training time)
+                    # The non-corrected configuration 2 (validation ds) should thefore point to the corrected id = 3
+                    dataset_id = correct_dataset_id_mapping[dataset_id]
+                    print(f'Corrected dataset Id: {dataset_id}')
                 all_results.append(self.single_forward(batch, dataset_id, predict_depth))
         else:
             all_results.append(self.single_forward(data, dataset_id, predict_depth))
@@ -307,8 +322,11 @@ class Guda(SemanticDepthFromMotionModelBase):
 
             results['semantic_sequence'] = semantic_sequence
 
-        return results
+        if self.predict_pseudo_labels[dataset_id]:
+            latent_features_batch_pseudo_label = self.latent_features(batch[("unaug_rgb", 0)])
+            results['pseudo_labels'] = self.predict_semantic(latent_features_batch_pseudo_label).detach()
 
+        return results
 
     # --------------------------------------------------------------------------
     # -----------------------------Helper-Methods-------------------------------

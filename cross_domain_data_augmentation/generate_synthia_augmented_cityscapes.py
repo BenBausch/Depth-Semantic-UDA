@@ -135,7 +135,11 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
     number_instances_to_insert = 20
     depth_between_instances = 0.2
 
+    to_pil = transforms.ToPILImage()
+
     for batch_idx, data in enumerate(cityscapes_loader):
+        if batch_idx <= 126:
+            continue
         print(f'################################ Image {batch_idx} ################################')
         for key, val in data.items():
             data[key] = val.to('cuda:0')
@@ -151,7 +155,12 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
 
         # rgb images
         rgb_cityscapes = data[('rgb', 0)][0].cpu()
-        #plt_rgb1 = rgb_cityscapes.numpy().transpose(1, 2, 0)
+
+        rgb_cityscapes_pil = to_pil(rgb_cityscapes)
+        rgb_cityscapes_pil.save(os.path.join(base_path, 'RGB_UNAUG', f'{str(batch_idx)}.png'))
+
+        plt_rgb1 = rgb_cityscapes.numpy().transpose(1, 2, 0)
+
         #axs[1, 0].imshow(plt_rgb1)
         #axs_2[0].imshow(plt_rgb1)
 
@@ -164,6 +173,7 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
         joined_instance_masks = torch.zeros((rgb_cityscapes.shape[1], rgb_cityscapes.shape[2])).bool()
 
         new_semantic_mask = torch.zeros((img_h1, img_w1)) + IGNORE_INDEX_SEMANTIC
+
         # -------------------------augment target image---------------------------------
         for instance_idx, inst in enumerate(synthia_loader):
 
@@ -248,8 +258,6 @@ def generate_synthia_augmented_cityscapes(cityscapes_loader, synthia_loader, mod
             # create semantic mask
             new_semantic_mask[padded_mask] = semantic_label
             #axs_2[2].imshow(s2rgb(new_semantic_mask.unsqueeze(0), 16))
-
-        to_pil = transforms.ToPILImage()
 
         rgb_cityscapes = to_pil(rgb_cityscapes)
         rgb_cityscapes.save(os.path.join(base_path, 'RGB', f'{str(batch_idx)}.png'))

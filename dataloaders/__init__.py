@@ -2,6 +2,7 @@ from dataloaders.gta5 import dataset_gta5
 from dataloaders.synthia import dataset_synthia
 from dataloaders.cityscapes import dataset_cityscapes_sequence, dataset_cityscapes_semantic
 from dataloaders.kalimu import dataset_kalimu
+from dataloaders.synthia_aug_cityscapes import dataset_synthia_augmented_cityscapes
 
 available_datasets = {
     #"kitti_depricated": dataset_kitti.KittiDataset,
@@ -10,7 +11,8 @@ available_datasets = {
     "synthia_rand_cityscapes": dataset_synthia.SynthiaRandCityscapesDataset,
     "cityscapes_sequence": dataset_cityscapes_sequence.CityscapesSequenceDataset,
     "cityscapes_semantic": dataset_cityscapes_semantic.CityscapesSemanticDataset,
-    'kalimu': dataset_kalimu.KalimuSequenceDataset
+    'kalimu': dataset_kalimu.KalimuSequenceDataset,
+    'synthia_aug_cityscapes': dataset_synthia_augmented_cityscapes.SynthiaAugCityscapesDataset
 }
 
 

@@ -93,6 +93,7 @@ class CoordinateWarper(nn.Module):
 
         # Reproject all image pixel coordinates into the 3d world (pointcloud)
         image_as_pointcloud = self.image_to_pointcloud(batch_depth_map)
+
         if motion_map is not None:
             image_as_pointcloud += motion_map
 

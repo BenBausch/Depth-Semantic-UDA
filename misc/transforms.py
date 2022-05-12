@@ -36,6 +36,14 @@ class PrepareForNet(object):
         return sample
 
 
+class ToTorchLong(object):
+    def __init__(self):
+        pass
+
+    def __call__(self, sample):
+        return torch.LongTensor(sample)
+
+
 class PILResizeByFactor(object):
     """Wrapper for the PIL resize method to be able to use it in the Compose structure of the datasets"""
 
