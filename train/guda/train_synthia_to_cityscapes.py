@@ -408,7 +408,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # --------------------------------Augmented Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
         if self.use_mixed_dataset:
-            pseudo_labels_m = prediction[2]['pseudo_labels']
+            pseudo_labels_m = F.softmax(prediction[2]['pseudo_labels'], dim=1)
             semantic_pred_m = F.softmax(prediction[2]['semantic'], dim=1)
 
             labels_m = fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction=pseudo_labels_m,

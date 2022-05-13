@@ -138,6 +138,11 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
 
         self.do_normalization = self.cfg.dataset.img_norm
 
+        self.aug_params = {"brightness_jitter": cfg.dataset.augmentation.brightness_jitter,
+                           "contrast_jitter": cfg.dataset.augmentation.contrast_jitter,
+                           "saturation_jitter": cfg.dataset.augmentation.saturation_jitter,
+                           "hue_jitter": cfg.dataset.augmentation.hue_jitter}
+
     def __len__(self):
         """
         :return: The number of ids in the split of the dataset.
@@ -185,13 +190,16 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         :return: dict of transformed rgb images and transformed label
         """
         do_flip = random.random() > 0.5
+        do_aug = random.random() > 0.5
 
         # Get the transformation objects
         tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,
                                          do_flip=do_flip,
                                          do_normalization = self.do_normalization,
                                          mean=self.mean,
-                                         var=self.var)
+                                         var=self.var,
+                                         do_aug=do_aug,
+                                         aug_params=self.aug_params)
 
         rgb_dict_tf = {}
         for k, img in rgb_dict.items():
@@ -248,7 +256,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         return img
 
     @staticmethod
-    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var):
+    def tf_rgb_train(tgt_size, do_flip, do_normalization, mean, var, do_aug, aug_params):
         """
         Transformations of the rgb image during training.
         :param mean: mean of rgb images
@@ -264,6 +272,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
                 tf_prep.CropCarAway(img_height=1024, img_width=2048),
                 tf_prep.PILResize(tgt_size, pil.BILINEAR),
                 tf_prep.PILHorizontalFlip(do_flip),
+                tf_prep.ColorAug(do_aug, aug_params),
                 tf_prep.PrepareForNet(do_normalization, mean, var)
             ]
         )

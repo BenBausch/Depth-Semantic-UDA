@@ -273,6 +273,9 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
                                          do_aug=do_aug,
                                          aug_params=self.aug_params)
 
+        tf_unaug_rgb_train = self.tf_unaug_rgb_train(tgt_size=self.feed_img_size,
+                                         do_flip=do_flip)
+
         tf_semantic_train = self.tf_semantic_train(tgt_size=self.feed_img_size,
                                                    do_flip=do_flip)
 
@@ -282,7 +285,7 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
 
         unaug_rgb_dict_tf = {}
 
-        unaug_rgb_dict_tf[0] = tf_rgb_train(unaug_rgb_dict[0])  # not sequence dataset therefor only offset 0
+        unaug_rgb_dict_tf[0] = tf_unaug_rgb_train(unaug_rgb_dict[0])  # not sequence dataset therefor only offset 0
 
         gt_semantic = tf_semantic_train(gt_semantic) if gt_semantic is not None else None
 
@@ -351,6 +354,30 @@ class SynthiaAugCityscapesDataset(DatasetRGB, DatasetSemantic):
                 tf_prep.PILResize(tgt_size, pil.BICUBIC),
                 tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.ColorAug(do_aug, aug_params),
+                tf_prep.PrepareForNet(do_normaliazion=False)
+            ]
+        )
+
+    @staticmethod
+    def tf_unaug_rgb_train(tgt_size, do_flip):
+        """
+        Transformations of the rgb image during training.
+        :param aug_params: augmentation parameters
+        :param do_aug: True if augmentations should be applied to the rgb image else False
+        :param tgt_size: target size of the images after resize operation
+        :param do_flip: True if the image should be horizontally flipped else False
+        :param do_normalization: true if image should be normalized
+        :param mean_city: mean of R,G,B of cityscapes rgb images
+        :param var_city: variance in R,G,B of cityscapes rgb images
+        :param mean_synthia: mean of R,G,B of synthia rgb images
+        :param var_synthia: variance in R,G,B of synthia rgb images
+        :param synthia_pixel_mask: boolean mask, true for synthia pixels, false for cityscapes pixels
+        :return: Transformation composition
+        """
+        return transforms.Compose(
+            [
+                tf_prep.PILResize(tgt_size, pil.BICUBIC),
+                tf_prep.PILHorizontalFlip(do_flip),
                 tf_prep.PrepareForNet(do_normaliazion=False)
             ]
         )

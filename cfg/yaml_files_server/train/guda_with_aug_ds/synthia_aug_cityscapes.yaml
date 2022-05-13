@@ -18,7 +18,7 @@ dataset:
 
 losses:
     loss_names_and_weights:
-        - cross_entropy: 1.0
+        - cross_entropy: 0.01
         - pseudo_label_threshold: 0.99
 
 eval:

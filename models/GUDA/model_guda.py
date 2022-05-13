@@ -261,7 +261,6 @@ class Guda(SemanticDepthFromMotionModelBase):
                     # present at training time)
                     # The non-corrected configuration 2 (validation ds) should thefore point to the corrected id = 3
                     dataset_id = correct_dataset_id_mapping[dataset_id]
-                    print(f'Corrected dataset Id: {dataset_id}')
                 all_results.append(self.single_forward(batch, dataset_id, predict_depth))
         else:
             all_results.append(self.single_forward(data, dataset_id, predict_depth))
