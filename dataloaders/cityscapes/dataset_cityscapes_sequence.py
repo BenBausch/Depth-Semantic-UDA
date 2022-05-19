@@ -190,7 +190,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         :return: dict of transformed rgb images and transformed label
         """
         do_flip = random.random() > 0.5
-        do_aug = random.random() > 0.5
+        do_aug = False
 
         # Get the transformation objects
         tf_rgb_train = self.tf_rgb_train(tgt_size=self.feed_img_size,

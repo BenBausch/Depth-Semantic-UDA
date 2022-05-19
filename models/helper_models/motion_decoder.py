@@ -61,7 +61,7 @@ class MotionDecoder(nn.Module):
                 # convolve over concatenated input
                 x = self.convs[f"upconv_{i}_1"](x)
 
-        translation_map = 0.0 * self.convs[f"translation_map"](x[0])
+        translation_map = 0.001 * self.convs[f"translation_map"](x[0])
 
         return translation_map
 

@@ -39,6 +39,8 @@ val:
 
 checkpoint:
     use_checkpoint: False
+    path_base: '/work/dlclarge1/bauschb-data/models/cityscapes_monodepth2_with_motion/tmp/2022_05_18_12_06_50_cityscapes_sequence'
+    filename : 'checkpoint_epoch_0.pth'
 
 device:
     multiple_gpus: True

@@ -20,7 +20,7 @@ losses:
     loss_names_and_parameters:
         - reconstruction:
             'use_ssim' : True
-            'use_automasking' : False
+            'use_automasking' : True
         - edge_smooth:
               'parameters': None
         - motion_group_smoothness: True

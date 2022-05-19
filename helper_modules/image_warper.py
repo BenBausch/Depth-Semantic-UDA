@@ -94,17 +94,26 @@ class CoordinateWarper(nn.Module):
         # Reproject all image pixel coordinates into the 3d world (pointcloud)
         image_as_pointcloud = self.image_to_pointcloud(batch_depth_map)
 
-        if motion_map is not None:
-            image_as_pointcloud += motion_map
-
         # Transform the pointcloud to homogeneous coordinates
         ones = nn.Parameter(torch.ones(batch_depth_map.size(0), 1, self.img_height, self.img_width, device=self.device),
                             requires_grad=False)
         image_as_pointcloud_homogeneous = torch.cat([image_as_pointcloud, ones], 1)
 
-        # Transform the obtained pointcloud into the local coordinate system of the target camera pose (homogeneous)
-        transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
-            batch_depth_map.size(0), 4, -1).double())
+        # Transform the obtained pointclou into the local coordinate system of the target camera pose (homogeneous)
+        if motion_map is not None:
+            rot = torch.clone(T)
+            rot[:, :-1, 3] = 0
+            trans = torch.clone(T)
+            trans[:, :-1, :-1] = torch.eye(3).to(T.device)
+            transformed_pointcloud = torch.bmm(rot.double(), image_as_pointcloud_homogeneous.view(
+                batch_depth_map.size(0), 4, -1).double())
+            transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
+            transformed_pointcloud[:, :-1, :, :] += motion_map
+            transformed_pointcloud = torch.bmm(trans.double(), transformed_pointcloud.view(
+                batch_depth_map.size(0), 4, -1).double())
+        else:
+            transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
+                batch_depth_map.size(0), 4, -1).double())
         transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
 
         # Transform back to Euclidean coordinates
