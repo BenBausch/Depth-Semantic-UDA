@@ -6,8 +6,9 @@ class MotionDecoder(nn.Module):
     """
     Motion decoder inspired by 'Unsupervised Monocular Depth Learning in Dynamic Scenes'
     """
-    def __init__(self, num_ch_enc, upsample_mode='bilinear', use_skips=True):
+    def __init__(self, num_ch_enc, upsample_mode='bilinear', use_skips=True, auto_mask=True):
         super(MotionDecoder, self).__init__()
+        self.auto_mask = auto_mask
 
         self.num_ch_enc = num_ch_enc
         self.num_ch_dec = [32, 64, 128, 256]
@@ -43,6 +44,14 @@ class MotionDecoder(nn.Module):
 
         self.sigmoid = nn.Sigmoid()
 
+    def _mask(self, x):
+        """Copied from https://github.com/chamorajg/pytorch_depth_and_motion_planning/blob/c688338d9d8d8b7dad5722a5eeb0ed8b393a82a5/object_motion_net.py"""
+        sq_x = torch.sqrt(torch.sum(x ** 2, dim=1, keepdim=True))
+        mean_sq_x = torch.mean(sq_x, dim=(0, 2, 3))
+        mask_x = (sq_x > mean_sq_x).type(x.dtype)
+        x = x * mask_x
+        return x
+
     def forward(self, input_features):
         # Initial previous layer is the
         x = input_features[-1]
@@ -62,6 +71,9 @@ class MotionDecoder(nn.Module):
                 x = self.convs[f"upconv_{i}_1"](x)
 
         translation_map = 0.001 * self.convs[f"translation_map"](x[0])
+
+        if self.auto_mask:
+            translation_map = self._mask(translation_map)
 
         return translation_map
 

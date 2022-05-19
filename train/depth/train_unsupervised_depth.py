@@ -17,7 +17,7 @@ import wandb
 import torch.nn.functional as F
 from utils.plotting_like_cityscapes_utils import CITYSCAPES_ID_TO_NAME_19, CITYSCAPES_ID_TO_NAME_16
 from utils.constans import IGNORE_VALUE_DEPTH
-
+from helper_modules.helper_functions import normalize_motion_map
 
 class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
     """
@@ -195,9 +195,20 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
 
         depth_pred, raw_sigmoid = prediction['depth'][0], prediction['depth'][1][('disp', 0)]
 
-        motion_map = prediction['motion']
+        object_motion_map = prediction['motion']
+        if object_motion_map is not None:
+            motion_map = {}
+            if object_motion_map is not None:
+                for offset in self.rgb_frame_offsets[1:]:
+                    motion_map[offset] = torch.clone(object_motion_map[offset])
+                    motion_map[offset][:, 0, :, :] += pose_pred[offset][0, 0, 3]
+                    motion_map[offset][:, 1, :, :] += pose_pred[offset][0, 1, 3]
+                    motion_map[offset][:, 2, :, :] += pose_pred[offset][0, 2, 3]
+        else:
+            motion_map = None
 
-        loss, loss_dict, warped_imgs = self.compute_losses(data, depth_pred, pose_pred, raw_sigmoid, motion_map)
+        loss, loss_dict, warped_imgs = self.compute_losses(data, depth_pred, pose_pred, raw_sigmoid, object_motion_map, motion_map)
+
         warped_imgs = warped_imgs["rgb"]
 
         self.print_p_0(loss)
@@ -214,15 +225,19 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             normal_img = self.get_wandb_normal_image(depth_pred[('depth', 0)].detach(), self.snr, 'Predicted')
             prev_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB -1")
             succ_warped_img = wandb.Image(warped_imgs[+1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB +1")
-            if motion_map is not None:
+            if object_motion_map is not None:
+                prev_obj_motion = wandb.Image(object_motion_map[-1][0], caption='frame -1 to frame 0 obj motion')
+                succ_obj_motion = wandb.Image(object_motion_map[1][0], caption='frame 0 to frame 1 obj motion')
                 prev_motion = wandb.Image(motion_map[-1][0], caption='frame -1 to frame 0 motion')
                 succ_motion = wandb.Image(motion_map[1][0], caption='frame 0 to frame 1 motion')
                 wandb.log({f'Source images {self.epoch}': [rgb, depth_img,
                                                            normal_img,
                                                            prev_warped_img,
                                                            prev_motion,
+                                                           prev_obj_motion,
                                                            succ_warped_img,
-                                                           succ_motion]})
+                                                           succ_motion,
+                                                           succ_obj_motion]})
             else:
                 wandb.log({f'Source images {self.epoch}': [rgb,
                                                            depth_img,
@@ -247,9 +262,11 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             wandb.log(
                 {f'images of epoch {self.epoch}': [rgb_img, depth_img, normal_img]})
 
-    def compute_losses(self, data, depth_pred, poses, raw_sigmoid, motion_map):
+    def compute_losses(self, data, depth_pred, poses, raw_sigmoid, object_motion_map, motion_map):
         loss_dict = {}
-        reconsruction_loss, _, warped_imgs = self.reconstruction_loss(batch_data=data,
+
+        reconsruction_loss, _, warped_imgs = self.reconstruction_loss(
+                                                      batch_data=data,
                                                       pred_depth=depth_pred,
                                                       poses=poses,
                                                       rgb_frame_offsets=self.cfg.datasets.configs[
@@ -263,18 +280,18 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
 
         sum = reconsruction_loss
 
-        if motion_map is not None:
+        if object_motion_map is not None:
             motion_sum = []
             print('Using Motion Regularization!')
             for offset in self.rgb_frame_offsets[1:]:
-                motion_regularization = self.motion_group_smoothness_loss(motion_map[offset]) * \
+                normalized_obj_motion = normalize_motion_map(object_motion_map[offset], motion_map[offset])
+                motion_regularization = self.motion_group_smoothness_loss(normalized_obj_motion) * \
                                         self.motion_group_smoothness_weight
-                motion_regularization += self.motion_sparsity_loss(motion_map[offset]) * \
+                motion_regularization += self.motion_sparsity_loss(normalized_obj_motion) * \
                                          self.motion_sparsity_weight
                 motion_sum.append(motion_regularization)
             sum += torch.sum(motion_regularization)
             loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_regularization
-
 
         mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
         norm_disp = raw_sigmoid / (mean_disp + 1e-7)

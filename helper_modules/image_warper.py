@@ -104,14 +104,10 @@ class CoordinateWarper(nn.Module):
         if motion_map is not None:
             rot = torch.clone(T)
             rot[:, :-1, 3] = 0
-            trans = torch.clone(T)
-            trans[:, :-1, :-1] = torch.eye(3).to(T.device)
             transformed_pointcloud = torch.bmm(rot.double(), image_as_pointcloud_homogeneous.view(
                 batch_depth_map.size(0), 4, -1).double())
             transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
             transformed_pointcloud[:, :-1, :, :] += motion_map
-            transformed_pointcloud = torch.bmm(trans.double(), transformed_pointcloud.view(
-                batch_depth_map.size(0), 4, -1).double())
         else:
             transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
                 batch_depth_map.size(0), 4, -1).double())
