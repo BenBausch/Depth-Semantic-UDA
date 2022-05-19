@@ -15,8 +15,19 @@ from utils.utils import info_gpu_memory
 
 class SemanticDecoderGUDA(nn.Module):
     """Semantic Decoder from the 'Geometric Unsupervised Domain Adaptation for Semantic Segmentation' paper"""
+
     def __init__(self, num_ch_enc, num_classes, use_skips=True,
-                 upsample_mode='nearest', num_ch_dec=[16, 32, 64, 128, 256]):
+                 upsample_mode='nearest', num_ch_dec=[16, 32, 64, 128, 256], last_layer_scale=1.0):
+        """
+        :param num_ch_enc: number channels outputted by encoder for different scales
+        :param num_classes: number of classes to predict
+        :param use_skips: true if skip connections between encoder and semantic decoder should be used on multilple
+        scales, false if not using skip connections
+        :param upsample_mode: how to upsample the different scales
+        :param num_ch_dec: number channels used in the semantic decoder
+        :param last_layer_scale: 1.0 for full resolution of input image, 0.5 = half resolution, 0.25 = quarter resolution,
+        0.125 = eight resolution. This drastically influences the amount of memory required to train the network
+        """
         super(SemanticDecoderGUDA, self).__init__()
 
         self.upsample_mode = upsample_mode
@@ -26,7 +37,19 @@ class SemanticDecoderGUDA(nn.Module):
         self.num_ch_enc = num_ch_enc
         self.num_ch_dec = np.array(num_ch_dec)
 
-        self.scale_factors = [1, 2, 4, 8]
+        if last_layer_scale == 1.0:
+            self.scale_factors = [1, 2, 4, 8]
+            self.out_scale_factor = 1
+        elif last_layer_scale == 0.5:
+            self.scale_factors = [0.5, 1, 2, 4]
+            self.out_scale_factor = 2
+        elif last_layer_scale == 0.25:
+            self.scale_factors = [0.25, 0.5, 1, 2]
+            self.out_scale_factor = 4
+        elif last_layer_scale == 0.125:
+            self.scale_factors = [0.125, 0.25, 0.5, 1]
+            self.out_scale_factor = 8
+
         self.inputs_to_last_layer = [3, 2, 1, 0]
 
         self.ordered_layers = []
@@ -83,6 +106,7 @@ class SemanticDecoderGUDA(nn.Module):
 
         x = torch.cat(outputs, 1)
         x = self.convs["final_conv"](x)
+        x = upsample(x, self.upsample_mode, scale_factor=self.out_scale_factor)
         return x
 
     def __str__(self):

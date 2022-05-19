@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s2rgb
 
+
 class _PointcloudToImage(nn.Module):
     """
         Reprojects all pointclouds of the batch into the image and returns a new batch of the corresponding 2d image points
@@ -94,17 +95,26 @@ class CoordinateWarper(nn.Module):
         # Reproject all image pixel coordinates into the 3d world (pointcloud)
         image_as_pointcloud = self.image_to_pointcloud(batch_depth_map)
 
-        if motion_map is not None:
-            image_as_pointcloud += motion_map
-
         # Transform the pointcloud to homogeneous coordinates
         ones = nn.Parameter(torch.ones(batch_depth_map.size(0), 1, self.img_height, self.img_width, device=self.device),
                             requires_grad=False)
         image_as_pointcloud_homogeneous = torch.cat([image_as_pointcloud, ones], 1)
 
         # Transform the obtained pointcloud into the local coordinate system of the target camera pose (homogeneous)
-        transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
-            batch_depth_map.size(0), 4, -1).double())
+        if motion_map is not None:
+            rot = torch.clone(T)
+            rot[:, :-1, 3] = 0
+            trans = torch.clone(T)
+            trans[:, :-1, :-1] = torch.eye(3).to(T.device)
+            transformed_pointcloud = torch.bmm(rot.double(), image_as_pointcloud_homogeneous.view(
+                batch_depth_map.size(0), 4, -1).double())
+            transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
+            transformed_pointcloud[:, :-1, :, :] += motion_map
+            transformed_pointcloud = torch.bmm(trans.double(), transformed_pointcloud.view(
+                batch_depth_map.size(0), 4, -1).double())
+        else:
+            transformed_pointcloud = torch.bmm(T.double(), image_as_pointcloud_homogeneous.view(
+                batch_depth_map.size(0), 4, -1).double())
         transformed_pointcloud = transformed_pointcloud.view(-1, 4, self.img_height, self.img_width)
 
         # Transform back to Euclidean coordinates
@@ -153,25 +163,20 @@ class ImageWarper(nn.Module):
         pixel_outside_of_image = torch.logical_or(pixel_coordinates < -1, pixel_coordinates > 1)
         pixel_outside_of_image = torch.logical_or(pixel_outside_of_image[:, :, :, 0],
                                                   pixel_outside_of_image[:, :, :, 1]).unsqueeze(1)
-        #fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-        #ax1.imshow(pixel_outside_of_image.squeeze(0).squeeze(0).cpu())
+        # fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+        # ax1.imshow(pixel_outside_of_image.squeeze(0).squeeze(0).cpu())
         pixel_outside_of_image = pixel_outside_of_image.repeat(1, batch_semantic.shape[1], 1, 1)
 
-        #plt_img = warped_image[0] + torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2).cuda()
-        #ax2.imshow(plt_img.detach().cpu().numpy().transpose(1, 2, 0))
+        # plt_img = warped_image[0] + torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2).cuda()
+        # ax2.imshow(plt_img.detach().cpu().numpy().transpose(1, 2, 0))
 
         warped_semantic = F.grid_sample(batch_semantic, pixel_coordinates, padding_mode="zeros", mode='nearest')
         warped_semantic[pixel_outside_of_image] = 250
-        #print(warped_semantic)
-        #img_to_plot = torch.topk(warped_semantic[0], k=1, dim=0, sorted=True).indices[0].unsqueeze(0).cpu()
-        #img_to_plot[pixel_outside_of_image[:, 0, :, :]] = 250
-        #ax3.imshow(s2rgb(img_to_plot, 16))
-        #plt.show()
+        # print(warped_semantic)
+        # img_to_plot = torch.topk(warped_semantic[0], k=1, dim=0, sorted=True).indices[0].unsqueeze(0).cpu()
+        # img_to_plot[pixel_outside_of_image[:, 0, :, :]] = 250
+        # ax3.imshow(s2rgb(img_to_plot, 16))
+        # plt.show()
         # set the padded pixels to the semantic ignore value since these should not be considered
 
         return warped_image, warped_semantic
-
-
-
-
-

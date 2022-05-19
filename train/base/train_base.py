@@ -89,6 +89,11 @@ class TrainBase(metaclass=abc.ABCMeta):
             numpy.random.seed(self.rank)
             random.seed(self.rank)
 
+        self.ema_model = None  # used for predicting pseudo_labels
+        if self.cfg.model.create_expo_moving_avg_model_copy:
+            print('Creating an exponential moving avg model to predict the pseudo labels.')
+            self.create_ema_model_copy()
+
         self.optimizer = self.get_optimizer(self.cfg.train.optimizer.type,
                                             self.model.params_to_train(self.cfg.train.optimizer.learning_rate),
                                             self.cfg.train.optimizer.learning_rate)
@@ -113,6 +118,11 @@ class TrainBase(metaclass=abc.ABCMeta):
             checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename, self.rank)
             # Load pretrained weights for the model and the optimizer status
             io_utils.IOHandler.load_weights(checkpoint, self.model.get_networks(), self.optimizer)
+            if self.cfg.model.create_expo_moving_avg_model_copy:
+                checkpoint = io_utils.IOHandler.load_checkpoint(cfg.checkpoint.path_base, cfg.checkpoint.filename,
+                                                                self.rank, is_ema_model=True)
+                # Load pretrained weights for the model and the optimizer status
+                io_utils.IOHandler.load_weights(checkpoint, self.ema_model.get_networks())
         else:
             print("No checkpoint is used. Training from scratch!")
 
@@ -137,6 +147,16 @@ class TrainBase(metaclass=abc.ABCMeta):
             {"epoch": self.epoch, "time": self.training_start_time,
              "dataset": self.cfg.datasets.configs[0].dataset.name},
             checkpoint)
+
+        if self.cfg.model.create_expo_moving_avg_model_copy:
+            checkpoint_ema = io_utils.IOHandler.gen_checkpoint(
+                self.ema_model.get_networks(),
+                **{"cfg": self.cfg})
+
+            self.io_handler.save_checkpoint(
+                {"epoch": self.epoch, "time": self.training_start_time,
+                 "dataset": self.cfg.datasets.configs[0].dataset.name},
+                checkpoint_ema, is_ema_model=True)
 
     def get_dataloader(self, mode, name, split, bs, num_workers, cfg, sample_completely_random=False, num_samples=None):
         """
@@ -286,6 +306,37 @@ class TrainBase(metaclass=abc.ABCMeta):
             semantic = semantic.unsqueeze(0)
         img = wandb.Image(s_to_rgb(semantic.detach().cpu(), num_classes=self.num_classes), caption=caption)
         return img
+
+    def create_ema_model_copy(self):
+        """
+        Creates an exponential moving average copy of the model in order to predict the pseudo labels. (Using the same
+        model for training and the predictions produces a high bias and results in collapse of semantic classes in the
+        preidction.)
+        """
+        self.ema_model = models.get_model(self.cfg.model.type, self.cfg)
+        if self.cfg.device.multiple_gpus:
+            self.ema_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(self.ema_model)
+        self.ema_model.to(self.device)
+
+        if self.cfg.device.multiple_gpus:
+            self.ema_model = CustomDistributedDataParallel(self.ema_model,
+                                                           device_ids=[self.rank],
+                                                           find_unused_parameters=True)
+
+        # load the weights
+        checkpoint = io_utils.IOHandler.gen_checkpoint(
+            self.model.get_networks(), **{"cfg": self.cfg})
+
+        io_utils.IOHandler.load_weights(checkpoint, self.ema_model.get_networks())
+
+        for param in self.ema_model.parameters():
+            param.detach_()
+
+    def update_ema_model_copy(self, iteration, teacher_weight):
+        """Copied and modified from https://github.com/vikolss/DACS/blob/master/trainUDA.py"""
+        teacher_weight = min(1 - 1 / (iteration + 1), teacher_weight)
+        for ema_param, param in zip(self.ema_model.parameters(), self.model.parameters()):
+            ema_param.data[:] = teacher_weight * ema_param[:].data[:] + (1 - teacher_weight) * param[:].data[:]
 
 
 class TrainSingleDatasetBase(TrainBase, ABC):

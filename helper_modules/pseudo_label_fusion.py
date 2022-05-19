@@ -1,10 +1,11 @@
+import numpy as np
 import torch.nn.functional as F
 import torch
 
 from utils.constans import IGNORE_INDEX_SEMANTIC
 
 
-def fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction, ground_turth_labels, probability_threshold=0.99):
+def fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction, ground_turth_labels):
     """
     Creates a Long Tensor Pseudo Label/Ground Truth target tensor. In the UDA setup, pseudo labels come from the target
     image prediction and ground truth labels come from the source domain instances.
@@ -15,11 +16,18 @@ def fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction, ground_turth_l
     """
     pseudo_labels = torch.argmax(pseudo_label_prediction, dim=1)
     pseudo_label_probs = torch.max(pseudo_label_prediction, dim=1).values
-    pseudo_labels[pseudo_label_probs <= probability_threshold] = IGNORE_INDEX_SEMANTIC
+
+    # following two lines copied from https://github.com/vikolss/DACS/blob/master/trainUDA.py
+    unlabeled_weight = torch.sum(pseudo_label_probs.ge(0.968).long() == 1).item() / np.size(
+        np.array(pseudo_label_probs.cpu()))
+    pixelWiseWeight = unlabeled_weight * torch.ones(pseudo_label_probs.shape)
+
     mask = ground_turth_labels != IGNORE_INDEX_SEMANTIC
     pseudo_labels[mask] = ground_turth_labels[mask]
+    pixelWiseWeight[mask] == 1.0
 
-    return pseudo_labels
+    return pseudo_labels, pixelWiseWeight
+
 
 if __name__ == "__main__":
     pred = torch.tensor([[[[0.1, 0., 0.2, 0., 0.],

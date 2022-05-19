@@ -12,15 +12,18 @@ class IOHandler:
     def __init__(self, path_base):
         self.path_base = path_base
 
-    def save_checkpoint(self, info, checkpoint):
+    def save_checkpoint(self, info, checkpoint, is_ema_model=False):
         """
         Saves the model as .pth file
         :param info: information on the run
         :param checkpoint: checkpoint of the model, see gen.checkpoint
+        :param is_ema_model: True if ema_model is being saved else false
         :return:
         """
         # Create folder
         path_save_folder = os.path.join(self.path_base, info["time"] + "_" + info["dataset"], "checkpoints")
+        if is_ema_model:
+            path_save_folder += "_ema"
 
         if not os.path.exists(path_save_folder):
             os.makedirs(path_save_folder)
@@ -95,14 +98,18 @@ class IOHandler:
         return checkpoint
 
     @staticmethod
-    def load_checkpoint(path_base_checkpoint, filename_checkpoint, device_id):
+    def load_checkpoint(path_base_checkpoint, filename_checkpoint, device_id, is_ema_model=False):
         """
         Loads the checkpoint from the file path
         :param path_base_checkpoint: path to the folder containing the checkpoint
         :param filename_checkpoint: the filename of the checkpoint
         :param device_id: the id of the device on which to load the weights on, for cuda:0 the id is 0
+        :param is_ema_model: True if ema_model is being saved else false
         """
-        path_checkpoint = os.path.join(path_base_checkpoint, 'checkpoints', filename_checkpoint)
+        if is_ema_model:
+            path_checkpoint = os.path.join(path_base_checkpoint, 'checkpoints_ema', filename_checkpoint)
+        else:
+            path_checkpoint = os.path.join(path_base_checkpoint, 'checkpoints', filename_checkpoint)
         assert os.path.exists(path_checkpoint), "The path {} does not exist!".format(path_checkpoint)
         checkpoint = torch.load(path_checkpoint, map_location=torch.device(device_id))
         return checkpoint

@@ -43,6 +43,7 @@ cfg.val.nof_workers = 4
 cfg.model = CN()
 
 cfg.model.type = ''  # which model to use: guda, monodepth2, ...
+cfg.model.create_expo_moving_avg_model_copy = False
 
 cfg.model.encoder = CN()
 cfg.model.encoder.params = CN()

@@ -309,7 +309,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         if self.use_mixed_dataset:
             loaders_zip = zip(self.source_train_loader, self.target_train_loader, self.mixed_train_loader)
         else:
-            _zip = zip(self.source_train_loader, self.target_train_loader)
+            loaders_zip = zip(self.source_train_loader, self.target_train_loader)
         # Main loop:
         for batch_idx, data in enumerate(loaders_zip):
             if self.rank == 0:
@@ -408,12 +408,15 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # --------------------------------Augmented Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
         if self.use_mixed_dataset:
-            pseudo_labels_m = F.softmax(prediction[2]['pseudo_labels'], dim=1)
+            pseudo_labels_m = self.model.forward(data, dataset_id=3,
+                                                 predict_pseudo_labels_only=True)[0]['pseudo_labels']
+            pseudo_labels_m = F.softmax(pseudo_labels_m, dim=1)
+
             semantic_pred_m = F.softmax(prediction[2]['semantic'], dim=1)
 
-            labels_m = fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction=pseudo_labels_m,
-                                                            ground_turth_labels=data[2]["semantic"],
-                                                            probability_threshold=self.mixed_pseudo_label_threshold)
+            labels_m, pixel_wise_weight = fuse_pseudo_labels_with_gorund_truth(
+                pseudo_label_prediction=pseudo_labels_m,
+                ground_turth_labels=data[2]["semantic"])
 
             mixed_loss = self.mixed_cross_entopy_weight * self.mixed_cross_entopy_loss(input=semantic_pred_m,
                                                                                        target=labels_m)

@@ -2,6 +2,7 @@ experiment_name: 'testing_guda_update_with_aug_ds'
 
 model:
     type: 'guda'
+    create_expo_moving_avg_model_copy: True
 
     encoder:
         params:
@@ -39,7 +40,7 @@ val:
     nof_workers: 5
 
 checkpoint:
-    use_checkpoint: True
+    use_checkpoint: False
     path_base : 'D:\Depth-Semantic-UDA\experiments\guda'
     filename : 'checkpoint_epoch_0.pth'
 

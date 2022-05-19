@@ -445,6 +445,9 @@ if __name__ == "__main__":
                         drop_last=False)
 
     for idx, data in enumerate(loader):
+        print(idx)
+        if idx != 738:
+            continue
         semantic = data["semantic"].squeeze(0)
         rgb = data[("rgb", 0)].squeeze(0)
         unaug_rgb = data[("unaug_rgb", 0)].squeeze(0)
