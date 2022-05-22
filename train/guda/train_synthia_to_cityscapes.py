@@ -237,7 +237,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         if self.use_mixed_dataset:
             self.mixed_cross_entopy_loss = get_loss("cross_entropy",
                                                     ignore_index=IGNORE_INDEX_SEMANTIC,
-                                                    reduction='mean')
+                                                    reduction='none')
             self.mixed_cross_entopy_weight = mixed_l_n_w[0]['cross_entropy']
             self.mixed_pseudo_label_threshold = mixed_l_n_w[0]['pseudo_label_threshold']
 
@@ -281,6 +281,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.epoch = 0  # current epoch
         self.start_time = None  # time of starting training
+        self.iteration_step = 0
 
     def run(self):
         # if lading from checkpoint set the epoch
@@ -315,6 +316,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             if self.rank == 0:
                 self.print_p_0(f"Training epoch {self.epoch} | batch {batch_idx}")
             self.training_step(data, batch_idx)
+            self.iteration_step += 1
 
         # Update the scheduler
         self.scheduler.step()
@@ -408,7 +410,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # --------------------------------Augmented Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
         if self.use_mixed_dataset:
-            pseudo_labels_m = self.model.forward(data, dataset_id=3,
+            pseudo_labels_m = self.model.forward(data[2], dataset_id=3,
                                                  predict_pseudo_labels_only=True)[0]['pseudo_labels']
             pseudo_labels_m = F.softmax(pseudo_labels_m, dim=1)
 
@@ -418,8 +420,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                 pseudo_label_prediction=pseudo_labels_m,
                 ground_turth_labels=data[2]["semantic"])
 
-            mixed_loss = self.mixed_cross_entopy_weight * self.mixed_cross_entopy_loss(input=semantic_pred_m,
-                                                                                       target=labels_m)
+            mixed_loss = self.mixed_cross_entopy_weight * \
+                         torch.mean(pixel_wise_weight * self.mixed_cross_entopy_loss(input=semantic_pred_m,
+                                                                                     target=labels_m))
             loss_target_dict[
                 "mixed_cross_entropy_loss"] = mixed_loss  # hacky to include in the target_loss_dict, but no
             # problem since just for plotting
@@ -433,6 +436,9 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+        if self.use_mixed_dataset:
+            self.update_ema_model_copy(self.iteration_step, 0.99)
 
         # log samples
         if batch_idx % int(500 / torch.cuda.device_count()) == 0 and self.rank == 0:

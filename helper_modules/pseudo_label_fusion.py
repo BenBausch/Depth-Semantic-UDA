@@ -26,7 +26,7 @@ def fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction, ground_turth_l
     pseudo_labels[mask] = ground_turth_labels[mask]
     pixelWiseWeight[mask] == 1.0
 
-    return pseudo_labels, pixelWiseWeight
+    return pseudo_labels, pixelWiseWeight.to(ground_turth_labels.device)
 
 
 if __name__ == "__main__":
@@ -46,4 +46,4 @@ if __name__ == "__main__":
                                              [1, 250, 250, 2, 0],
                                              [250, 250, 250, 250, 250]]])
 
-    print(fuse_pseudo_labels_with_gorund_truth(pred, ground_turth_labels, probability_threshold=0.89))
+    print(fuse_pseudo_labels_with_gorund_truth(pred, ground_turth_labels))
