@@ -136,6 +136,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
 
         self.epoch = 0  # current epoch
         self.start_time = None  # time of starting training
+        self.iteration_step = 0
 
     def run(self):
         # if lading from checkpoint set the epoch
@@ -166,6 +167,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             if self.rank == 0:
                 self.print_p_0(f"Training epoch {self.epoch} | batch {batch_idx}")
             self.training_step(data, batch_idx)
+            self.iteration_step += 1
 
         # Update the scheduler
         self.scheduler.step()
@@ -200,6 +202,8 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             motion_map = {}
             if object_motion_map is not None:
                 for offset in self.rgb_frame_offsets[1:]:
+                    if self.iteration_step < 3000:
+                        object_motion_map[offset] = torch.zeros_like(object_motion_map[offset])
                     motion_map[offset] = torch.clone(object_motion_map[offset])
                     motion_map[offset][:, 0, :, :] += pose_pred[offset][0, 0, 3]
                     motion_map[offset][:, 1, :, :] += pose_pred[offset][0, 1, 3]
@@ -284,7 +288,7 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
             motion_sum = []
             print('Using Motion Regularization!')
             for offset in self.rgb_frame_offsets[1:]:
-                normalized_obj_motion = normalize_motion_map(object_motion_map[offset], motion_map[offset])
+                normalized_obj_motion = object_motion_map[offset] #normalize_motion_map(object_motion_map[offset], motion_map[offset])
                 motion_regularization = self.motion_group_smoothness_loss(normalized_obj_motion) * \
                                         self.motion_group_smoothness_weight
                 motion_regularization += self.motion_sparsity_loss(normalized_obj_motion) * \
