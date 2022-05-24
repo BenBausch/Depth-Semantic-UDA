@@ -294,8 +294,9 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
                 motion_regularization += self.motion_sparsity_loss(normalized_obj_motion) * \
                                          self.motion_sparsity_weight
                 motion_sum.append(motion_regularization)
-            sum += torch.sum(motion_regularization)
-            loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_regularization
+            motion_sum = torch.sum(torch.stack(motion_sum))
+            sum += torch.sum(motion_sum)
+            loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_sum
 
         mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
         norm_disp = raw_sigmoid / (mean_disp + 1e-7)

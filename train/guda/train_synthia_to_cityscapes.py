@@ -387,7 +387,19 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         depth_pred_t, raw_sigmoid_t = prediction_t['depth'][0], prediction_t['depth'][1][('disp', 0)]
 
-        motion_map = prediction_t['motion']
+        object_motion_map = prediction_t['motion']
+        if object_motion_map is not None:
+            motion_map = {}
+            if object_motion_map is not None:
+                for offset in self.target_rgb_frame_offsets[1:]:
+                    if self.iteration_step < 0:
+                        object_motion_map[offset] = torch.zeros_like(object_motion_map[offset])
+                    motion_map[offset] = torch.clone(object_motion_map[offset])
+                    motion_map[offset][:, 0, :, :] += pose_pred_t[offset][0, 0, 3]
+                    motion_map[offset][:, 1, :, :] += pose_pred_t[offset][0, 1, 3]
+                    motion_map[offset][:, 2, :, :] += pose_pred_t[offset][0, 2, 3]
+        else:
+            motion_map = None
 
         if self.target_predict_semantic_for_whole_sequence:
             semantic_sequence = {}
@@ -401,6 +413,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
                                                                                 pose_pred_t,
                                                                                 raw_sigmoid_t,
                                                                                 semantic_sequence,
+                                                                                object_motion_map,
                                                                                 motion_map)
         warped_imgs = warped_imgs["rgb"]
 
@@ -410,7 +423,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         # --------------------------------Augmented Sample Processing------------------------------------
         # -----------------------------------------------------------------------------------------------
         if self.use_mixed_dataset:
-            pseudo_labels_m = self.model.forward(data[2], dataset_id=3,
+            pseudo_labels_m = self.ema_model.forward(data[2], dataset_id=3,
                                                  predict_pseudo_labels_only=True)[0]['pseudo_labels']
             pseudo_labels_m = F.softmax(pseudo_labels_m, dim=1)
 
@@ -465,14 +478,24 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
             prev_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB -1")
             succ_warped_img = wandb.Image(warped_imgs[+1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB +1")
-
-            if motion_map is not None:
+            if object_motion_map is not None:
+                prev_obj_motion = wandb.Image(object_motion_map[-1][0], caption='frame -1 to frame 0 obj motion')
+                succ_obj_motion = wandb.Image(object_motion_map[1][0], caption='frame 0 to frame 1 obj motion')
                 prev_motion = wandb.Image(motion_map[-1][0], caption='frame -1 to frame 0 motion')
                 succ_motion = wandb.Image(motion_map[1][0], caption='frame 0 to frame 1 motion')
-                wandb.log({f'Target Images {self.epoch}': [rgb_1, depth_img_1, normal_img_1, prev_motion,
-                                                           prev_warped_img, succ_warped_img, succ_motion]})
+                wandb.log({f'Target images {self.epoch}': [rgb_1, depth_img_1,
+                                                           normal_img_1,
+                                                           prev_warped_img,
+                                                           prev_motion,
+                                                           prev_obj_motion,
+                                                           succ_warped_img,
+                                                           succ_motion,
+                                                           succ_obj_motion]})
             else:
-                wandb.log({f'Target Images {self.epoch}': [rgb_1, depth_img_1, normal_img_1, prev_warped_img,
+                wandb.log({f'Target images {self.epoch}': [rgb_1,
+                                                           depth_img_1,
+                                                           normal_img_1,
+                                                           prev_warped_img,
                                                            succ_warped_img]})
 
             # mixed dataset plotting
@@ -536,7 +559,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         return silog_loss + bce_loss + snr_loss, loss_dict
 
-    def compute_losses_target(self, data, depth_pred, poses, raw_sigmoid, semantic_sequence, motion_map):
+    def compute_losses_target(self, data, depth_pred, poses, raw_sigmoid, semantic_sequence, object_motion_map, motion_map):
         loss_dict = {}
         reconsruction_loss, semantic_consistency_loss, warped_imgs = self.target_reconstruction_loss(
             batch_data=data,
@@ -561,17 +584,20 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             sum += semantic_consistency_loss
             loss_dict[f'Temporal Semantic Consistency epoch {self.epoch}'] = semantic_consistency_loss
 
-        if motion_map is not None:
+        if object_motion_map is not None:
             motion_sum = []
             print('Using Motion Regularization!')
             for offset in self.target_rgb_frame_offsets[1:]:
-                motion_regularization = self.target_motion_group_smoothness_loss(motion_map[offset]) * \
+                normalized_obj_motion = object_motion_map[
+                    offset]  # normalize_motion_map(object_motion_map[offset], motion_map[offset])
+                motion_regularization = self.target_motion_group_smoothness_loss(normalized_obj_motion) * \
                                         self.target_motion_group_smoothness_weight
-                motion_regularization += self.target_motion_sparsity_loss(motion_map[offset]) * \
+                motion_regularization += self.target_motion_sparsity_loss(normalized_obj_motion) * \
                                          self.target_motion_sparsity_weight
                 motion_sum.append(motion_regularization)
-            sum += torch.sum(motion_regularization)
-            loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_regularization
+            motion_sum = torch.sum(torch.stack(motion_sum))
+            sum += motion_sum
+            loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_sum
 
         mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
         norm_disp = raw_sigmoid / (mean_disp + 1e-7)
