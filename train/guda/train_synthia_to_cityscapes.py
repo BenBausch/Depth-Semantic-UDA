@@ -392,7 +392,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             motion_map = {}
             if object_motion_map is not None:
                 for offset in self.target_rgb_frame_offsets[1:]:
-                    if self.iteration_step < 0:
+                    if self.iteration_step < 3000:
                         object_motion_map[offset] = torch.zeros_like(object_motion_map[offset])
                     motion_map[offset] = torch.clone(object_motion_map[offset])
                     motion_map[offset][:, 0, :, :] += pose_pred_t[offset][0, 0, 3]
