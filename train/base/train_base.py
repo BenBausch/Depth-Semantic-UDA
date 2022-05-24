@@ -330,7 +330,7 @@ class TrainBase(metaclass=abc.ABCMeta):
         io_utils.IOHandler.load_weights(checkpoint, self.ema_model.get_networks())
 
         for param in self.ema_model.parameters():
-            param.detach_()
+            param.detach()
 
     def update_ema_model_copy(self, iteration, teacher_weight):
         """Copied and modified from https://github.com/vikolss/DACS/blob/master/trainUDA.py"""

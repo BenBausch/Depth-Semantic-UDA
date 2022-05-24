@@ -1,4 +1,4 @@
-experiment_name: 'synthia_to_cityscapes_with_tscl'
+experiment_name: 'synthia_to_cityscapes'
 
 model:
     type: 'guda'
@@ -42,9 +42,9 @@ device:
     multiple_gpus: True
 
 io:
-    path_save: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes_tscl'
+    path_save: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes'
 
 checkpoint:
-    use_checkpoint: True
+    use_checkpoint: False
     path_base: '/work/dlclarge1/bauschb-data/models/guda_synthia_to_cityscapes_tscl/tmp/2022_05_03_22_32_28_synthia_rand_cityscapes'
     filename: 'checkpoint_epoch_25.pth'
