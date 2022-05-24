@@ -608,3 +608,4 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         sum += smoothness_loss
 
         return sum, loss_dict, warped_imgs
+

@@ -2,6 +2,7 @@ experiment_name: 'synthia_to_cityscapes_with_aug_ds'
 
 model:
     type: 'guda'
+    create_expo_moving_avg_model_copy: True
 
     encoder:
         params:
