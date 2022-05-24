@@ -451,6 +451,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.optimizer.step()
 
         if self.use_mixed_dataset:
+            self.optimizer.zero_grad()
             self.update_ema_model_copy(self.iteration_step, 0.99)
 
         # log samples
