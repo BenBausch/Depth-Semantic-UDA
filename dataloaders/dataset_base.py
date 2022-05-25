@@ -146,7 +146,7 @@ class DatasetRGB(data.Dataset, metaclass=abc.ABCMeta):
     def __init__(self, pathsObj, cfg):
         self.cfg = cfg
         self.paths = pathsObj
-        self.mode = pathsObj.mode
+        self.mode = pathsObj.mode if pathsObj is not None else None
         self.rgb_frame_offsets = cfg.dataset.rgb_frame_offsets
         self.feed_img_size = cfg.dataset.feed_img_size
 

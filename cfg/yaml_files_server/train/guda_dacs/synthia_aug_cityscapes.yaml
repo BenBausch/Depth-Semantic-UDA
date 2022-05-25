@@ -1,0 +1,42 @@
+dataset:
+    name: 'synthia_cityscapes_classmix'
+    path: ['/work/dlclarge1/bauschb-data/data/Synthia/RAND_CITYSCAPES', # source
+           '/work/dlclarge1/bauschb-data/data/Cityscapes/leftImg8bit_sequence'] # target
+    feed_img_size: [ 512, 512 ]
+    use_sparse_depth: False
+    use_dense_depth: False
+    use_self_supervised_depth: False
+    use_semantic_gt: True
+    split: None
+    camera: 'pinhole'
+    shuffle: True
+    num_classes: 16
+    min_depth : 0.01
+    max_depth : 655.35
+    rgb_frame_offsets: [0]
+    sequence_dataset: False
+    predict_pseudo_labels: True
+    augmentation:
+        brightness_jitter: 0.25
+        contrast_jitter: 0.25
+        saturation_jitter: 0.25
+        hue_jitter: 0.25
+
+losses:
+    loss_names_and_weights:
+        - cross_entropy: 0.01
+        - pseudo_label_threshold: 0.99
+
+eval:
+    train:
+        use_gt_scale: True
+        gt_depth_available: False
+        gt_semantic_available: True
+    val:
+        use_gt_scale: True
+        gt_depth_available: False
+        gt_semantic_available: True
+    test:
+        use_gt_scale: True
+        gt_depth_available: False
+        gt_semantic_available: True

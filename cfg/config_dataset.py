@@ -9,6 +9,7 @@ cfg_dataset.dataset = CN()
 # ********************************************************************
 cfg_dataset.dataset.name = ''
 cfg_dataset.dataset.path = ''
+cfg_dataset.dataset.sub_dataset_paths = []
 cfg_dataset.dataset.feed_img_size = []  # used for datasets with fixed image sizes, or when resizing everything to
 # same resolution
 cfg_dataset.dataset.resize_factor = 1  # used for datasets with variable image sizes
@@ -22,6 +23,7 @@ cfg_dataset.dataset.min_depth = 0.001
 cfg_dataset.dataset.max_depth = 80.0
 cfg_dataset.dataset.shuffle = False
 cfg_dataset.dataset.img_norm = True
+cfg_dataset.dataset.do_augmentation = True
 cfg_dataset.dataset.num_classes = 1
 cfg_dataset.dataset.rgb_frame_offsets = []
 cfg_dataset.dataset.sequence_dataset = False

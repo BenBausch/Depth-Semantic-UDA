@@ -1,0 +1,30 @@
+dataset:
+    name: 'synthia_rand_cityscapes'
+    path: ''
+    feed_img_size: [ 1280, 760]
+    use_sparse_depth: False
+    use_dense_depth: False
+    use_self_supervised_depth: False
+    use_semantic_gt: True
+    split: None
+    shuffle: True
+    num_classes: 16
+    min_depth : 0.01
+    max_depth : 655.35
+    rgb_frame_offsets: [0]
+    sequence_dataset: False
+    do_augmentation: False
+
+eval:
+    train:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True
+    val:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True
+    test:
+        use_gt_scale: True
+        gt_depth_available: True
+        gt_semantic_available: True

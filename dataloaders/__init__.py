@@ -3,6 +3,7 @@ from dataloaders.synthia import dataset_synthia
 from dataloaders.cityscapes import dataset_cityscapes_sequence, dataset_cityscapes_semantic
 from dataloaders.kalimu import dataset_kalimu
 from dataloaders.synthia_aug_cityscapes import dataset_synthia_augmented_cityscapes
+from dataloaders.synthia_aug_cityscapes import dataset_synthia_cityscapes_classmix
 
 available_datasets = {
     #"kitti_depricated": dataset_kitti.KittiDataset,
@@ -12,7 +13,8 @@ available_datasets = {
     "cityscapes_sequence": dataset_cityscapes_sequence.CityscapesSequenceDataset,
     "cityscapes_semantic": dataset_cityscapes_semantic.CityscapesSemanticDataset,
     'kalimu': dataset_kalimu.KalimuSequenceDataset,
-    'synthia_aug_cityscapes': dataset_synthia_augmented_cityscapes.SynthiaAugCityscapesDataset
+    'synthia_aug_cityscapes': dataset_synthia_augmented_cityscapes.SynthiaAugCityscapesDataset,
+    'synthia_cityscapes_classmix': dataset_synthia_cityscapes_classmix.SynthiaCityscapesClassMixDataset
 }
 
 
