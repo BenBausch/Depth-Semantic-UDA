@@ -387,6 +387,7 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         depth_pred_t, raw_sigmoid_t = prediction_t['depth'][0], prediction_t['depth'][1][('disp', 0)]
 
+
         object_motion_map = prediction_t['motion']
         if object_motion_map is not None:
             motion_map = {}
@@ -600,12 +601,13 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             sum += motion_sum
             loss_dict[f'Motion Regularization epoch {self.epoch}'] = motion_sum
 
-        mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
-        norm_disp = raw_sigmoid / (mean_disp + 1e-7)
-        smoothness_loss = self.target_edge_smoothness_weight * \
-                          self.target_edge_smoothness_loss(norm_disp, data["rgb", 0])
-        loss_dict[f'Edge Smoothess epoch {self.epoch}'] = smoothness_loss
-        sum += smoothness_loss
+        if raw_sigmoid is not None:
+            mean_disp = raw_sigmoid.mean(2, True).mean(3, True)
+            norm_disp = raw_sigmoid / (mean_disp + 1e-7)
+            smoothness_loss = self.target_edge_smoothness_weight * \
+                              self.target_edge_smoothness_loss(norm_disp, data["rgb", 0])
+            loss_dict[f'Edge Smoothess epoch {self.epoch}'] = smoothness_loss
+            sum += smoothness_loss
 
         return sum, loss_dict, warped_imgs
 

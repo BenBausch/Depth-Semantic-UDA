@@ -10,6 +10,8 @@ import re
 # Own classes
 import numpy.random
 import numpy as np
+from torch import nn
+
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s_to_rgb
 from utils.plotting_like_cityscapes_utils import visu_depth_prediction as vdp
 from cfg.config_training import to_dictionary
@@ -254,12 +256,24 @@ class TrainBase(metaclass=abc.ABCMeta):
                 "The optimizer ({}) is not yet implemented.".format(type_optimizer))
 
     def set_train(self):
+
+        def deactivate_batchnorm(m):
+            if isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.SyncBatchNorm):
+                m.reset_parameters()
+                m.eval()
+                with torch.no_grad():
+                    m.weight.fill_(1.0)
+                    m.bias.zero_()
+
         for m in self.model.networks.values():
             m.train()
+            if self.cfg.train.batch_size == 1:
+                m.apply(deactivate_batchnorm)
 
     def set_eval(self):
         for m in self.model.networks.values():
             m.eval()
+
 
     def set_from_checkpoint(self):
         """

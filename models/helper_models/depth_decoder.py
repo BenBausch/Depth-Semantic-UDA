@@ -9,6 +9,9 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from collections import OrderedDict
+
+from torchvision.models.segmentation.deeplabv3 import DeepLabHead
+
 from models.helper_models.layers import *
 
 
@@ -105,6 +108,7 @@ class DepthDecoderDADA(nn.Module):
         self.enc4_2.weight.data.normal_(0, 0.01)
         self.enc4_3.weight.data.normal_(0, 0.01)
         self.relu = nn.ReLU(inplace=True)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_features):
         x4_enc = self.enc4_1(input_features)
@@ -112,5 +116,18 @@ class DepthDecoderDADA(nn.Module):
         x4_enc = self.enc4_2(x4_enc)
         x4_enc = self.relu(x4_enc)
         x4_enc = self.enc4_3(x4_enc)
-        depth = torch.mean(x4_enc, dim=1, keepdim=True)
+        depth = self.sigmoid(torch.mean(x4_enc, dim=1, keepdim=True))
         return x4_enc, depth
+
+
+class DepthDecoderDeepLab(nn.Module):
+
+    def __init__(self, in_channels: int, num_classes: int):
+        super(DepthDecoderDeepLab, self).__init__()
+        self.deeplab_head = DeepLabHead(in_channels, num_classes)
+        self.sig = nn.Sigmoid()
+
+    def forward(self, x):
+        x = self.deeplab_head(x)
+
+        return self.sig(x)
