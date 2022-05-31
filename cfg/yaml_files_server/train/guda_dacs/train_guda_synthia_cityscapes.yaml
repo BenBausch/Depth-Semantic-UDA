@@ -25,7 +25,7 @@ datasets:
 train:
     nof_epochs: 120
     batch_size: 1
-    nof_workers: 5
+    nof_workers: 3
 
     optimizer:
         type: 'Adam'
@@ -37,7 +37,7 @@ train:
 
 val:
     batch_size: 1
-    nof_workers: 5
+    nof_workers: 3
 
 
 device:

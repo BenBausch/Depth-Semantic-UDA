@@ -1,6 +1,6 @@
 dataset:
     name: 'synthia_cityscapes_classmix'
-    path: ['/work/dlclarge1/bauschb-data/data/Synthia/RAND_CITYSCAPES', # source
+    sub_dataset_paths: ['/work/dlclarge1/bauschb-data/data/Synthia/RAND_CITYSCAPES', # source
            '/work/dlclarge1/bauschb-data/data/Cityscapes/leftImg8bit_sequence'] # target
     feed_img_size: [ 512, 512 ]
     use_sparse_depth: False
