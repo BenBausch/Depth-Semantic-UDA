@@ -96,9 +96,9 @@ class SynthiaCityscapesClassMixDataset(data.Dataset):
         cityscapes_rgb = data_cityscapes[("rgb", 0)]
 
         # get the two crop postions
-        self.synthia_crop_indices = transforms.RandomCrop.get_params(
+        synthia_crop_indices = transforms.RandomCrop.get_params(
             synthia_rgb, output_size=(self.img_height, self.img_width))
-        i, j, h, w = self.synthia_crop_indices
+        i, j, h, w = synthia_crop_indices
         crop_cityscapes = RandomCrop((self.img_height, self.img_width))
 
         # crop both images and sample half the semantic classes from synthia
