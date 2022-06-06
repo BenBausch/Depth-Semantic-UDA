@@ -1,4 +1,4 @@
-experiment_name: 'synthia_to_cityscapes'
+experiment_name: 'synthia_to_cityscapes_with_tscl'
 
 model:
     type: 'guda'
