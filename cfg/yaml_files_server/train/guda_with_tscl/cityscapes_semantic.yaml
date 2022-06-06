@@ -1,0 +1,30 @@
+dataset:
+    name: 'cityscapes_semantic'
+    path: '/work/dlclarge1/bauschb-data/data/Cityscapes/leftImg8bit'
+    feed_img_size: [ 512, 256 ]
+    use_sparse_depth: False
+    use_dense_depth: False
+    use_self_supervised_depth: False
+    use_semantic_gt: True
+    split: None
+    camera: 'pinhole'
+    shuffle: False
+    num_classes: 16
+    min_depth : 0.01
+    max_depth : 655.35
+    rgb_frame_offsets: [0]
+    sequence_dataset: False
+
+eval:
+    train:
+        use_gt_scale: False
+        gt_depth_available: False
+        gt_semantic_available: True
+    val:
+        use_gt_scale: False
+        gt_depth_available: False
+        gt_semantic_available: True
+    test:
+        use_gt_scale: False
+        gt_depth_available: False
+        gt_semantic_available: True

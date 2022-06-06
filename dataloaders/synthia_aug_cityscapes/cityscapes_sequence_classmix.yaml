@@ -1,7 +1,7 @@
 dataset:
     name: 'cityscapes_sequence'
     path: ''
-    feed_img_size: [ 512, 256 ] # 1024, 512
+    feed_img_size: [ 512, 256 ] #[1024, 512]
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: True

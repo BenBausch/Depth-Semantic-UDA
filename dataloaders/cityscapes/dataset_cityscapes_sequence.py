@@ -189,7 +189,7 @@ class CityscapesSequenceDataset(dataset_base.DatasetRGB):
         :param gt_semantic: ground truth of the image with offset = 0
         :return: dict of transformed rgb images and transformed label
         """
-        do_flip = random.random() > 0.5
+        do_flip = random.random() > 0.5 # False
         do_aug = False
 
         # Get the transformation objects

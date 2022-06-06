@@ -1,0 +1,49 @@
+dataset:
+    name: 'cityscapes_sequence'
+    path: 'D:\Depth-Semantic-UDA\data\Cityscapes_datasets\leftImg8bit_sequence'
+    feed_img_size: [ 512, 256 ]
+    use_sparse_depth: False
+    use_dense_depth: False
+    use_self_supervised_depth: True
+    use_semantic_gt: True # semantic gt is temporal semantic consistency
+    split: None
+    camera: 'pinhole'
+    shuffle: True
+    num_classes: 16
+    min_depth : 0.01
+    max_depth : 655.35
+    rgb_frame_offsets: [0, -1, +1]
+    sequence_dataset: True
+    predict_depth_for_each_img_in_sequence: True
+
+losses:
+    loss_names_and_parameters:
+        - reconstruction:
+            'use_ssim' : True
+            'use_automasking' : True
+            'use_temporal_semantic_consistency': True
+        - edge_smooth:
+              'parameters': None
+        - motion_group_smoothness: True
+        - motion_sparsity: True
+
+    loss_names_and_weights:
+        - temporal_semantic_consistency: 0.01
+        - reconstruction : 1
+        - edge_smooth: 0.001
+        - motion_group_smoothness: 1.0
+        - motion_sparsity: 0.2
+
+eval:
+    train:
+        use_gt_scale: False
+        gt_depth_available: False
+        gt_semantic_available: False
+    val:
+        use_gt_scale: False
+        gt_depth_available: False
+        gt_semantic_available: False
+    test:
+        use_gt_scale: False
+        gt_depth_available: False
+        gt_semantic_available: False

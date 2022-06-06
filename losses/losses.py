@@ -6,6 +6,7 @@ from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
 from helper_modules.image_warper import CoordinateWarper
 from utils.constans import IGNORE_INDEX_SEMANTIC
 
+
 # ----------------------------------------------Semantic Losses---------------------------------------------------------
 class WeightedCrossEntropy(nn.Module):
     """
@@ -185,6 +186,7 @@ class SemanticL1LossPixelwise(nn.Module):
         loss[mask] = zeros[mask]
         return loss
 
+
 # ----------------------------------------------Motion Losses-----------------------------------------------------------
 
 
@@ -218,7 +220,9 @@ class MotionSparsityRegularizationLoss(nn.Module):
         """
         abs_map = torch.abs(translation_map)
         spatial_mean_motion = torch.mean(abs_map, dim=(2, 3), keepdim=True).detach()
-        return torch.mean(2 * spatial_mean_motion * torch.sqrt(abs_map/(spatial_mean_motion + 1e-24) + 1))
+        return torch.mean(2 * spatial_mean_motion * torch.sqrt(abs_map / (spatial_mean_motion + 1e-24) + 1))
+
+
 # ----------------------------------------------Depth Losses------------------------------------------------------------
 
 
@@ -371,7 +375,7 @@ class ReconstructionLoss(nn.Module):
         super(ReconstructionLoss, self).__init__()
         self.num_scales = num_scales
         self.l1_loss_pixelwise = L1LossPixelwise()
-        self.semantic_l1_loss_pixelwise = SemanticL1LossPixelwise()
+        self.semantic_ce_loss_pixelwise = nn.CrossEntropyLoss(ignore_index=IGNORE_INDEX_SEMANTIC, reduction='none')
         self.ssim = SSIMLoss(ssim_kernel_size)
         self.image_warpers = {}
         self.scaling_modules = {}
@@ -437,10 +441,14 @@ class ReconstructionLoss(nn.Module):
                         self.image_warpers[s](scaled_adjacent_img_,
                                               scaled_depth,
                                               poses[frame_id],
-                                              semantic_logits[frame_id],
+                                              semantic_logits[frame_id]['label'],
                                               scaled_motion_map)
 
-                    loss_sem = self.semantic_l1_loss_pixelwise(semantic_logits[0], warped_semantic_logits_frame)
+                    warped_semantic_logits_frame = torch.argmax(warped_semantic_logits_frame, dim=1)
+
+                    loss_sem = semantic_logits[frame_id]['label_weights'] * \
+                               self.semantic_ce_loss_pixelwise(semantic_logits[0],
+                                                               warped_semantic_logits_frame.detach())
 
                     semantic_cosistency_losses.append(loss_sem)
 
@@ -451,9 +459,9 @@ class ReconstructionLoss(nn.Module):
                                                                         None,
                                                                         scaled_motion_map)
 
-                    if s == 0 and return_warped_images:
-                        # return first in batch warped image just for plotting --> detach
-                        warped_images_at_biggest_scale[frame_id] = warped_scaled_adjacent_img_.detach()[0]
+                if s == 0 and return_warped_images:
+                    # return first in batch warped image just for plotting --> detach
+                    warped_images_at_biggest_scale[frame_id] = warped_scaled_adjacent_img_.detach()[0]
 
                 rec_l1_loss = self.l1_loss_pixelwise(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
                 rec_ssim_loss = self.ssim(warped_scaled_adjacent_img_, scaled_tgt_img).mean(1, True)
@@ -489,7 +497,7 @@ class ReconstructionLoss(nn.Module):
             if s == 0 and semantic_logits is not None:
                 # the warped image index pixels that have minimum loss in photometric reconstruction
                 image_pixels_used = torch.argmin(reconstruction_losses_s,
-                                                 dim=1).repeat(1, semantic_cosistency_losses[0].shape[1], 1, 1)
+                                                 dim=1)#.repeat(1, semantic_cosistency_losses[0].shape[1], 1, 1)
 
                 # take the loss of the pixels which had minimum loss in photometric reconstruction
                 semantic_cosistency_loss_min = torch.zeros_like(semantic_cosistency_losses[0])
@@ -508,7 +516,6 @@ class ReconstructionLoss(nn.Module):
             return total_loss, 0, warped_imgs
         else:
             return total_loss, semantic_cosistency_loss_min, warped_imgs
-
 
     def match_sizes(self, image, target_shape, mode='bilinear', align_corners=True):
         if len(target_shape) > 2:

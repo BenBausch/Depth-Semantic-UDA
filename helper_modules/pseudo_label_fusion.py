@@ -22,11 +22,12 @@ def fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction, ground_turth_l
         np.array(pseudo_label_probs.cpu()))
     pixelWiseWeight = unlabeled_weight * torch.ones(pseudo_label_probs.shape)
 
-    mask = ground_turth_labels != IGNORE_INDEX_SEMANTIC
-    pseudo_labels[mask] = ground_turth_labels[mask]
-    pixelWiseWeight[mask] == 1.0
+    if ground_turth_labels is not None:
+        mask = ground_turth_labels != IGNORE_INDEX_SEMANTIC
+        pseudo_labels[mask] = ground_turth_labels[mask]
+        pixelWiseWeight[mask] == 1.0
 
-    return pseudo_labels, pixelWiseWeight.to(ground_turth_labels.device)
+    return pseudo_labels, pixelWiseWeight.to(pseudo_label_prediction.device)
 
 
 if __name__ == "__main__":

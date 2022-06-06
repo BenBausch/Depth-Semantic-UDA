@@ -12,7 +12,7 @@ dataset:
     num_classes: 16
     min_depth : 0.01
     max_depth : 655.35
-    rgb_frame_offsets: [0, -1, +1]
+    rgb_frame_offsets: [0, -2, +2]
     sequence_dataset: True
 
 losses:

@@ -162,6 +162,10 @@ class UnsupervisedDepthTrainer(TrainSingleDatasetBase):
     def train(self):
         self.set_train()
 
+        if self.iteration_step == 0 and self.epoch > 0:
+            # set iteration step after laoding a model
+            self.iteration_step = self.epoch * len(self.train_loader)
+
         # Main loop:
         for batch_idx, data in enumerate(self.train_loader):
             if self.rank == 0:

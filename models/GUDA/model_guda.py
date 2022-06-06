@@ -72,7 +72,6 @@ class Guda(SemanticDepthFromMotionModelBase):
         self.dataset_predict_semantic = []
         self.dataset_predict_pose = []
         self.dataset_min_max_depth = []
-        self.predict_semantic_for_whole_sequence = []
         self.predict_depth_for_whole_sequence = []
 
         # all datasets should have the same number of classes because they use the same semantic head
@@ -80,7 +79,6 @@ class Guda(SemanticDepthFromMotionModelBase):
 
         # collect the parameters from all the datasets
         for i, dcfg in enumerate(self.cfg.datasets.configs):
-            self.predict_semantic_for_whole_sequence.append(dcfg.dataset.predict_semantic_for_each_img_in_sequence)
             self.predict_depth_for_whole_sequence.append(dcfg.dataset.predict_depth_for_each_img_in_sequence)
             self.rgb_frame_offsets.append(dcfg.dataset.rgb_frame_offsets)
 
@@ -95,7 +93,7 @@ class Guda(SemanticDepthFromMotionModelBase):
             # pose prediction is only needed in context of self-supervised monocular depth
             self.dataset_predict_pose.append(dcfg.dataset.use_self_supervised_depth)
 
-            predict_semantics = dcfg.dataset.use_semantic_gt or dcfg.dataset.predict_semantic_for_each_img_in_sequence
+            predict_semantics = dcfg.dataset.use_semantic_gt
             self.dataset_predict_semantic.append(predict_semantics)
 
             if self.num_classes != dcfg.dataset.num_classes:
@@ -104,7 +102,6 @@ class Guda(SemanticDepthFromMotionModelBase):
         print(f'Predict depth per dataset: {self.dataset_predict_depth}')
         print(f'Predict pose per dataset: {self.dataset_predict_pose}')
         print(f'Predict semantic mask per dataset: {self.dataset_predict_semantic}')
-        print(f'Predict semantic for each frame in sequence: {self.predict_semantic_for_whole_sequence}')
         print(f'Predict depth for each frame in sequence: {self.predict_depth_for_whole_sequence}')
         print(f'Number classes: {self.num_classes}')
 
@@ -239,7 +236,7 @@ class Guda(SemanticDepthFromMotionModelBase):
         return a
 
     def forward(self, data, predict_depth=False, dataset_id=4, train=True, correct_dataset_id_mapping=None,
-                predict_pseudo_labels_only=False):
+                predict_pseudo_labels_only=False, predict_sequence_pseudo_labels_only=False):
         """
         Performs multiple forward passes, one for each dataset. This is need because of the distributed data parallel
         training, where a model is allowed to perform only a single forward pass before backward pass in order to keep
@@ -249,7 +246,19 @@ class Guda(SemanticDepthFromMotionModelBase):
         all_results = []
         if train:
             if predict_pseudo_labels_only:
-                all_results.append(self.single_forward(data, dataset_id, predict_depth, predict_pseudo_labels_only))
+                all_results.append(self.single_forward(data,
+                                                       dataset_id=dataset_id,
+                                                       predict_depth=False,
+                                                       predict_pseudo_labels_only=predict_pseudo_labels_only,
+                                                       predict_sequence_pseudo_labels_only=False))
+
+            elif predict_sequence_pseudo_labels_only:
+                all_results.append(
+                    self.single_forward(data,
+                                        dataset_id=dataset_id,
+                                        predict_depth=False,
+                                        predict_pseudo_labels_only=False,
+                                        predict_sequence_pseudo_labels_only=predict_sequence_pseudo_labels_only))
             else:
                 for dataset_id, batch in enumerate(data):
                     if correct_dataset_id_mapping is not None:
@@ -266,42 +275,67 @@ class Guda(SemanticDepthFromMotionModelBase):
             all_results.append(self.single_forward(data, dataset_id, predict_depth))
         return all_results
 
-    def single_forward(self, batch, dataset_id, predict_depth=False, predict_pseudo_labels_only=False):
+    def single_forward(self, batch, dataset_id, predict_depth=False,
+                       predict_pseudo_labels_only=False,
+                       predict_sequence_pseudo_labels_only=False):
         """
         Forward pass on a single batch.
         param batch: batch of data to process
+        :param predict_sequence_pseudo_labels_only: true if ema model should predict semantic pseudo labels for each
+        image with offset != 0 in the sequence.
+        :param predict_pseudo_labels_only: true if ema model should predict pseudo labels for image with offset = 0
+        for the dataset with id = dataset_id
         :param dataset_id: number of datasets in the list of datasets (source: 0, target:1, ...)
         :param predict_depth: used to manually enforce depth prediction (for example: during specific samples in
         validation for visualization purposes) Note: Don't use to manage depth prediction per dataset -->
         set use_..._depth to True in the config of that specific dataset!
         """
         results = {}
+
         if predict_pseudo_labels_only:
+            # predict the semantic labels for unaugmented image (e.g. cityscapes crop not mixed with synthia crop),
+            # this should be used when predicting with an exponential moving average model.
             latent_features_batch_pseudo_label = self.latent_features(batch[("unaug_rgb", 0)])
             results['pseudo_labels'] = self.predict_semantic(latent_features_batch_pseudo_label).detach()
 
+        elif predict_sequence_pseudo_labels_only:
+            # predict the semantic labels for offset images in the sequence, this should be used when predicting with
+            # an exponential moving average model.
+            semantic_sequence = {}
+            for offset in self.rgb_frame_offsets[dataset_id][1:]:
+                offset_features = self.latent_features(batch[("rgb", offset)])
+                semantic_sequence[offset] = self.predict_semantic(offset_features).detach()
+
+            # predict semantic for the sequence if wanted and if dataset has sequences
+            results['semantic_sequence'] = semantic_sequence
+            return results
+
         else:
+            # predict latent features
             latent_features_batch = self.latent_features(batch[("rgb", 0)])
 
             offset_img_features = {}
-            if self.predict_semantic_for_whole_sequence[dataset_id] or \
-                    self.predict_depth_for_whole_sequence[dataset_id]:
+            if self.predict_depth_for_whole_sequence[dataset_id]:
+                # predict latent features for offset images important if using motion network
                 for offset in self.rgb_frame_offsets[dataset_id][1:]:
                     offset_img_features[offset] = self.latent_features(batch[("rgb", offset)])
 
+            # predict the dense depth maps
             if self.dataset_predict_depth[dataset_id] or predict_depth:
+                # predict depth for source frame (offset = 0)
                 results['depth'] = self.predict_depth(latent_features_batch, dataset_id=dataset_id)
             else:
                 results['depth'] = None
 
             depth_sequence = {}
             if self.predict_depth_for_whole_sequence[dataset_id]:
-                # predict semantic for the sequence if wanted and if dataset has sequences
+                # predict depth for offset images important if using motion network
                 depth_sequence[0] = results['depth'][0][('depth', 0)].detach()
                 for offset in self.rgb_frame_offsets[dataset_id][1:]:
                     depth_sequence[offset] = \
                         self.predict_depth(offset_img_features[offset], dataset_id)[0][('depth', 0)].detach()
 
+            # predict pose and motion if required
             if self.dataset_predict_pose[dataset_id]:
                 if self.predict_motion_map:
                     results['poses'], results['motion'] = \
@@ -312,18 +346,12 @@ class Guda(SemanticDepthFromMotionModelBase):
             else:
                 results['poses'] = None
 
+            # predict dense semantic map
             if self.dataset_predict_semantic[dataset_id]:
                 results['semantic'] = self.predict_semantic(latent_features_batch)
             else:
                 results['semantic'] = None
 
-            if self.predict_semantic_for_whole_sequence[dataset_id]:
-                # predict semantic for the sequence if wanted and if dataset has sequences
-                semantic_sequence = {0: results['semantic']}
-                for offset in self.rgb_frame_offsets[dataset_id][1:]:
-                    semantic_sequence[offset] = self.predict_semantic(offset_img_features[offset])
-
-                results['semantic_sequence'] = semantic_sequence
         return results
 
     # --------------------------------------------------------------------------

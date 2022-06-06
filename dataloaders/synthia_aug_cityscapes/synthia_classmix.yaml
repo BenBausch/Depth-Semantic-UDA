@@ -1,7 +1,7 @@
 dataset:
     name: 'synthia_rand_cityscapes'
     path: ''
-    feed_img_size: [ 640, 320] # 1280, 760
+    feed_img_size: [640, 320] # [1280, 760]
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: False

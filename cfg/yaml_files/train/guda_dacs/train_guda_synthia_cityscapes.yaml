@@ -40,9 +40,9 @@ val:
     nof_workers: 5
 
 checkpoint:
-    use_checkpoint: False
-    path_base : 'D:\Depth-Semantic-UDA\experiments\guda'
-    filename : 'checkpoint_epoch_0.pth'
+    use_checkpoint: True
+    path_base: 'C:\Users\benba\Documents\University\Masterarbeit\models\ema_stuff'
+    filename: 'checkpoint_epoch_9.pth'
 
 device:
     multiple_gpus: False

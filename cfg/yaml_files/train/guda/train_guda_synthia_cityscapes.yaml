@@ -1,7 +1,7 @@
 experiment_name: 'testing_guda_update'
 
 model:
-    type: 'deeplabv3'
+    type: 'guda'
 
     encoder:
         params:

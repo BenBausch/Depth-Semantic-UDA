@@ -1,11 +1,11 @@
 dataset:
     name: 'cityscapes_sequence'
     path: 'D:\Depth-Semantic-UDA\data\Cityscapes_datasets\leftImg8bit_sequence'
-    feed_img_size: [ 256, 128 ]
+    feed_img_size: [ 512, 256 ]
     use_sparse_depth: False
     use_dense_depth: False
     use_self_supervised_depth: True
-    use_semantic_gt: False
+    use_semantic_gt: True # semantic gt is temporal semantic consistency
     split: None
     camera: 'pinhole'
     shuffle: True
@@ -14,7 +14,6 @@ dataset:
     max_depth : 655.35
     rgb_frame_offsets: [0, -1, +1]
     sequence_dataset: True
-    predict_semantic_for_each_img_in_sequence: True
 
 losses:
     loss_names_and_parameters:

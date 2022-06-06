@@ -17,6 +17,8 @@ import os
 from torchvision import transforms
 import copy
 
+from PIL import Image
+
 
 class SynthiaCityscapesClassMixDataset(data.Dataset):
     """
@@ -88,12 +90,25 @@ class SynthiaCityscapesClassMixDataset(data.Dataset):
             :param index: Index of an image with offset 0 in the sequence.
             :return: dict of images and label
         """
+        #path = r'C:\Users\benba\Documents\University\Masterarbeit\Depth-Semantic-UDA\plots\dacs'
+
+        data = {}
+
         # Get all required training elements
         data_synthia = self.synthia_ds.__getitem__(random.randint(0, self.synthia_length - 1))
         data_cityscapes = self.cityscapes_ds.__getitem__(random.randint(0, self.cityscapes_length - 1))
 
         synthia_rgb, synthia_semantic = data_synthia[("rgb", 0)], data_synthia["semantic"]
         cityscapes_rgb = data_cityscapes[("rgb", 0)]
+        #data[("synthia_plot")] = synthia_rgb + torch.tensor(
+        #    [[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
+        #plot = Image.fromarray((data[("synthia_plot")].permute(1, 2, 0).numpy() * 255).astype(np.uint8))
+        #plot.save(os.path.join(path, "synthia_plot.png"))
+
+        #data[("cityscapes_plot")] = cityscapes_rgb + torch.tensor(
+        #    [[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
+        #plot = Image.fromarray((data[("cityscapes_plot")].permute(1, 2, 0).numpy() * 255).astype(np.uint8))
+        #plot.save(os.path.join(path, "cityscapes_plot.png"))
 
         # get the two crop postions
         synthia_crop_indices = transforms.RandomCrop.get_params(
@@ -102,24 +117,48 @@ class SynthiaCityscapesClassMixDataset(data.Dataset):
         crop_cityscapes = RandomCrop((self.img_height, self.img_width))
 
         # crop both images and sample half the semantic classes from synthia
-        synthia_semantic = TF.crop(self.sample_semantic_gt(synthia_semantic), i, j, h, w)
+        #data["synthia_semantic"] = synthia_semantic
+        #plot = Image.fromarray((s2rgb(data[("synthia_semantic")].unsqueeze(0), num_classes=16)).astype(np.uint8))
+        #plot.save(os.path.join(path, "synthia_semantic.png"))
+
+        sampled_semantic = self.sample_semantic_gt(synthia_semantic)
+        #data["sampled_semantic"] = sampled_semantic
+        #plot = Image.fromarray((s2rgb(data[("sampled_semantic")].unsqueeze(0), num_classes=16)).astype(np.uint8))
+        #plot.save(os.path.join(path, "sampled_semantic.png"))
+
+        synthia_semantic = TF.crop(sampled_semantic, i, j, h, w)
         synthia_rgb = TF.crop(synthia_rgb, i, j, h, w)
         cityscapes_rgb = crop_cityscapes(cityscapes_rgb)
 
         # fuse cityscapes rgb into synthia rgb
         mask_cityscapes = synthia_semantic == IGNORE_INDEX_SEMANTIC # cityscapes pixel are pasted where the synthia is
         # ignored
-        synthia_rgb[:, mask_cityscapes] = cityscapes_rgb[:, mask_cityscapes]
 
-        data = {}
+        #plotting
+        #synthia_plot = synthia_rgb + torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
+        #cityscapes_plot = cityscapes_rgb + torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
+        #synthia_plot[:, mask_cityscapes] = cityscapes_plot[:, mask_cityscapes]
+        #plot = Image.fromarray(
+        #    (synthia_plot.permute(1, 2, 0).numpy() * 255).astype(np.uint8))
+        #plot.save(os.path.join(path, "mixed.png"))
+
+        synthia_rgb[:, mask_cityscapes] = cityscapes_rgb[:, mask_cityscapes]
 
         do_color_aug = random.random() > 0.5
         mixed_sample_augmentation = self.tf_augmented_rgb_train(do_color_aug=do_color_aug,
                                                                 color_aug_params=self.aug_params)
 
+        #data[("synthia_crop_plot")] = synthia_rgb + torch.tensor([[[0.314747602, 0.277402550, 0.248091921]]]).transpose(0, 2)
+        #plot = Image.fromarray((data[("synthia_crop_plot")].permute(1, 2, 0).numpy() * 255).astype(np.uint8))
+        #plot.save(os.path.join(path, "synthia_crop_plot.png"))
+        #data[("cityscapes_crop_plot")] = cityscapes_rgb + torch.tensor([[[0.28689554, 0.32513303, 0.28389177]]]).transpose(0, 2)
+        #plot = Image.fromarray((data[("cityscapes_crop_plot")].permute(1, 2, 0).numpy() * 255).astype(np.uint8))
+        #plot.save(os.path.join(path, "cityscapes_crop_plot.png"))
         data[("unaug_rgb", 0)] = cityscapes_rgb
         data[("rgb", 0)] = mixed_sample_augmentation(synthia_rgb)
         data["semantic"] = synthia_semantic
+        #plot = Image.fromarray((s2rgb(data[("semantic")].unsqueeze(0), num_classes=16)).astype(np.uint8))
+        #plot.save(os.path.join(path, "semantic.png"))
 
         return data
 
@@ -128,6 +167,7 @@ class SynthiaCityscapesClassMixDataset(data.Dataset):
         Selects #self.number_classes_to_sample classes from the synthia semantic gt at random.
         """
         random_class_ids = random.sample(range(0, self.cfg.dataset.num_classes), self.number_classes_to_sample)
+        #random_class_ids = [4, 0, 6, 7, 10, 11, 15, 12] for testing and plotting purpose
 
         mask = torch.zeros_like(synthia_semantic) + IGNORE_INDEX_SEMANTIC
         for class_id in random_class_ids:

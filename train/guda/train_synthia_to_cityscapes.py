@@ -130,9 +130,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         self.target_use_garg_crop = self.cfg.datasets.configs[1].eval.use_garg_crop
 
-        self.target_predict_semantic_for_whole_sequence = \
-            self.cfg.datasets.configs[1].dataset.predict_semantic_for_each_img_in_sequence
-
         # Set up normalized camera model for target domain
         try:
             self.target_normalized_camera_model = \
@@ -209,16 +206,18 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         self.target_reconstruction_use_ssim = target_l_n_p[0]['reconstruction']['use_ssim']
         self.target_reconstruction_use_automasking = target_l_n_p[0]['reconstruction']['use_automasking']
 
-        # if using tscl then also need to predict semantics for all frames.
-        if 'temporal_semantic_consistency' in target_l_n_w[0].keys():
+        # if using tscl then also need to predict semantics for all frames using an ema model.
+        if 'use_temporal_semantic_consistency' in target_l_n_p[0]['reconstruction'].keys() and \
+            target_l_n_p[0]['reconstruction']['use_temporal_semantic_consistency']:
             self.target_temporal_semantic_consistency_weigth = target_l_n_w[0]['temporal_semantic_consistency']
-            assert target_l_n_p[0]['reconstruction']['use_temporal_semantic_consistency'] == \
-                   self.target_predict_semantic_for_whole_sequence, \
-                'If the model should predict semantics the whole target sequence, ' \
-                'if should also be used in the target loss! Otherwise unused predictions'
-            self.target_use_tsc = True
+            self.target_use_tsc = target_l_n_p[0]['reconstruction']['use_temporal_semantic_consistency']
+            if self.target_use_tsc:
+                assert self.ema_model is not None, "Please create EMA model to create pseudo-labels for whole " \
+                                                   "sequence, by setting create_expo_moving_avg_model_copy: True in " \
+                                                   "<your_train_file_name>.yaml"
         else:
             self.target_use_tsc = False
+        print(f'Using temporal semantic consistency: {self.target_use_tsc}')
 
         # either use both motion regularization losses or none
         assert ('motion_group_smoothness' in target_l_n_w[0].keys()) == ('motion_sparsity' in target_l_n_w[0].keys())
@@ -311,6 +310,11 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             loaders_zip = zip(self.source_train_loader, self.target_train_loader, self.mixed_train_loader)
         else:
             loaders_zip = zip(self.source_train_loader, self.target_train_loader)
+
+        if self.iteration_step == 0 and self.epoch > 0:
+            # set iteration step after laoding a model
+            self.iteration_step = self.epoch * len(self.source_train_loader)
+
         # Main loop:
         for batch_idx, data in enumerate(loaders_zip):
             if self.rank == 0:
@@ -387,7 +391,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
 
         depth_pred_t, raw_sigmoid_t = prediction_t['depth'][0], prediction_t['depth'][1][('disp', 0)]
 
-
         object_motion_map = prediction_t['motion']
         if object_motion_map is not None:
             motion_map = {}
@@ -402,10 +405,19 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
         else:
             motion_map = None
 
-        if self.target_predict_semantic_for_whole_sequence:
+        if self.target_use_tsc:
+            semantic_sequence_labels = \
+                self.ema_model.forward(data[1],
+                                       dataset_id=1,
+                                       predict_sequence_pseudo_labels_only=True)[0]['semantic_sequence']
             semantic_sequence = {}
-            for offset in prediction_t['semantic_sequence'].keys():
-                semantic_sequence[offset] = F.softmax(prediction_t['semantic_sequence'][offset], dim=1)
+            for offset in semantic_sequence_labels.keys():
+                semantic_weight_dict = {}
+                semantic_weight_dict['label'] = F.softmax(semantic_sequence_labels[offset], dim=1)
+                _, semantic_weight_dict['label_weights'] = \
+                    fuse_pseudo_labels_with_gorund_truth(semantic_weight_dict['label'], None)
+                semantic_sequence[offset] = semantic_weight_dict
+            semantic_sequence[0] = F.softmax(prediction_t['semantic'], dim=1)
         else:
             semantic_sequence = None
 
@@ -478,13 +490,13 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             normal_img_1 = self.get_wandb_normal_image(depth_pred_t[('depth', 0)].detach(), self.snr_validation,
                                                        'Predicted')
 
-            prev_warped_img = wandb.Image(warped_imgs[-1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB -1")
-            succ_warped_img = wandb.Image(warped_imgs[+1].cpu().numpy().transpose(1, 2, 0), caption="Warped RGB +1")
+            prev_warped_img = wandb.Image(warped_imgs[self.target_rgb_frame_offsets[1]].cpu().numpy().transpose(1, 2, 0), caption=f"Warped RGB {self.target_rgb_frame_offsets[1]}")
+            succ_warped_img = wandb.Image(warped_imgs[self.target_rgb_frame_offsets[2]].cpu().numpy().transpose(1, 2, 0), caption=f"Warped RGB {self.target_rgb_frame_offsets[2]}")
             if object_motion_map is not None:
-                prev_obj_motion = wandb.Image(object_motion_map[-1][0], caption='frame -1 to frame 0 obj motion')
-                succ_obj_motion = wandb.Image(object_motion_map[1][0], caption='frame 0 to frame 1 obj motion')
-                prev_motion = wandb.Image(motion_map[-1][0], caption='frame -1 to frame 0 motion')
-                succ_motion = wandb.Image(motion_map[1][0], caption='frame 0 to frame 1 motion')
+                prev_obj_motion = wandb.Image(object_motion_map[self.target_rgb_frame_offsets[1]][0], caption=f'frame {self.target_rgb_frame_offsets[1]} to frame 0 obj motion')
+                succ_obj_motion = wandb.Image(object_motion_map[self.target_rgb_frame_offsets[2]][0], caption=f'frame 0 to frame {self.target_rgb_frame_offsets[2]} obj motion')
+                prev_motion = wandb.Image(motion_map[self.target_rgb_frame_offsets[1]][0], caption=f'frame {self.target_rgb_frame_offsets[1]} to frame 0 motion')
+                succ_motion = wandb.Image(motion_map[self.target_rgb_frame_offsets[2]][0], caption=f'frame 0 to frame {self.target_rgb_frame_offsets[2]} motion')
                 wandb.log({f'Target images {self.epoch}': [rgb_1, depth_img_1,
                                                            normal_img_1,
                                                            prev_warped_img,

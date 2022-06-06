@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from utils.plotting_like_cityscapes_utils import semantic_id_tensor_to_rgb_numpy_array as s2rgb
+from utils.constans import IGNORE_INDEX_SEMANTIC
 
 
 class _PointcloudToImage(nn.Module):
@@ -167,7 +168,7 @@ class ImageWarper(nn.Module):
         # ax2.imshow(plt_img.detach().cpu().numpy().transpose(1, 2, 0))
 
         warped_semantic = F.grid_sample(batch_semantic, pixel_coordinates, padding_mode="zeros", mode='nearest')
-        warped_semantic[pixel_outside_of_image] = 250
+        warped_semantic[pixel_outside_of_image] = IGNORE_INDEX_SEMANTIC
         # print(warped_semantic)
         # img_to_plot = torch.topk(warped_semantic[0], k=1, dim=0, sorted=True).indices[0].unsqueeze(0).cpu()
         # img_to_plot[pixel_outside_of_image[:, 0, :, :]] = 250
