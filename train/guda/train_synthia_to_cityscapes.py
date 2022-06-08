@@ -17,7 +17,6 @@ import torch.nn.functional as F
 from utils.constans import IGNORE_VALUE_DEPTH, IGNORE_INDEX_SEMANTIC
 from helper_modules.pseudo_label_fusion import fuse_pseudo_labels_with_gorund_truth
 
-
 class GUDATrainer(TrainSourceTargetDatasetBase):
     """
     Trainer to run the guda algorithm for synthia to cityscapes.
@@ -414,8 +413,6 @@ class GUDATrainer(TrainSourceTargetDatasetBase):
             for offset in semantic_sequence_labels.keys():
                 semantic_weight_dict = {}
                 semantic_weight_dict['label'] = F.softmax(semantic_sequence_labels[offset], dim=1)
-                _, semantic_weight_dict['label_weights'] = \
-                    fuse_pseudo_labels_with_gorund_truth(semantic_weight_dict['label'], None)
                 semantic_sequence[offset] = semantic_weight_dict
             semantic_sequence[0] = F.softmax(prediction_t['semantic'], dim=1)
         else:

@@ -5,6 +5,17 @@ import torch
 from utils.constans import IGNORE_INDEX_SEMANTIC
 
 
+def get_pseudo_labels_ge_threshold(softmax_prediction, threshold):
+    """
+    Sets all pseudo labels with probability smaller than the threshold to SEMANTIC_IGNORE_INDEX
+    """
+    pseudo_labels = torch.argmax(softmax_prediction, dim=1)
+    pseudo_label_probs = torch.max(softmax_prediction, dim=1).values
+
+    pseudo_labels[pseudo_label_probs < threshold] = IGNORE_INDEX_SEMANTIC
+    return pseudo_labels
+
+
 def fuse_pseudo_labels_with_gorund_truth(pseudo_label_prediction, ground_turth_labels):
     """
     Creates a Long Tensor Pseudo Label/Ground Truth target tensor. In the UDA setup, pseudo labels come from the target

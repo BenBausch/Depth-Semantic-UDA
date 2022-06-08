@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from helper_modules.image_warper import ImageWarper, _ImageToPointcloud
 from helper_modules.image_warper import CoordinateWarper
+from helper_modules.pseudo_label_fusion import get_pseudo_labels_ge_threshold
 from utils.constans import IGNORE_INDEX_SEMANTIC
 
 
@@ -444,10 +445,9 @@ class ReconstructionLoss(nn.Module):
                                               semantic_logits[frame_id]['label'],
                                               scaled_motion_map)
 
-                    warped_semantic_logits_frame = torch.argmax(warped_semantic_logits_frame, dim=1)
+                    warped_semantic_logits_frame = get_pseudo_labels_ge_threshold(warped_semantic_logits_frame, 0.968)
 
-                    loss_sem = semantic_logits[frame_id]['label_weights'] * \
-                               self.semantic_ce_loss_pixelwise(semantic_logits[0],
+                    loss_sem = self.semantic_ce_loss_pixelwise(semantic_logits[0],
                                                                warped_semantic_logits_frame.detach())
 
                     semantic_cosistency_losses.append(loss_sem)
